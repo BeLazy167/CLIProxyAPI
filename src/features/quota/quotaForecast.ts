@@ -47,6 +47,81 @@ export function burnRatePerHour(
   return Math.max(0, 100 - remaining) / elapsedHours;
 }
 
+/** One Lamplighter history series: `[unix seconds, remaining %, 1 when read passively off live traffic]`. */
+export interface QuotaHistorySeries {
+  auth_index: string;
+  window: string;
+  points: [number, number, number][];
+}
+
+export interface DrainBar {
+  atMs: number;
+  drain: number;
+}
+
+/**
+ * Active polls of `window` for each account, oldest first. Passive readings come
+ * off live traffic and wobble by a point (97, 98, 97), which would read as fake
+ * drain, so they are used only when an account has no active poll at all.
+ */
+function samplesByAccount(series: readonly QuotaHistorySeries[], authIndexes: readonly string[], window: string) {
+  return authIndexes.map((authIndex) => {
+    const points = series
+      .filter((s) => s.auth_index === authIndex && s.window === window)
+      .flatMap((s) => s.points);
+    const active = points.filter((p) => p[2] === 0);
+    return (active.length > 0 ? active : points)
+      .map(([t, remaining]) => ({ atMs: t * 1000, remaining }))
+      .sort((a, b) => a.atMs - b.atMs);
+  });
+}
+
+/** Pool total over time: each account's latest sample summed, from the first step where every account has one. */
+export function buildPoolHistory(
+  series: readonly QuotaHistorySeries[],
+  authIndexes: readonly string[],
+  window: string,
+  fromMs: number,
+  toMs: number,
+  stepMs = 15 * 60_000
+): ForecastPoint[] {
+  const accounts = samplesByAccount(series, authIndexes, window);
+  const cursors = accounts.map(() => -1);
+  const points: ForecastPoint[] = [];
+  for (let t = fromMs; t <= toMs; t += stepMs) {
+    let total = 0;
+    let complete = true;
+    accounts.forEach((samples, i) => {
+      while (cursors[i] + 1 < samples.length && samples[cursors[i] + 1].atMs <= t) cursors[i] += 1;
+      if (cursors[i] < 0) complete = false;
+      else total += samples[cursors[i]].remaining;
+    });
+    if (complete) points.push({ atMs: t, remaining: total });
+  }
+  return points;
+}
+
+/** Percentage points used per hour across the accounts. Rises (resets) are not use, so they are skipped. */
+export function buildHourlyDrain(
+  series: readonly QuotaHistorySeries[],
+  authIndexes: readonly string[],
+  window: string,
+  fromMs: number,
+  toMs: number
+): DrainBar[] {
+  const startHour = Math.floor(fromMs / HOUR_MS) * HOUR_MS;
+  const bars: DrainBar[] = [];
+  for (let t = startHour; t < toMs; t += HOUR_MS) bars.push({ atMs: t, drain: 0 });
+  for (const samples of samplesByAccount(series, authIndexes, window)) {
+    for (let i = 1; i < samples.length; i += 1) {
+      const drop = samples[i - 1].remaining - samples[i].remaining;
+      const bar = bars[Math.floor((samples[i].atMs - startHour) / HOUR_MS)];
+      if (drop > 0 && bar) bar.drain += drop;
+    }
+  }
+  return bars;
+}
+
 export function buildPoolForecast(
   window: PoolWindow,
   nowMs: number,

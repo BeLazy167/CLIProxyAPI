@@ -1,5 +1,10 @@
 import { describe, expect, test } from 'bun:test';
-import { buildPoolForecast, burnRatePerHour } from '@/features/quota/quotaForecast';
+import {
+  buildHourlyDrain,
+  buildPoolForecast,
+  buildPoolHistory,
+  burnRatePerHour,
+} from '@/features/quota/quotaForecast';
 import type { PoolWindow } from '@/features/quota/quotaPool';
 
 const H = 3_600_000;
@@ -38,6 +43,24 @@ describe('quota forecast', () => {
     expect(forecast.resets.map((r) => (r.atMs - NOW) / H)).toEqual([84, 144]);
     expect(forecast.resets[0].restore).toBeCloseTo(84);
     expect(Math.min(...forecast.points.map((p) => p.remaining))).toBeGreaterThanOrEqual(0);
+  });
+
+  test('history sums accounts once all have a sample, and ignores passive wobble', () => {
+    const s = (auth: string, pts: [number, number, number][]) => ({ auth_index: auth, window: 'seven-day', points: pts });
+    const t0 = NOW / 1000;
+    const series = [
+      s('a', [[t0, 80, 0], [t0 + 1800, 79, 1], [t0 + 1860, 80, 1], [t0 + 3600, 70, 0]]),
+      s('b', [[t0 + 900, 50, 0], [t0 + 4500, 100, 0]]),
+      { auth_index: 'a', window: 'five-hour', points: [[t0, 5, 0]] as [number, number, number][] },
+    ];
+    const history = buildPoolHistory(series, ['a', 'b'], 'seven-day', NOW, NOW + 2 * H);
+    expect(history[0]).toEqual({ atMs: NOW + 15 * 60_000, remaining: 130 });
+    expect(history.find((p) => p.atMs === NOW + H)?.remaining).toBe(120);
+    expect(history.at(-1)?.remaining).toBe(170);
+
+    // Only a's 80→70 drop counts; b's reset to 100 and a's passive 79/80 wobble do not.
+    const drain = buildHourlyDrain(series, ['a', 'b'], 'seven-day', NOW, NOW + 2 * H);
+    expect(drain.map((bar) => bar.drain)).toEqual([0, 10]);
   });
 
   test('nothing reported means no forecast', () => {
