@@ -9,7 +9,6 @@ import (
 	"net/http/httptest"
 	"sync/atomic"
 	"testing"
-	"time"
 
 	"github.com/router-for-me/CLIProxyAPI/v8/plugins/claude-quota/gateway"
 )
@@ -39,8 +38,7 @@ func TestShadowBuildCannotWrite(t *testing.T) {
 	if err := w.SetExcludedModels(context.Background(), acct, nil, []string{"claude-fable-*"}); err != nil {
 		t.Fatal(err)
 	}
-	until := time.Date(2026, 11, 11, 18, 0, 0, 0, time.UTC)
-	if err := w.ResetCooldown(context.Background(), acct, "idx-a", until); err != nil {
+	if err := w.ResetCooldown(context.Background(), acct, "idx-a", "stale until 2026-11-11T18:00:00Z"); err != nil {
 		t.Fatal(err)
 	}
 	if n := requests.Load(); n != 0 {

@@ -1,27 +1,29 @@
-claude-quota e2e run 2026-11-11T16:27:10Z
-gateway built from /work/tmp/cpa-plugin, plugin from plugins/claude-quota
+claude-quota e2e run 2026-11-11T18:50:25Z
+gateway built from /work/tmp/cpa-offers, plugin from plugins/claude-quota
 
   PASS  build.sh builds the shadow plugin and finds no write path in it
-        /work/tmp/go-tmp-plugin/TestGatewayE2E3256388666/001/plugins/claude-quota.so
+        /work/tmp/go-tmp-fix3/TestGatewayE2E1648548296/001/plugins/claude-quota.so
   PASS  the host loaded and registered claude-quota
   PASS  health route: mode shadow, state, last cycle, generation and per-account limit age
-        {"accounts":{"claude-fable-left.json":{"in_plan":true,"last_good_read":"2026-11-11T10:26:28.535118289-06:00","limits_age_seconds":0.187923156},"claude-fable-out.json":{"in_plan":true,"last_good_read":"2026-11-11T10:26:28.535524811-06:00","limits_age_seconds":0.187516634},"claude-weekly-out.json":{"in_plan":true,"last_good_read":"2026-11-11T10:26:28.535812818-06:00","limits_age_seconds":0.187228626}},"copy":"4f4a17","engine":"4f4a17/1","generation":1,"last_cycle":"2026-11-11T16:26:28.535813119Z","mode":"shadow","plugin":"claude-quota","state":"running","version":"0.1.0"}
+        {"accounts":{"claude-fable-left.json":{"in_plan":true,"last_good_read":"2026-11-11T12:49:44.335580255-06:00","limits_age_seconds":0.196244181},"claude-fable-out.json":{"in_plan":true,"last_good_read":"2026-11-11T12:49:44.336200573-06:00","limits_age_seconds":0.195623863},"claude-weekly-out.json":{"in_plan":true,"last_good_read":"2026-11-11T12:49:44.336680896-06:00","limits_age_seconds":0.19514354}},"copy":"385027","engine":"385027/1","generation":1,"last_cycle":"2026-11-11T18:49:44.336681247Z","mode":"shadow","plugin":"claude-quota","state":"running","version":"0.1.0"}
   PASS  the shadow log shows the three decisions the Python dry-run printed on 2026-11-11
         shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"] | shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"] | shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
   PASS  one usage read per account per cycle (3 cycles, 3 reads each)
         map[fable-left:3 fable-out:3 weekly-out:3]
+  PASS  when the start cycle cannot read the gateway's credentials (not listening yet), the plugin reads them again within seconds
+        start read failed: true, retry plans: 1
   PASS  config reload with the same plugin config: one engine, not restarted
-        [4f4a17/1]
+        [385027/1]
   PASS  after a hot reload to a new build exactly one engine runs (old copy stopped, new copy running)
-        running=[c180e4/1] starts=2 stops=1 health engine=c180e4/1
+        running=[342ca4/1] starts=2 stops=1 health engine=342ca4/1
   PASS  after the hot reload each account is read about once per 3 s poll, not twice (9.5 s window)
         map[fable-left:3 fable-out:3 weekly-out:3]
   PASS  a window reset 6 s ahead triggers a usage read and a re-plan within 1.5 s of the reset
-        reads after reset: [747.151µs 1.494843935s], reason lines 0 -> 1
+        reads after reset: [1.856859ms 1.488806707s], reason lines 0 -> 1
   PASS  usage server down: limits go stale, the fail-open line appears and only the Opus/Sonnet reservation is released
         shadow: fable-left@example.com excluded_models ["claude-opus-*","claude-sonnet-*"] -> null
   PASS  no PATCH or reset request reached the management API from the plugin
-        16 GET, other: []
+        17 GET, other: []
   PASS  the auth files still hold what the test wrote
         [claude-opus-* claude-sonnet-*] <nil> [claude-fable-*]
   PASS  no management key or OAuth token in the gateway log
@@ -30,10 +32,15 @@ gateway built from /work/tmp/cpa-plugin, plugin from plugins/claude-quota
   PASS  on gateway shutdown the host stops the engine, which runs its fail-open step
         running=[] fail-open lines=2
 
-15 of 15 checks passed
+16 of 16 checks passed
 
 plugin log lines from the gateway log:
-  engine 4f4a17/1 running (mode shadow)
+  engine 385027/1 running (mode shadow)
+  shadow offers: state.json is read only in this build; offer changes are not saved
+  shadow offers: Bark push not sent: Claude Fable weekly limit 100% used
+  fable-out@example.com: bark failed for launch-2610-fable; retry next cycle
+  shadow offers: Bark push not sent: Claude weekly limit 100% used
+  weekly-out@example.com: bark failed for full-reset-2611; retry next cycle
   shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
   shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
   shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
@@ -42,66 +49,114 @@ plugin log lines from the gateway log:
   shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
   shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
   shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
-  plan 2 (poll): 3 accounts planned, 3 read, 0 left out
+  plan 2 (credentials retry): 3 accounts planned, 0 read, 0 left out
+  shadow offers: Bark push not sent: Claude Fable weekly limit 100% used
+  fable-out@example.com: bark failed for launch-2610-fable; retry next cycle
+  shadow offers: Bark push not sent: Claude weekly limit 100% used
+  weekly-out@example.com: bark failed for full-reset-2611; retry next cycle
   shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
   shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
   shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
   plan 3 (poll): 3 accounts planned, 3 read, 0 left out
+  shadow offers: Bark push not sent: Claude Fable weekly limit 100% used
+  fable-out@example.com: bark failed for launch-2610-fable; retry next cycle
+  shadow offers: Bark push not sent: Claude weekly limit 100% used
+  weekly-out@example.com: bark failed for full-reset-2611; retry next cycle
   shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
   shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
   shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
   plan 4 (poll): 3 accounts planned, 3 read, 0 left out
-  fail-open: engine stopping; releasing every Opus/Sonnet reservation
-  engine 4f4a17/1 stopped
-  engine c180e4/1 running (mode shadow)
-  shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
-  shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
-  shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
-  plan 1 (start): 3 accounts planned, 3 read, 0 left out
-  shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
-  shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
-  shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
-  plan 2 (poll): 3 accounts planned, 3 read, 0 left out
-  shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
-  shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
-  shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
-  plan 3 (poll): 3 accounts planned, 3 read, 0 left out
-  shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
-  shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
-  shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
-  plan 4 (poll): 3 accounts planned, 3 read, 0 left out
+  shadow offers: Bark push not sent: Claude Fable weekly limit 100% used
+  fable-out@example.com: bark failed for launch-2610-fable; retry next cycle
+  shadow offers: Bark push not sent: Claude weekly limit 100% used
+  weekly-out@example.com: bark failed for full-reset-2611; retry next cycle
   shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
   shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
   shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
   plan 5 (poll): 3 accounts planned, 3 read, 0 left out
+  fail-open: engine stopping; releasing every Opus/Sonnet reservation
+  engine 385027/1 stopped
+  engine 342ca4/1 running (mode shadow)
+  shadow offers: state.json is read only in this build; offer changes are not saved
+  shadow offers: Bark push not sent: Claude Fable weekly limit 100% used
+  fable-out@example.com: bark failed for launch-2610-fable; retry next cycle
+  shadow offers: Bark push not sent: Claude weekly limit 100% used
+  weekly-out@example.com: bark failed for full-reset-2611; retry next cycle
+  shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
+  shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
+  shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
+  plan 1 (start): 3 accounts planned, 3 read, 0 left out
+  shadow offers: Bark push not sent: Claude Fable weekly limit 100% used
+  fable-out@example.com: bark failed for launch-2610-fable; retry next cycle
+  shadow offers: Bark push not sent: Claude weekly limit 100% used
+  weekly-out@example.com: bark failed for full-reset-2611; retry next cycle
+  shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
+  shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
+  shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
+  plan 2 (poll): 3 accounts planned, 3 read, 0 left out
+  shadow offers: Bark push not sent: Claude Fable weekly limit 100% used
+  fable-out@example.com: bark failed for launch-2610-fable; retry next cycle
+  shadow offers: Bark push not sent: Claude weekly limit 100% used
+  weekly-out@example.com: bark failed for full-reset-2611; retry next cycle
+  shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
+  shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
+  shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
+  plan 3 (poll): 3 accounts planned, 3 read, 0 left out
+  shadow offers: Bark push not sent: Claude Fable weekly limit 100% used
+  fable-out@example.com: bark failed for launch-2610-fable; retry next cycle
+  shadow offers: Bark push not sent: Claude weekly limit 100% used
+  weekly-out@example.com: bark failed for full-reset-2611; retry next cycle
+  shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
+  shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
+  shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
+  plan 4 (poll): 3 accounts planned, 3 read, 0 left out
+  shadow offers: Bark push not sent: Claude weekly limit 100% used
+  weekly-out@example.com: bark failed for full-reset-2611; retry next cycle
+  shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
+  shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
+  shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
+  plan 5 (poll): 3 accounts planned, 3 read, 0 left out
+  shadow offers: Bark push not sent: Claude weekly limit 100% used
+  weekly-out@example.com: bark failed for full-reset-2611; retry next cycle
   shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
   shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
   shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
   plan 6 (poll): 3 accounts planned, 3 read, 0 left out
+  shadow offers: Bark push not sent: Claude Fable weekly limit 100% used
+  fable-out@example.com: bark failed for launch-2610-fable; retry next cycle
   shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
   shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
   shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
   plan 7 (window reset or quota 429): 3 accounts planned, 1 read, 0 left out
+  shadow offers: Bark push not sent: Claude Fable weekly limit 100% used
+  fable-out@example.com: bark failed for launch-2610-fable; retry next cycle
+  shadow offers: Bark push not sent: Claude weekly limit 100% used
+  weekly-out@example.com: bark failed for full-reset-2611; retry next cycle
   shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
   shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
   shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
   plan 8 (poll): 3 accounts planned, 3 read, 0 left out
+  shadow offers: Bark push not sent: Claude Fable weekly limit 100% used
+  fable-out@example.com: bark failed for launch-2610-fable; retry next cycle
+  shadow offers: Bark push not sent: Claude weekly limit 100% used
+  weekly-out@example.com: bark failed for full-reset-2611; retry next cycle
   shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
   plan 9 (poll): 3 accounts planned, 3 read, 0 left out
-  fable-left@example.com: usage read failed: dial tcp 127.0.0.1:37737: connect: connection refused
-  fable-out@example.com: usage read failed: dial tcp 127.0.0.1:37737: connect: connection refused
-  weekly-out@example.com: usage read failed: dial tcp 127.0.0.1:37737: connect: connection refused
+  fable-left@example.com: usage read failed: dial tcp 127.0.0.1:34857: connect: connection refused
+  fable-out@example.com: usage read failed: dial tcp 127.0.0.1:34857: connect: connection refused
+  weekly-out@example.com: usage read failed: dial tcp 127.0.0.1:34857: connect: connection refused
   plan 10 (poll): 0 accounts planned, 0 read, 3 left out
-  fable-left@example.com: usage read failed: dial tcp 127.0.0.1:37737: connect: connection refused
-  fable-out@example.com: usage read failed: dial tcp 127.0.0.1:37737: connect: connection refused
-  weekly-out@example.com: usage read failed: dial tcp 127.0.0.1:37737: connect: connection refused
+  fable-left@example.com: usage read failed: dial tcp 127.0.0.1:34857: connect: connection refused
+  fable-out@example.com: usage read failed: dial tcp 127.0.0.1:34857: connect: connection refused
+  weekly-out@example.com: usage read failed: dial tcp 127.0.0.1:34857: connect: connection refused
   plan 11 (poll): 0 accounts planned, 0 read, 3 left out
-  fable-left@example.com: usage read failed: dial tcp 127.0.0.1:37737: connect: connection refused
-  fable-out@example.com: usage read failed: dial tcp 127.0.0.1:37737: connect: connection refused
-  weekly-out@example.com: usage read failed: dial tcp 127.0.0.1:37737: connect: connection refused
+  fable-left@example.com: usage read failed: dial tcp 127.0.0.1:34857: connect: connection refused
+  fable-out@example.com: usage read failed: dial tcp 127.0.0.1:34857: connect: connection refused
+  weekly-out@example.com: usage read failed: dial tcp 127.0.0.1:34857: connect: connection refused
   fail-open: fable-left@example.com has no usage read newer than 8s; releasing its Opus/Sonnet reservation
   shadow: fable-left@example.com excluded_models ["claude-opus-*","claude-sonnet-*"] -> null
+  cooldown check skipped: GET /v8/management/credentials: context canceled
   plan 12 (poll): 0 accounts planned, 0 read, 3 left out
   fail-open: engine stopping; releasing every Opus/Sonnet reservation
   shadow: fable-left@example.com excluded_models ["claude-opus-*","claude-sonnet-*"] -> null
-  engine c180e4/1 stopped
+  engine 342ca4/1 stopped

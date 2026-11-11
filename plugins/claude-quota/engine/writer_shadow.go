@@ -4,7 +4,6 @@ package engine
 
 import (
 	"context"
-	"time"
 
 	"github.com/router-for-me/CLIProxyAPI/v8/plugins/claude-quota/gateway"
 )
@@ -26,7 +25,7 @@ func (s shadowWriter) SetExcludedModels(_ context.Context, acct gateway.Account,
 	return nil
 }
 
-func (s shadowWriter) ResetCooldown(_ context.Context, acct gateway.Account, _ string, staleUntil time.Time) error {
-	s.logf("shadow: %s cooldown reset (stale until %s)", acct.Label, staleUntil.UTC().Format(time.RFC3339))
+func (s shadowWriter) ResetCooldown(_ context.Context, acct gateway.Account, _, why string) error {
+	s.logf("shadow: %s cooldown reset (%s)", acct.Label, why)
 	return nil
 }

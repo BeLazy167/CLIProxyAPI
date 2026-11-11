@@ -58,21 +58,23 @@ func applyRouting(ctx context.Context, w Writer, logf Logf, limits map[string]ru
 	return planned
 }
 
-// healCooldowns clears gateway cooldowns that this run's usage reads prove stale, as the Python service's
-// _heal_cooldowns does. Only accounts read in this run and still planned are checked.
+// healCooldowns clears gateway cooldowns that the usage reads of the accounts in heal prove stale, as the Python
+// service's _heal_cooldowns does. Only accounts still planned are checked; it returns the ones it checked.
 func healCooldowns(ctx context.Context, w Writer, logf Logf, creds map[string]gateway.Credential, credErr error,
-	planned map[string]rules.Limits, accounts map[string]loaded, readNow []string, now time.Time) {
+	planned map[string]rules.Limits, accounts map[string]loaded, heal []string, now time.Time) []string {
 	if credErr != nil {
 		logf("cooldown check skipped: %v", credErr)
-		return
+		return nil
 	}
-	names := append([]string(nil), readNow...)
+	names := append([]string(nil), heal...)
 	sort.Strings(names)
+	var checked []string
 	for _, name := range names {
 		lim, ok := planned[name]
 		if !ok {
 			continue
 		}
+		checked = append(checked, name)
 		cred := creds[name]
 		stale := rules.StaleCooldowns(lim, cred.Cooldowns, now)
 		if len(stale) == 0 {
@@ -84,8 +86,9 @@ func healCooldowns(ctx context.Context, w Writer, logf Logf, creds map[string]ga
 				acct.Label, stale[0].RetryAt.UTC().Format(time.RFC3339))
 			continue
 		}
-		if err := w.ResetCooldown(ctx, acct, cred.AuthIndex, stale[0].RetryAt); err != nil {
+		if err := w.ResetCooldown(ctx, acct, cred.AuthIndex, "stale until "+stale[0].RetryAt.UTC().Format(time.RFC3339)); err != nil {
 			logf("%s: gateway cooldown not cleared: %v", acct.Label, err)
 		}
 	}
+	return checked
 }

@@ -1,0 +1,286 @@
+claude-quota claim e2e run 2026-11-11T18:52:40.379877+00:00
+gateway built from /work/tmp/cpa-offers, plugin built with -tags claude_quota_e2e, caddy/reset.caddy on Caddy
+
+# moved from fleet services/claude-reset
+## replay_live_fixtures
+  PASS  replay exits 0
+  PASS  2026-11-09 real data: no alerts, no schema problems; both weekly-out accounts lose Fable, nothing reserved
+  PASS  2026-11-11 real data: Fable-only limit offers launch-2610-fable, not full-reset-2611; Fable reserved on the account with Fable
+## routing_rules
+  PASS  1. limits missing, not a list, or not dicts -> unreadable
+  PASS  2. no weekly_all or no Fable entry -> unreadable
+  PASS  3. bool, string, NaN, inf or null percent -> unreadable
+  PASS  4. Fable 100 or weekly 100 is out, 99.9 is not
+  PASS  5. reserve at exactly 10% weekly left, not at 9.5%
+  PASS  6. no Fable-out account with room -> nothing reserved
+  PASS  7. every account Fable-out -> Fable excluded everywhere, nothing reserved
+  PASS  8. single account -> no exclusion
+  PASS  9. Haiku never excluded
+  PASS  10. same set in another order is unchanged
+  PASS  11. unread accounts never count
+  PASS  12. past retry_at is not stale
+  PASS  13. nanosecond retry_at with Z or offset parses and counts
+  PASS  14. weekly at 100 keeps its cooldown
+  PASS  15. five_hour at 100 or unreadable keeps its cooldown; null five_hour reads as 0
+  PASS  16. Fable model cooldown kept while Fable is at 100; Opus one healed
+  PASS  17. no cooldowns -> nothing
+  PASS  18. non-quota reason is kept
+  PASS  19. a Fable-out account at five-hour 100% or unreadable is no fallback; at 99.9% it is
+  PASS  20. one valid future cooldown on the credential keeps every cooldown; past ones do not count
+## s_routing_busy_fallback_and_partial_heal
+  PASS  Fable-out accounts at five-hour 100% or unreadable are no fallback: Opus/Sonnet not reserved
+  PASS  a stale cooldown is not cleared while a valid one shares the credential (non-quota, or Fable at 100%)
+## s_routing_failed_free_skips_reserve
+  PASS  a failed freeing write skips every reserving write (Go engine vs Python, random cases with failed writes)
+  PASS  the skip is logged (the differential compares the skipped list)
+  PASS  next cycle frees the fallback first, then reserves (write order compared case by case)
+## s_claim_reroutes_now
+  PASS  cycle: Fable excluded on a, Opus/Sonnet reserved on b
+  PASS  right after the Fable reset, routing clears both lists without waiting for a cycle
+  PASS  no usage read for the other account (page, pre-claim and post-claim reads only)
+## s_removed_account_is_no_fallback_after_claim
+  PASS  an account removed since the last cycle does not reserve Opus/Sonnet away from the claimed one
+## s_expiring_offer_shows_windows
+  PASS  expiring alert states each cleared window's percent and natural reset
+  PASS  offer page states them too
+  PASS  expiring offer stays claimable
+## s_real_browser_claim
+  PASS  headless Chromium ran
+  PASS  browser form POST carries the page origin, not null
+  PASS  browser tap claimed exactly once
+  PASS  browser saw: POST /reset/offer/<token>/claim Origin: <origin> / RESULT Claude Fable weekly limit 95% used | Reset claimed. Resets left: 0. Verified: True. gateway cooldown reset is logged only (shadow routing writer). | Acco
+## s_jittered_reset_one_alert
+  PASS  reset time moving by microseconds across 4 reads -> one alert
+  PASS  one offer stored
+  PASS  several cycles ran
+## s_fable_only_limit_offers_narrow_grant
+  PASS  one offer, for the Fable-only grant that ends later
+  PASS  claim spends the Fable-only grant, full reset kept
+## s_claim_clears_gateway_cooldown
+  PASS  no gateway write and no cooldown reset before the claim
+  PASS  one cooldown reset after the claim, for the claimed account
+  PASS  management key sent as Bearer
+  PASS  the claimed account is found in the real gateway's credentials
+  PASS  page and after email report the cooldown step
+  PASS  no PATCH or POST reached the management API
+## s_claim_gateway_down_still_done
+  PASS  claim DONE although the gateway is down
+  PASS  page says the cooldown was not cleared
+  PASS  service still running
+## s_routing_applies_and_heals
+  PASS  one usage read per account in a cycle
+  PASS  shadow write only where the list changes
+  PASS  the plan gives every account its wanted list
+  PASS  stale quota cooldown healed only on the account with weekly room
+  PASS  second cycle after the writes landed: no write, no heal (idempotent)
+  PASS  second cycle still one read per account
+  PASS  every change logged in one line
+  PASS  management key not in the log
+## s_routing_no_reserve_clears_old_list
+  PASS  no account with Fable gone and weekly room (unread account ignored): Opus/Sonnet not reserved
+  PASS  old reserve list cleared (the write for fableleft is null)
+## s_routing_gateway_down_alerts_still_work
+  PASS  service still running with the gateway down
+  PASS  alert sent
+  PASS  failed credentials read logged; the shadow write still logged
+## s_near_limit_alert_once
+  PASS  one alert after 3 cycles
+  PASS  alert has offer link
+  PASS  no claim sent
+  PASS  bark key used in path
+## s_below_threshold_and_near_reset_no_alert
+  PASS  no alerts for 80%, reset in 6 h, reset in 20 h (default 24 h), blocked, not started, used up
+  PASS  status was read
+## s_two_grants_one_offer
+  PASS  one alert for two grants on one window
+  PASS  earliest-expiring grant chosen
+## s_get_is_read_only_and_post_guards
+  PASS  GET 200 shows grant
+  PASS  no-store + same-origin referrer headers
+  PASS  bad nonce refused
+  PASS  bad origin refused
+  PASS  Origin: null refused
+  PASS  unknown token 404
+  PASS  no claim, no email after GETs and bad POSTs
+## s_happy_claim
+  PASS  claim page 200 says reset
+  PASS  exactly one claim sent
+  PASS  claim body program/grant/request_id
+  PASS  before email then after email
+  PASS  emails use resend key, from/to
+  PASS  state DONE and verified
+  PASS  second POST sends nothing
+  PASS  spent exactly 1
+## s_concurrent_taps
+  PASS  8 parallel taps -> 1 claim
+  PASS  spent exactly 1
+  PASS  2 emails only
+## s_lost_response_after_spend
+  PASS  state UNKNOWN right after lost response
+  PASS  cycle reconciles to DONE
+  PASS  no second claim sent
+  PASS  spent exactly 1
+## s_lost_response_no_spend_retry_same_id
+  PASS  stays UNKNOWN when status unchanged
+  PASS  no automatic re-send
+  PASS  user re-tap re-sends same request_id
+  PASS  spent exactly 1
+## s_late_tap_refused
+  PASS  late tap refused with message
+  PASS  no claim, no email
+## s_before_email_fails_no_claim
+  PASS  no claim when before email fails
+  PASS  page shows email error
+  PASS  offer back to OFFERED
+  PASS  later tap works
+## s_after_email_fails_bark_fallback
+  PASS  claim still done
+  PASS  bark fallback sent with result
+## s_cooldown_back_to_offered
+  PASS  cooldown -> OFFERED
+  PASS  retap after past cooldown_until claims
+## s_off_switch
+  PASS  POST refused when disabled (the host unloads the plugin, so its route is gone)
+  PASS  no new alerts when disabled
+## s_bark_fail_retries
+  PASS  failed pushes retried until one lands
+  PASS  one offer stored (only for the landed push)
+## s_expiry_alerts
+  PASS  expiring in 5 d -> one 7-day alert
+  PASS  expiring in 20 h -> only the 24-hour alert
+## s_schema_problem_isolated
+  PASS  only the good account gets an offer (unmapped grant expiring in 20 h gets none)
+  PASS  schema alerts: unmapped window + missing cedar_ember
+## s_expired_token_skipped
+  PASS  no status read with expired token
+  PASS  no alert
+## s_no_secrets_in_logs
+  PASS  log has no oauth/bark/resend/gateway key or offer token
+  PASS  state has no raw offer token or oauth token
+  PASS  emails have no offer token or oauth token
+  PASS  log is not empty
+## s_two_offers_same_grant_concurrent
+  PASS  near-limit + expiring offers for one grant
+  PASS  6 parallel taps on 2 offers -> 1 claim
+  PASS  spent exactly 1 of 2
+## s_retry_form_action_absolute
+  PASS  page after a failed POST posts back to the same claim URL
+## s_disabled_account_refused
+  PASS  disabled account: no claim, no email
+## s_malformed_claim_reply_unknown
+  PASS  2xx without a known result -> UNKNOWN
+## s_missing_grant_not_confirmed
+  PASS  grant missing from status does not confirm a lost claim
+## s_expired_unknown_no_resend
+  PASS  expired UNKNOWN offer is not re-sent
+## s_crash_in_sending_recovers
+  PASS  crash during SENDING -> UNKNOWN -> DONE by status read
+  PASS  no re-send after restart
+## s_config_typo_exits
+  PASS  config typo stops the engine (the host reports the plugin error)
+## s_revoked_token_alerts
+  PASS  401 on status read -> token alert
+## s_sibling_after_lost_reply_refused
+  PASS  sibling offer refused while an earlier claim is unknown
+## s_multi_window_grant_siblings_expire
+  PASS  one grant, two windows -> two offers
+  PASS  second window's offer expires after the first claim
+  PASS  the expired sibling names the claim that expired it
+## s_malformed_fields_fail_closed
+  PASS  service still running
+  PASS  only the good account gets an offer
+  PASS  seven schema alerts
+## s_bad_interval_exits
+  PASS  negative interval stops the engine (the host reports the plugin error)
+## s_email_protocol_error_bark_fallback
+  PASS  claim done
+  PASS  after email protocol error -> Bark fallback
+## s_string_eligible_blocks_claim
+  PASS  eligible "false" (a string) blocks the claim
+# new for the plugin
+## s_panel_and_page_at_once
+  PASS  panel and page tapped at once -> one claim, one spend
+  PASS  one interface gets the reset, the other is told it is done, whichever ran first
+  PASS  the panel answer carries the settled offer state
+  PASS  a later panel claim of the spent grant names its DONE offer and sends nothing
+## s_lost_reply_then_other_interface
+  PASS  page tap with a lost reply -> UNKNOWN
+  PASS  the panel re-sends the same request_id
+  PASS  the panel claim settles the same offer to DONE, one spend
+  PASS  panel claim with a lost reply -> the offer from the alert is UNKNOWN
+  PASS  the page re-sends the same request_id
+  PASS  the page settles it to DONE, one spend
+## s_hot_reload_during_claim
+  PASS  the gateway hot reloaded while the claim was in flight
+  PASS  the claim answered and was sent once
+  PASS  the offer settled to DONE, not SENDING or UNKNOWN
+  PASS  after the reload exactly one engine runs
+  PASS  a tap on the new copy is refused as done; nothing more is sent
+## s_stale_wider_offer_refused
+  PASS  the first offer is for the only grant then, the wide one
+  PASS  the wide offer is refused once a narrower grant covers the window
+  PASS  nothing was swapped: no claim, no email
+## s_replaced_auth_file_refused
+  PASS  the offer is bound to the account's organization at creation
+  PASS  an auth file that now holds another organization is refused
+  PASS  no claim, no email
+## s_natural_reset_every_account_excluded
+  PASS  every account excludes Fable before the reset; nothing to write
+  PASS  at the window's reset time the plan frees Fable on every account, without waiting for the 60 s poll
+## s_read_fails_during_swap
+  PASS  cycle: Fable out on a, Opus/Sonnet reserved on b
+  PASS  a's usage read fails: a is left out, so b's reservation is released (a is no fallback)
+## s_python_reads_plugin_state
+  PASS  store.py reads the plugin's state file; the offer is under sha256(token)
+  PASS  store.py writes the same bytes back
+  PASS  Python derives the page's nonce from the plugin's csrf_key
+  PASS  Python parses every time the plugin wrote
+## s_caddy_paths
+  PASS  a client ?token= on the page URL is dropped by the rewrite (page still for the path token)
+  PASS  a form token that differs from the path token is refused
+  PASS  a claim body over 4 KB is refused
+  PASS  the claim route without the management key is refused by the gateway
+  PASS  Caddy adds no key to other management paths
+  PASS  Caddy adds no key to other /reset/offer/... paths
+  PASS  none of these claimed or emailed
+## s_panel_after_page_claim_spends_once
+  PASS  the page claims the 24 h expiry offer
+  PASS  a panel tap queued behind it sends no second claim: one spend, one reset left
+  PASS  the panel answer names the page's DONE offer
+  PASS  no new offer or alert for the used reminder
+  PASS  reverse order: the panel claims the alert's offer
+  PASS  reverse order: the page tap is refused as done; one claim, one spend
+  PASS  the expiry reminder's push failed, so only the near-limit offer exists
+  PASS  the page claims the near-limit offer
+  PASS  a panel tap after it makes no offer from the unsent reminder of the same grant: one claim, one spend
+## s_email_change_keeps_the_claim_on_the_account
+  PASS  a page tap with a lost reply -> UNKNOWN
+  PASS  after the account's email changes, the same alert is not sent again: the account's UNKNOWN offer holds it
+  PASS  once the window's reset moves (a new alert), a tap on it is refused while the first claim is unknown
+  PASS  the panel re-sends the first claim's request_id
+  PASS  the panel settles the first offer to DONE, one spend
+  PASS  the offer made under the new email expires as the claimed offer's sibling
+  PASS  a lost reply after the spend -> UNKNOWN
+  PASS  after the email change a status read still settles it to DONE; nothing is re-sent
+## s_credentials_read_again_after_boot
+  PASS  the start cycle's credentials read fails, as at gateway boot, and heals nothing
+  PASS  the credentials are read again within seconds and the stale cooldown is healed, without the 60 s poll
+  PASS  the retry reads no usage
+## s_legacy_offers_used_after_email_change
+  PASS  the account (email now a@) is read and planned at least twice
+  PASS  no new alert for the alerts the Python offers (made under a-old@) already used
+  PASS  the panel refuses g1: its near-limit alert was used by the legacy DONE offer
+  PASS  the panel refuses g2: its 24 h expiry alert was used by the legacy CLOSED offer
+  PASS  no claim, no new offer
+## s_narrower_grant_after_wide_alert_claims_from_panel
+  PASS  the page refuses the wide offer and names the narrower grant
+  PASS  the panel claims the narrower grant: the open wide offer sent nothing, so the alert is not used
+  PASS  one claim, on the narrower grant
+  PASS  the wide offer expires as the claim's sibling and a later tap on it is refused
+## s_same_email_other_org_claims_from_panel
+  PASS  one organization gets the alert; the other, same email and same dedupe key, gets none (the Python sent-map dedupe)
+  PASS  the panel claims g1 on the other organization: one org's alert is not the other's
+  PASS  the alerted organization's page tap still claims its own offer
+  PASS  one spend per organization
+
+216 of 216 checks passed

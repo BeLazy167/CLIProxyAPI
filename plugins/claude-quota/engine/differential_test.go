@@ -60,7 +60,7 @@ func (r recordingWriter) SetExcludedModels(_ context.Context, acct gateway.Accou
 	return nil
 }
 
-func (r recordingWriter) ResetCooldown(_ context.Context, _ gateway.Account, authIndex string, _ time.Time) error {
+func (r recordingWriter) ResetCooldown(_ context.Context, _ gateway.Account, authIndex, _ string) error {
 	r.out.Resets = append(r.out.Resets, authIndex)
 	return nil
 }
