@@ -1,5 +1,6 @@
 # Fork release build (FORK.md). The ops deploy script runs: make release OUT=<dir> VERSION=<v> COMMIT=<8 hex>
-# A release directory holds bin/cliproxyapi; later parts add plugins/linux/amd64/*.so and static/management.html.
+# A release directory holds bin/cliproxyapi; later parts add plugins/linux/amd64/claude-quota.so and static/management.html,
+# as real files (the gateway skips symlinked plugins). The deploy adds the pinned third-party plugins itself.
 # Each part is its own target in RELEASE_PARTS.
 GO ?= go
 BUILD_DATE ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)

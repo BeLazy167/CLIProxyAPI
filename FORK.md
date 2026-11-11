@@ -37,7 +37,12 @@ Fork CI (`Fork CI / check`) runs on every PR into `main` and on every push to `m
    not list. Review the calling code, then add the host to that file.
 4. Tests against a base. It runs `go test ./...` on the base and on the result, and fails only on tests that fail on the
    result but not on the base. Each suspected test is rerun 5 times on the base first; one failure there marks it as
-   flaky and it does not count.
+   flaky and it does not count. A package that fails for more than its failing tests (it does not build, or its test
+   binary panics outside a test or exits early) is a failure of its own, which tests failing on the base do not excuse.
+   When `go test` exits other than 0 or 1 (killed, for example) or a package never reports a result, the check fails.
+
+The PR job runs code that is not on `main` yet, so it gets no credentials: checkout keeps no token, only the step that
+fetches the PR head sees one, and Go's caches for that job live inside the job instead of in the runner's shared caches.
 
 The base for vet and tests is `main` before the change. For an upstream release PR it is the release itself, so findings
 and failures that upstream already has do not count.
@@ -75,18 +80,21 @@ make release OUT=<release dir> VERSION=<version> COMMIT=<first 8 hex of sha>
 ```
 
 The version is the newest upstream release tag merged into the commit, with `+<7 hex>` added when the commit is not the
-tag itself. A release directory holds `bin/cliproxyapi`. Later steps add `plugins/linux/amd64/claude-quota.so` and
-`static/management.html`, each as a new target in the Makefile's `RELEASE_PARTS`. The symlink
-`/work/deploy/cliproxyapi/current` names the running release, and the systemd drop-in runs `current/bin/cliproxyapi`.
+tag itself. A release directory holds `bin/cliproxyapi` from `make release`. The deploy then adds `plugins/`: copies of the
+third-party plugins pinned by checksum in the ops repo (`deploy/cliproxyapi.plugins`), that pins file, and `data`, a
+symlink to `~/.cli-proxy-api/plugins/data`, where plugins keep their state. Later steps add
+`plugins/linux/amd64/claude-quota.so` and `static/management.html`, each as a new target in the Makefile's `RELEASE_PARTS`.
+They must be real files: the gateway skips symlinked plugins. The symlink `/work/deploy/cliproxyapi/current` names the
+running release, and the systemd drop-in runs `current/bin/cliproxyapi`.
 
-Config, auth files and plugins stay outside releases. The gateway reads the single plugin directory
-`~/.cli-proxy-api/plugins`, because third-party plugins keep their data under `plugins/data/`. Fork plugins will be symlinks
-there that point through `current/`, so they switch with the release. The third-party `.so` files are pinned by
-checksum in the ops repo (`deploy/cliproxyapi.plugins`).
+Config and auth files stay outside releases. Once `plugins.dir` in the gateway's config is
+`/work/deploy/cliproxyapi/current/plugins` (a prepared change in the ops runbook `runbooks/cliproxyapi-fork.md`), a
+release switches the binary and its plugins together. Until then the gateway reads `~/.cli-proxy-api/plugins`.
 
-A deploy passes its health check only when the gateway answers a client key, every pinned plugin registered in this
-process's log and matches its checksum, no unpinned `.so` is present, and one small request each to Claude and Codex
-succeeds. A failed check switches back to the previous release.
+A deploy passes its health check only when, within 60 seconds, the gateway answers a client key, the plugin directory holds
+exactly the pinned plugins with their checksums, each registered in this process's log, one small request each to Claude
+and Codex succeeds, and no plugin failed, panicked, or was unloaded or reloaded in this process. A failed restart or check
+switches back to the previous release.
 
 ## Rollback
 
