@@ -115,11 +115,7 @@ export function SystemPage() {
   const [requestLogSaving, setRequestLogSaving] = useState(false);
 
   const connected = connectionStatus === 'connected';
-  const otherLabel = useMemo(
-    () => (i18n.language?.toLowerCase().startsWith('zh') ? '其他' : 'Other'),
-    [i18n.language]
-  );
-  const groupedModels = useMemo(() => classifyModels(models, { otherLabel }), [models, otherLabel]);
+  const groupedModels = useMemo(() => classifyModels(models, { otherLabel: 'Other' }), [models]);
   const filteredGroups = useMemo(() => {
     const query = modelSearch.trim().toLowerCase();
     if (!query) return groupedModels;

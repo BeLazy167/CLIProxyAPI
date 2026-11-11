@@ -58,7 +58,7 @@ const states: Record<string, unknown> = {
 
 const quotaFor = (item: QuotaFileEntry) => states[item.file.name] as QuotaCardState | undefined;
 
-let originalLanguage = 'zh-CN';
+let originalLanguage = 'en';
 beforeAll(async () => {
   originalLanguage = i18n.language;
   await i18n.changeLanguage('en');

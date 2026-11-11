@@ -87,7 +87,9 @@ export const QUOTA_CLASS_KEYS: readonly (keyof QuotaClassMap)[] = [
 export function bindQuotaClasses(module: Record<string, string>, source: string): QuotaClassMap {
   const missing = QUOTA_CLASS_KEYS.filter((key) => !module[key]);
   if (missing.length > 0) {
-    throw new Error(`[quota] ${source} 缺少额度契约类名: ${missing.join(', ')}`);
+    throw new Error(
+      `[quota] ${source} is missing quota contract class names: ${missing.join(', ')}`
+    );
   }
   const bound = {} as Record<keyof QuotaClassMap, string>;
   for (const key of QUOTA_CLASS_KEYS) {

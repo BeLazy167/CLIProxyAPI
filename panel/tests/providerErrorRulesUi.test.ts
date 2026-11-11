@@ -8,9 +8,6 @@ import { RuntimePolicyEditor } from '@/features/providers/sheets/forms/RuntimePo
 import { readErrorRules, type ErrorRuleDraft } from '@/features/providers/errorRules';
 import { readRuntimePolicy } from '@/features/providers/runtimePolicy';
 import en from '@/i18n/locales/en.json';
-import zhCN from '@/i18n/locales/zh-CN.json';
-import zhTW from '@/i18n/locales/zh-TW.json';
-import ru from '@/i18n/locales/ru.json';
 
 const i18n = createInstance();
 await i18n.init({ lng: 'en', resources: { en: { translation: en } } });
@@ -96,7 +93,7 @@ describe('error-rule editor UI', () => {
     expect(html).toContain('aria-label="Action"');
   });
   test('every locale contains complete row labels, errors, actions and no stale JSON guidance', () => {
-    for (const messages of [en, zhCN, zhTW, ru]) {
+    for (const messages of [en]) {
       const section = messages.providersPage.errorRules;
       expect(Object.keys(section).sort()).toEqual(Object.keys(en.providersPage.errorRules).sort());
       expect(Object.keys(section.actions).sort()).toEqual([

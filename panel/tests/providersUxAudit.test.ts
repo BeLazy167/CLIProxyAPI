@@ -11,7 +11,7 @@ import type { ProviderResource } from '../src/features/providers/types';
 import type { ConnectivityErrorMessages } from '../src/features/providers/sheets/forms/useConnectivityTest';
 
 const read = (rel: string) => readFileSync(new URL(`../${rel}`, import.meta.url), 'utf8');
-const LOCALES = ['en', 'zh-CN', 'zh-TW', 'ru', 'vi'];
+const LOCALES = ['en'];
 const messages: ConnectivityErrorMessages = {
   baseUrlRequired: 'base required',
   endpointInvalid: 'invalid endpoint',

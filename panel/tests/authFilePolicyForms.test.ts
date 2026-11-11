@@ -7,9 +7,6 @@ import { ModelEntriesEditor } from '@/features/providers/sheets/forms/ModelEntri
 import { AuthFilePolicyFields } from '@/features/authFiles/components/AuthFilePolicyFields';
 import { readCredentialPolicy } from '@/features/authFiles/credentialPolicy';
 import en from '@/i18n/locales/en.json';
-import zhCN from '@/i18n/locales/zh-CN.json';
-import zhTW from '@/i18n/locales/zh-TW.json';
-import ru from '@/i18n/locales/ru.json';
 
 const i18n = createInstance();
 await i18n.init({ lng: 'en', resources: { en: { translation: en } } });
@@ -110,7 +107,7 @@ describe('credential policy structured forms', () => {
   });
 
   test('all locales describe structured fields without asking users for JSON', () => {
-    for (const messages of [en, zhCN, zhTW, ru]) {
+    for (const messages of [en]) {
       for (const [key, value] of Object.entries(messages.auth_files)) {
         if (!key.startsWith('policy_')) continue;
         expect(value.trim().length).toBeGreaterThan(0);

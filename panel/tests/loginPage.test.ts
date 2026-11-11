@@ -8,10 +8,6 @@ import { LoginPage } from '@/pages/LoginPage';
 import { getLocalizedLoginError } from '@/pages/loginErrors';
 import { LegacyBackendError } from '@/services/api/legacyBackendProbe';
 import en from '@/i18n/locales/en.json';
-import zhCN from '@/i18n/locales/zh-CN.json';
-import zhTW from '@/i18n/locales/zh-TW.json';
-import ru from '@/i18n/locales/ru.json';
-import vi from '@/i18n/locales/vi.json';
 
 const i18n = createInstance();
 await i18n.init({ lng: 'en', resources: { en: { translation: en } } });
@@ -68,16 +64,14 @@ describe('login page markup', () => {
     expect(markup).not.toContain('<form');
   });
 
-  test('login copy has no trailing colons, no hard-coded fallbacks, and exists in every locale', () => {
-    for (const locale of [en, zhCN, zhTW, ru, vi]) {
+  test('login copy has no trailing colons, and no hard-coded fallbacks', () => {
+    for (const locale of [en]) {
       const login = locale.login as Record<string, string>;
       for (const key of Object.keys(en.login)) {
         expect(login[key]?.trim()).toBeTruthy();
       }
       expect(login.management_key_label.endsWith(':')).toBe(false);
-      expect(login.management_key_label.endsWith('：')).toBe(false);
       expect(login.custom_connection_label.endsWith(':')).toBe(false);
-      expect(login.custom_connection_label.endsWith('：')).toBe(false);
     }
     expect(en.login.error_required).toBe('Enter the management key');
     expect(en.login.remember_password_label).toBe('Remember key on this device');

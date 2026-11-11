@@ -11,7 +11,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CLI Proxy API Management Center</title>
     <script>
-      // 首帧前应用主题，避免深色用户看到浅色闪烁（与 useThemeStore 的 persist 键一致）
+      // Apply the theme before first paint so dark-mode users see no light flash (same persist key as useThemeStore)
       (function () {
         try {
           var raw = localStorage.getItem('cli-proxy-theme');

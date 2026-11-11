@@ -71,7 +71,7 @@ describe('Muse (Meta) provider and device OAuth', () => {
       /const CALLBACK_SUPPORTED = new Set<string>\(([^;]+)\);/
     );
     expect(callbackProviders?.[1]).not.toContain("'meta'");
-    for (const locale of ['en', 'zh-CN', 'zh-TW', 'ru']) {
+    for (const locale of ['en']) {
       const translations = JSON.parse(readFileSync(`src/i18n/locales/${locale}.json`, 'utf8'));
       for (const suffix of [
         'oauth_title',

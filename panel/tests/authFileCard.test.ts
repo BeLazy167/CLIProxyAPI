@@ -52,7 +52,7 @@ describe('auth file card presentation contract', () => {
     );
     expect(detailsSource).toContain('i18nKey="auth_files.weight_hint"');
 
-    for (const locale of ['en', 'zh-CN', 'zh-TW', 'ru']) {
+    for (const locale of ['en']) {
       const { auth_files: messages } = JSON.parse(
         readFileSync(new URL(`../src/i18n/locales/${locale}.json`, import.meta.url), 'utf8')
       ) as { auth_files: Record<string, string> };
