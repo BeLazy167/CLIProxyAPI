@@ -1,0 +1,64 @@
+/**
+ * 全局样式
+ */
+
+@use './variables.scss' as *;
+@use './mixins.scss' as *;
+@use './reset.scss';
+@use './themes.scss';
+@use './components.scss';
+@use './layout.scss';
+
+// 统一焦点环：模块里更具体的规则可覆盖
+:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+// 减少动态：全站一处兜底，模块无需各自声明
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+body {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  transition:
+    background-color $transition-normal,
+    color $transition-normal;
+}
+
+html.modal-open,
+body.modal-open {
+  overflow: hidden;
+}
+
+body.modal-open .content {
+  overflow: hidden;
+}
+
+// 滚动条样式
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: $radius-full;
+
+  &:hover {
+    background: var(--border-hover);
+  }
+}

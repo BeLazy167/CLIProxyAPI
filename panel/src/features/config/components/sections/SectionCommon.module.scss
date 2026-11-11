@@ -1,0 +1,87 @@
+@use '../../../../styles/mixins' as *;
+
+/* 总览 tab：摘要卡网格（配方同配额页 QuotaPools：auto-fill 列、12px 圆角、82% color-mix 表面） */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 13px 15px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg-primary) 82%, transparent);
+}
+
+/* 需要注意：琥珀描边 + 淡琥珀底 */
+.cardAttention {
+  border-color: var(--amber-30);
+  background: color-mix(in srgb, var(--amber-10) 60%, var(--bg-primary));
+}
+
+.cardHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+
+.cardLink {
+  @include button-reset;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &:hover {
+    color: var(--text-primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+.cardAttentionLine {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  margin: 0;
+  color: var(--amber-text);
+  font-size: 12px;
+  line-height: 1.5;
+
+  > svg {
+    flex-shrink: 0;
+    margin-top: 3px;
+  }
+}
+
+@include mobile {
+  .grid {
+    gap: 10px;
+  }
+}

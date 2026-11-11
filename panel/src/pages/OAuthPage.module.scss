@@ -1,0 +1,391 @@
+@use '../styles/mixins' as *;
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  width: 100%;
+  min-width: 0;
+}
+
+.sectionTitle {
+  margin: $spacing-sm 0 0;
+  color: var(--text-secondary);
+  font-size: var(--fs-meta);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+// ---- provider list ---------------------------------------------------------
+
+.providerList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--bg-primary);
+  overflow: hidden;
+}
+
+.providerRow {
+  border-top: 1px solid var(--border-color);
+
+  &:first-child {
+    border-top: none;
+  }
+}
+
+.providerRowActive {
+  background: var(--bg-secondary);
+}
+
+.rowMain {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: 10px $spacing-md;
+  min-width: 0;
+
+  @include mobile {
+    flex-wrap: wrap;
+    gap: $spacing-sm $spacing-md;
+  }
+}
+
+.providerIcon {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+}
+
+.providerIconFallback {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.rowText {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rowName {
+  font-size: var(--fs-title);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.rowHint {
+  @include text-ellipsis-multiline(1);
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  color: var(--text-secondary);
+
+  // Expanded rows show the full hint: the user is reading it.
+  .providerRowActive & {
+    -webkit-line-clamp: unset;
+  }
+}
+
+.rowLink {
+  color: var(--primary-color);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  white-space: nowrap;
+}
+
+.rowCount {
+  flex: 0 0 auto;
+  font-family: $font-mono;
+  font-size: var(--fs-meta);
+  color: var(--text-secondary);
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover {
+    color: var(--text-primary);
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  @include mobile {
+    order: 3;
+  }
+}
+
+.rowPanel {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  padding: 0 $spacing-md $spacing-md calc(#{$spacing-md} + 24px + #{$spacing-md});
+
+  @include mobile {
+    padding-left: $spacing-md;
+  }
+
+  :global(.form-group) {
+    margin-bottom: 0;
+  }
+
+  :global(.status-badge) {
+    margin-bottom: 0;
+    align-self: flex-start;
+  }
+}
+
+// ---- active-login steps ----------------------------------------------------
+
+.steps {
+  list-style: decimal;
+  margin: 0;
+  padding-left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  padding-left: $spacing-xs;
+
+  &::marker {
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
+}
+
+.stepTitle {
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.stepHint {
+  margin: 0;
+  font-size: var(--fs-meta);
+  line-height: 1.5;
+  color: var(--text-tertiary);
+}
+
+.stepActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.authUrlValue {
+  font-family: $font-mono;
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+  max-width: 100%;
+}
+
+.deviceCode {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.deviceCodeLabel {
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+}
+
+.deviceCodeValue {
+  font-family: $font-mono;
+  font-size: var(--fs-title);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-primary);
+}
+
+.callbackSection {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.waitingRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-sm;
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+}
+
+.waitingDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--warning-color);
+  animation: waitingPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes waitingPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.waitingText {
+  flex: 1 1 auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.errorRow {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+// ---- success ---------------------------------------------------------------
+
+.successBox {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: $spacing-xs $spacing-sm;
+  align-items: start;
+  padding: $spacing-sm $spacing-md;
+  border: 1px solid var(--success-border);
+  border-radius: var(--radius-md);
+  background: var(--success-bg);
+
+  .stepActions {
+    grid-column: 2;
+  }
+}
+
+.successIcon {
+  color: var(--success-text);
+  margin-top: 1px;
+}
+
+.successText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.successTitle {
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--success-text);
+  overflow-wrap: anywhere;
+}
+
+// ---- Vertex import ---------------------------------------------------------
+
+.vertexForm {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.formItem {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.formItemLabel {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.filePicker {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+}
+
+.fileName {
+  flex: 1;
+  min-width: 220px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: $radius-md;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.fileNamePlaceholder {
+  color: var(--text-secondary);
+}
+
+.connectionBox {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.connectionLabel {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.keyValueList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.keyValueItem {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 10px;
+  align-items: start;
+
+  @include mobile {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}
+
+.keyValueKey {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.keyValueValue {
+  color: var(--text-primary);
+  word-break: break-all;
+  overflow-wrap: anywhere;
+}

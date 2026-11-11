@@ -1,0 +1,301 @@
+@use '../../../styles/mixins' as *;
+@use '../../../styles/variables' as *;
+
+.panel {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ---------- 厂商行（logo + 名称 + 外链） ---------- */
+
+.vendor {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
+}
+
+.logo {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.vendorName {
+  font-family: $font-mono;
+  font-size: var(--fs-base);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+}
+
+.topLink,
+.externalLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 4px 8px;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: var(--fs-base);
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background-color $transition-fast,
+    color $transition-fast;
+
+  &:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+
+  &:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  small {
+    font-size: var(--fs-meta);
+    font-weight: 500;
+    color: var(--text-tertiary);
+  }
+}
+
+/* 中性外链按钮（不是警告色）：描边药丸 */
+.externalLink {
+  align-self: flex-start;
+  padding: 6px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: $radius-full;
+  color: var(--text-primary);
+
+  &:hover {
+    border-color: var(--border-hover);
+  }
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.intro {
+  margin: 0;
+  max-width: 64ch;
+  font-size: var(--fs-base);
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+/* ---------- 四步清单 ---------- */
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.step {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 12px;
+  padding: 16px 0;
+  border-top: 1px solid var(--border-color);
+
+  &:first-child {
+    border-top: none;
+    padding-top: 4px;
+  }
+}
+
+.stepBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.stepTitle {
+  font-size: var(--fs-title);
+  font-weight: 650;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+
+.stepHint {
+  font-size: var(--fs-body);
+  line-height: 1.45;
+  color: var(--text-tertiary);
+}
+
+/* 状态标记：序号 / 对勾 / 警告 / 转圈 */
+.mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  font-family: $font-mono;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.markTodo {
+  background: var(--bg-secondary);
+}
+
+.markRunning {
+  color: var(--text-secondary);
+}
+
+.markDone {
+  border-color: transparent;
+  background: var(--viz-success);
+  color: #fff;
+}
+
+.markFailed {
+  border-color: transparent;
+  background: var(--viz-failure);
+  color: #fff;
+}
+
+/* 校验徽章：复用 mark 的四种色态 */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: $radius-full;
+  border: 1px solid var(--border-color);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-secondary);
+
+  &.markDone {
+    background: color-mix(in srgb, var(--viz-success) 12%, transparent);
+    border-color: color-mix(in srgb, var(--viz-success) 40%, transparent);
+    color: var(--success-text);
+  }
+
+  &.markFailed {
+    background: var(--danger-bg);
+    border-color: color-mix(in srgb, var(--viz-failure) 40%, transparent);
+    color: var(--danger-text);
+  }
+}
+
+.verifyRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---------- 复制字段 ---------- */
+
+.copyField {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.copyValue {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  font-family: $font-mono;
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+  @include text-ellipsis;
+}
+
+/* ---------- 已配置后的紧凑状态卡 ---------- */
+
+.cardRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.cardActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cardStatus {
+  display: flex;
+}
+
+.cardField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.spin {
+  animation: sponsor-quick-start-spin 0.8s linear infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes sponsor-quick-start-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@include mobile {
+  .panel {
+    padding: 16px;
+  }
+
+  .footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+}

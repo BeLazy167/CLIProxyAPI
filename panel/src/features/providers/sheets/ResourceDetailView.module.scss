@@ -1,0 +1,97 @@
+@use '../../../styles/mixins' as *;
+@use '../../../styles/variables' as *;
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.heading {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.mono {
+  font-family: $font-mono;
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+}
+
+.secret {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.secretText {
+  font-family: $font-mono;
+  font-size: 12.5px;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.empty {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-tertiary);
+}
+
+.modelList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.modelRow {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 12.5px;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.alias {
+  color: var(--text-tertiary);
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.chipLabel {
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: $radius-full;
+  border: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-family: $font-mono;
+  font-size: 11px;
+  white-space: nowrap;
+}
