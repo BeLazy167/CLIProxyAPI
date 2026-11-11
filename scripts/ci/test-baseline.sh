@@ -2,9 +2,12 @@
 # test-baseline.sh BASE_DIR [OUT_DIR]: run `go test ./...` in BASE_DIR (a checkout of the base commit) and in the current
 # directory (the head), and fail only on tests that fail on the head but not on the base (scripts/ci/testdiff).
 # Before failing, each suspected test is rerun 5 times on the base: one failure there marks it as already failing on the
-# base (a flaky test), not a new failure. A package that fails with no failing test (it does not build) is not rerun:
-# on the base it may not exist, and go test reports a missing package as a failure.
-# Prints a Markdown report on stdout and the failing tests' output on stderr.
+# base (a flaky test), not a new failure. A package that fails for more than its failing tests (it does not build, or its
+# test binary panics or exits early) is not rerun: on the base it may not exist, and go test reports a missing package as
+# a failure.
+# Prints a Markdown report on stdout and the failing tests' output on stderr. Exit status: 0 no new failures, 1 new
+# failures, 2 the tests did not run to the end (go test exited other than 0 or 1, for example killed, or testdiff found a
+# package without a result).
 # OUT_DIR keeps base.json, head.json and the lists; it defaults to a new temporary directory.
 set -euo pipefail
 [ $# -ge 1 ] || { echo "usage: $0 BASE_DIR [OUT_DIR]" >&2; exit 2; }
@@ -13,9 +16,15 @@ out=${2:-$(mktemp -d)}
 mkdir -p "$out" && out=$(cd "$out" && pwd)
 (cd "$(dirname "$0")/testdiff" && go build -o "$out/testdiff" .)
 
-gotest() { # dir name: full suite as JSON into $out/name.json
+gotest() { # dir name go-test-args...: append `go test -json` output to $out/name.json; 1 means tests failed, more is an error
+  local dir=$1 name=$2 rc=0
+  shift 2
+  (cd "$dir" && go test -json "$@") >>"$out/$name.json" 2>>"$out/$name.stderr" || rc=$?
+  [ $rc -le 1 ] || { cat "$out/$name.stderr" >&2; echo "test-baseline.sh: go test $* on $name exited with status $rc" >&2; exit 2; }
+}
+suite() { # dir name: the full suite
   local t0=$SECONDS
-  (cd "$1" && go test -json ./... >"$out/$2.json" 2>"$out/$2.stderr") || :
+  gotest "$1" "$2" ./...
   echo "$2: go test ./... took $((SECONDS - t0)) s" >&2
 }
 by_package() { # list file -> "package run-pattern" for each package; a package-only entry gets ^$ (build output only)
@@ -28,15 +37,16 @@ diff_runs() { # list file: testdiff base.json head.json into it; returns testdif
   return $rc
 }
 
-gotest "$base" base
-gotest . head
+rm -f "$out"/{base,head}.{json,stderr}
+suite "$base" base
+suite . head
 rc=0
 diff_runs "$out/suspects.tsv" || rc=$?
 [ $rc -le 1 ] || { cat "$out/base.stderr" "$out/head.stderr" >&2; exit $rc; }
 if [ $rc = 1 ]; then
   while read -r pkg pattern; do
     [ "$pattern" = '^$' ] && continue
-    (cd "$base" && go test -json -count=5 -run "$pattern" "$pkg") >>"$out/base.json" 2>>"$out/base.stderr" || :
+    gotest "$base" base -count=5 -run "$pattern" "$pkg"
   done < <(by_package "$out/suspects.tsv")
   rc=0
   diff_runs "$out/new-failures.tsv" || rc=$?

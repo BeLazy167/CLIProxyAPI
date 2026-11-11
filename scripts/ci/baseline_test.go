@@ -123,6 +123,44 @@ func TestBaselineScript(t *testing.T) {
 	}
 }
 
+const killerTest = `package zkiller
+
+import (
+	"os"
+	"syscall"
+	"testing"
+	"time"
+)
+
+// Kills the go command that runs it, as the OOM killer would, so the run ends without this package's result. go test
+// prints results in package order, and the wait lets the packages before this one finish and print theirs.
+func TestKillsGoTest(t *testing.T) {
+	time.Sleep(2 * time.Second)
+	if err := syscall.Kill(os.Getppid(), syscall.SIGKILL); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(time.Second)
+}
+`
+
+func TestBaselineScriptStopsWhenGoTestDies(t *testing.T) {
+	if testing.Short() {
+		t.Skip("runs go test in two temporary modules")
+	}
+	base := module(t, map[string]string{
+		"stable/s_test.go":  testFile("stable", "TestStable", ""),
+		"zkiller/k_test.go": testFile("zkiller", "TestKillsGoTest", ""),
+	})
+	head := module(t, map[string]string{
+		"stable/s_test.go":  testFile("stable", "TestStable", ""),
+		"zkiller/k_test.go": killerTest,
+	})
+	code, out, errOut := runScript(t, head, "test-baseline.sh", base, t.TempDir())
+	if code != 2 || !strings.Contains(errOut, "exited with status 137") {
+		t.Fatalf("exit %d, want 2 with the go command's status on stderr\nstdout:\n%s\nstderr:\n%s", code, out, errOut)
+	}
+}
+
 const badPrintf = "package x\n\nimport \"fmt\"\n\nfunc F() { fmt.Printf(\"%d\\n\", \"text\") }\n"
 
 func TestVetBaselineScript(t *testing.T) {
