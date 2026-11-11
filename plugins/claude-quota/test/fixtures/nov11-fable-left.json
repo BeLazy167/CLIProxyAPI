@@ -1,0 +1,150 @@
+{
+ "cedar_ember": {
+  "at_limit": false,
+  "cooldown_until": null,
+  "eligible": true,
+  "event_props": {
+   "billing_path": "stripe",
+   "billing_period": "unknown",
+   "extra_usage_state": "not_configured",
+   "surface": "claude_code_cli",
+   "tenure_bucket": "365+",
+   "tier": "claude_max_20x"
+  },
+  "exhausted": [],
+  "grants": [
+   {
+    "arm": null,
+    "blocking": [],
+    "clears": [
+     "seven_day",
+     "seven_day_overage_included"
+    ],
+    "ends_at": "2026-12-10T22:00:00+00:00",
+    "gives_back_weekly": false,
+    "id": "full-reset-2611",
+    "label": "One full limit reset (November 2026)",
+    "paused": false,
+    "percent_used": {
+     "seven_day": 54,
+     "seven_day_overage_included": 0
+    },
+    "resets_left": 1,
+    "resets_total": 1,
+    "starts_at": "2026-11-10T21:30:00+00:00",
+    "type": "weekly",
+    "unavailable_reason": null,
+    "usable_now": true,
+    "use_requires_limit": false
+   },
+   {
+    "arm": null,
+    "blocking": [],
+    "clears": [
+     "seven_day_overage_included"
+    ],
+    "ends_at": "2027-03-09T07:59:00+00:00",
+    "gives_back_weekly": true,
+    "id": "launch-2610-fable",
+    "label": "New model launch: one Fable reset for Max, Team Premium and Enterprise Premium",
+    "paused": false,
+    "percent_used": {
+     "seven_day": 54,
+     "seven_day_overage_included": 0
+    },
+    "resets_left": 0,
+    "resets_total": 1,
+    "starts_at": "2026-11-09T18:00:00+00:00",
+    "type": "full",
+    "unavailable_reason": "unavailable",
+    "usable_now": false,
+    "use_requires_limit": false
+   },
+   {
+    "arm": null,
+    "blocking": [],
+    "clears": [
+     "seven_day_overage_included"
+    ],
+    "ends_at": "2027-03-09T07:59:00+00:00",
+    "gives_back_weekly": true,
+    "id": "launch-2610-fable-12mo",
+    "label": "New model launch: one more Fable reset at 12 months' tenure",
+    "paused": false,
+    "percent_used": {
+     "seven_day": 54,
+     "seven_day_overage_included": 0
+    },
+    "resets_left": 0,
+    "resets_total": 1,
+    "starts_at": "2026-11-09T18:00:00+00:00",
+    "type": "full",
+    "unavailable_reason": "unavailable",
+    "usable_now": false,
+    "use_requires_limit": false
+   },
+   {
+    "arm": null,
+    "blocking": [],
+    "clears": [
+     "seven_day_overage_included"
+    ],
+    "ends_at": "2027-03-09T07:59:00+00:00",
+    "gives_back_weekly": true,
+    "id": "launch-2610-fable-6mo",
+    "label": "New model launch: one more Fable reset at 6 months' tenure",
+    "paused": false,
+    "percent_used": {
+     "seven_day": 54,
+     "seven_day_overage_included": 0
+    },
+    "resets_left": 1,
+    "resets_total": 1,
+    "starts_at": "2026-11-09T18:00:00+00:00",
+    "type": "full",
+    "unavailable_reason": null,
+    "usable_now": true,
+    "use_requires_limit": false
+   }
+  ],
+  "ineligible_reason": null,
+  "next_grant_id": "full-reset-2611",
+  "paused_held": false,
+  "weekly_resets_at": "2026-11-14T21:00:00+00:00"
+ },
+ "five_hour": null,
+ "limits": [
+  {
+   "group": "weekly",
+   "is_active": true,
+   "kind": "weekly_all",
+   "percent": 54,
+   "resets_at": "2026-11-14T20:59:59.591303+00:00",
+   "scope": null,
+   "severity": "normal"
+  },
+  {
+   "group": "weekly",
+   "is_active": false,
+   "kind": "weekly_scoped",
+   "percent": 0,
+   "resets_at": "2026-11-14T20:59:59.591481+00:00",
+   "scope": {
+    "model": {
+     "display_name": "Fable",
+     "id": null
+    },
+    "surface": null
+   },
+   "severity": "normal"
+  }
+ ],
+ "seven_day": {
+  "limit_dollars": null,
+  "locked_reason": null,
+  "remaining_dollars": null,
+  "resets_at": "2026-11-14T20:59:59.591303+00:00",
+  "used_dollars": null,
+  "utilization": 54.0
+ }
+}
