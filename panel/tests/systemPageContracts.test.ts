@@ -6,12 +6,6 @@ const readSource = (path: string) => readFileSync(new URL(`../${path}`, import.m
 describe('System page contracts', () => {
   const page = readSource('src/pages/SystemPage.tsx');
 
-  test('update check result is rendered inline with last-checked time and a release link', () => {
-    expect(page).toContain("t('system_info.last_checked', { time: checkedAtText })");
-    expect(page).toContain('href={RELEASES_URL}');
-    expect(page).toContain('let updateCheckCache');
-  });
-
   test('tiles are named Management Center / CLIProxyAPI and the easter egg is gone', () => {
     expect(page).toContain("t('system_info.tile_ui')");
     expect(page).toContain("t('system_info.tile_api')");

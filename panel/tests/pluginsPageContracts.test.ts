@@ -63,54 +63,6 @@ describe('Plugins page contracts', () => {
   });
 });
 
-describe('Plugin Store page contracts', () => {
-  const page = readSource('src/features/plugins/PluginStorePage.tsx');
-
-  test('remembers the security note dismissal and shows a single alert stack', () => {
-    expect(page).toMatch(/useLocalStorage\(\s*SECURITY_NOTE_STORAGE_KEY/);
-    expect(page).toMatch(/className=\{styles\.alerts\}/);
-  });
-
-  test('install modal is keyed per entry and the gate receives a target version', () => {
-    expect(page).toContain('key={getStoreEntryKey(installOptionsEntry)}');
-    expect(page).toContain('targetVersion={gateTargetVersion}');
-  });
-
-  test('Manage deep-links to the Plugins page focus param', () => {
-    expect(page).toContain('/plugins?focus=${encodeURIComponent(entry.id)}');
-  });
-
-  test('reads ?filter= initially and shows Source select only with multiple sources', () => {
-    expect(page).toContain("parseStatusFilter(searchParams.get('filter'))");
-    expect(page).toContain('sources.length > 1 ?');
-  });
-
-  test('restart-required state goes through the shared store', () => {
-    expect(page).toContain('markRestartRequired(entry.id)');
-    expect(page).not.toContain('setRestartRequiredKeys');
-  });
-
-  test('disabled Install explains itself inline instead of a tooltip', () => {
-    expect(page).toContain("t('plugin_store.auth_required_hint')");
-    expect(page).not.toContain('title={actionTitle}');
-  });
-});
-
-describe('Plugin install modals', () => {
-  const options = readSource('src/features/plugins/components/PluginInstallOptionsModal.tsx');
-  const gate = readSource('src/features/plugins/components/PluginInstallGateModal.tsx');
-
-  test('releases are only fetched after the disclosure is opened', () => {
-    expect(options).toContain("'plugin_store.choose_another_version'");
-    expect(options).toContain('install_versions_rate_limited');
-  });
-
-  test('gate has two steps and updates skip typed confirmation', () => {
-    expect(gate).toContain('useState<1 | 2>(1)');
-    expect(gate).toContain('const requireTypedConfirm = !isUpdate;');
-  });
-});
-
 describe('Plugin resource page contracts', () => {
   const page = readSource('src/features/plugins/PluginResourcePage.tsx');
 

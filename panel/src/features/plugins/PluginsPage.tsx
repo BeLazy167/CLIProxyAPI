@@ -11,24 +11,13 @@ import { Select } from '@/components/ui/Select';
 import { Sheet } from '@/components/ui/Sheet';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ToggleSwitch } from '@/components/ui/ToggleSwitch';
-import {
-  IconEye,
-  IconEyeOff,
-  IconRefreshCw,
-  IconSettings,
-  IconSidebarStore,
-} from '@/components/ui/icons';
+import { IconEye, IconEyeOff, IconRefreshCw, IconSettings } from '@/components/ui/icons';
 import { useHeaderRefresh } from '@/hooks/useHeaderRefresh';
 import { useRevealGroup } from '@/hooks/motion';
-import { pluginsApi, pluginStoreApi } from '@/services/api';
+import { pluginsApi } from '@/services/api';
 import { useAuthStore, useConfigStore, useNotificationStore } from '@/stores';
 import { getErrorMessage, isRecord } from '@/utils/helpers';
-import type {
-  PluginConfigField,
-  PluginListEntry,
-  PluginListResponse,
-  PluginStoreEntry,
-} from '@/types';
+import type { PluginConfigField, PluginListEntry, PluginListResponse } from '@/types';
 import {
   buildPluginConfigDraft,
   buildPluginConfigPatch,
@@ -96,7 +85,6 @@ export function PluginsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const connectionStatus = useAuthStore((state) => state.connectionStatus);
   const apiBase = useAuthStore((state) => state.apiBase);
-  const managementKey = useAuthStore((state) => state.managementKey);
   const clearConfigCache = useConfigStore((state) => state.clearCache);
   const showNotification = useNotificationStore((state) => state.showNotification);
   const showConfirmation = useNotificationStore((state) => state.showConfirmation);
@@ -106,11 +94,6 @@ export function PluginsPage() {
   const headerRef = useRevealGroup<HTMLElement>();
 
   const [data, setData] = useState<PluginListResponse | null>(null);
-  const [storeEntries, setStoreEntries] = useState<{
-    apiBase: string;
-    managementKey: string;
-    entries: PluginStoreEntry[];
-  } | null>(null);
   const [filter, setFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState<PluginStatusFilter>('all');
   const [loading, setLoading] = useState(true);
@@ -175,29 +158,6 @@ export function PluginsPage() {
     void loadPlugins();
   }, [loadPlugins]);
 
-  // Store metadata is optional (logos, update flags); its failure must not block management.
-  useEffect(() => {
-    setStoreEntries(null);
-    if (!connected || !data) return;
-    let cancelled = false;
-    void pluginStoreApi.list().then(
-      (response) => {
-        if (!cancelled) {
-          setStoreEntries({ apiBase, managementKey, entries: response.plugins });
-        }
-      },
-      () => {}
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [connected, apiBase, managementKey, data]);
-
-  const storeEntryList =
-    connected && storeEntries?.apiBase === apiBase && storeEntries.managementKey === managementKey
-      ? storeEntries.entries
-      : null;
-
   const plugins = useMemo(() => data?.plugins ?? [], [data?.plugins]);
   const pluginsEnabled = data?.pluginsEnabled ?? true;
 
@@ -224,12 +184,8 @@ export function PluginsPage() {
       else if (isAttentionStatus(kind)) attention += 1;
       if (plugin.effectiveEnabled) pages += plugin.menus.filter((menu) => menu.path.trim()).length;
     });
-    const installedIDs = new Set(plugins.map((plugin) => plugin.id));
-    const updates = (storeEntryList ?? []).filter(
-      (entry) => entry.installed && entry.updateAvailable && installedIDs.has(entry.id)
-    ).length;
-    return { running, disabled, attention, pages, updates };
-  }, [plugins, statusByID, storeEntryList]);
+    return { running, disabled, attention, pages };
+  }, [plugins, statusByID]);
 
   const visiblePlugins = useMemo(() => {
     const query = filter.trim().toLowerCase();
@@ -645,13 +601,6 @@ export function PluginsPage() {
       tone: 'attention',
     });
   }
-  if (data && counts.updates > 0) {
-    meta.push({
-      key: 'updates',
-      text: t('plugin_management.meta_updates', { count: counts.updates }),
-      tone: 'warning',
-    });
-  }
 
   const toggleStatusFilter = (next: PluginStatusFilter) =>
     setStatusFilter((current) => (current === next && next !== 'all' ? 'all' : next));
@@ -682,15 +631,6 @@ export function PluginsPage() {
       onClick: () => toggleStatusFilter('attention'),
     },
   ];
-  if (storeEntryList) {
-    summaryCards.push({
-      key: 'updates',
-      label: t('plugin_management.summary_updates'),
-      count: counts.updates,
-      tone: counts.updates > 0 ? 'accent' : 'muted',
-      onClick: () => navigate('/plugin-store?filter=updates'),
-    });
-  }
 
   const filterCounts: Record<PluginStatusFilter, number> = {
     all: plugins.length,
@@ -709,7 +649,7 @@ export function PluginsPage() {
 
   const renderRow = (plugin: PluginListEntry) => {
     const title = getPluginTitle(plugin);
-    const logo = resolvePluginAsset(getPluginLogo(plugin, storeEntryList ?? []));
+    const logo = resolvePluginAsset(getPluginLogo(plugin));
     const github = plugin.metadata?.githubRepository.trim();
     const status = statusByID.get(plugin.id) ?? derivePluginStatus(plugin, pluginsEnabled);
     const version = plugin.metadata?.version;
@@ -832,15 +772,6 @@ export function PluginsPage() {
         actions={
           <>
             <Button
-              variant="secondary"
-              shape="pill"
-              size="sm"
-              onClick={() => navigate('/plugin-store')}
-            >
-              <IconSidebarStore size={14} />
-              {t('plugin_store.title')}
-            </Button>
-            <Button
               shape="pill"
               onClick={loadPlugins}
               disabled={!connected || loading || actionBusy}
@@ -926,12 +857,6 @@ export function PluginsPage() {
           <EmptyState
             title={t('plugin_management.no_plugins')}
             description={t('plugin_management.no_plugins_desc')}
-            action={
-              <Button variant="secondary" size="sm" onClick={() => navigate('/plugin-store')}>
-                <IconSidebarStore size={16} />
-                {t('plugin_management.browse_store')}
-              </Button>
-            }
           />
         )
       ) : visiblePlugins.length === 0 ? (

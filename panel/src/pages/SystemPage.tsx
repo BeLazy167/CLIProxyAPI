@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -23,7 +23,7 @@ import {
   useModelsStore,
   useThemeStore,
 } from '@/stores';
-import { configApi, versionApi } from '@/services/api';
+import { configApi } from '@/services/api';
 import { useApiKeysForModels } from '@/hooks/useApiKeysForModels';
 import { copyToClipboard } from '@/utils/clipboard';
 import { formatDateTimeValue, maskApiKey } from '@/utils/format';
@@ -61,8 +61,6 @@ const MODEL_CATEGORY_ICONS: Record<string, string | { light: string; dark: strin
   minimax: iconMinimax,
 };
 
-const RELEASES_URL = 'https://github.com/router-for-me/CLIProxyAPI/releases';
-
 const LINKS = [
   {
     key: 'main',
@@ -83,49 +81,6 @@ const LINKS = [
     Icon: IconBookOpen,
   },
 ] as const;
-
-const parseVersionSegments = (version?: string | null) => {
-  if (!version) return null;
-  const cleaned = version.trim().replace(/^v/i, '');
-  if (!cleaned) return null;
-  const parts = cleaned
-    .split(/[^0-9]+/)
-    .filter(Boolean)
-    .map((segment) => Number.parseInt(segment, 10))
-    .filter(Number.isFinite);
-  return parts.length ? parts : null;
-};
-
-const compareVersions = (latest?: string | null, current?: string | null) => {
-  const latestParts = parseVersionSegments(latest);
-  const currentParts = parseVersionSegments(current);
-  if (!latestParts || !currentParts) return null;
-  const length = Math.max(latestParts.length, currentParts.length);
-  for (let i = 0; i < length; i++) {
-    const l = latestParts[i] || 0;
-    const c = currentParts[i] || 0;
-    if (l > c) return 1;
-    if (l < c) return -1;
-  }
-  return 0;
-};
-
-interface UpdateCheckState {
-  status: 'idle' | 'checking' | 'latest' | 'update' | 'unknown' | 'error';
-  latest: string;
-  checkedAt: number | null;
-  message: string;
-}
-
-const IDLE_UPDATE_CHECK: UpdateCheckState = {
-  status: 'idle',
-  latest: '',
-  checkedAt: null,
-  message: '',
-};
-
-// Survives navigation within the session so the result does not vanish when leaving the page.
-let updateCheckCache: UpdateCheckState = IDLE_UPDATE_CHECK;
 
 const errorText = (error: unknown) =>
   error instanceof Error ? error.message : typeof error === 'string' ? error : '';
@@ -158,7 +113,6 @@ export function SystemPage() {
   const [allGroupsOpen, setAllGroupsOpen] = useState<boolean | null>(null);
   const [groupsResetKey, setGroupsResetKey] = useState(0);
   const [requestLogSaving, setRequestLogSaving] = useState(false);
-  const [updateCheck, setUpdateCheck] = useState<UpdateCheckState>(updateCheckCache);
 
   const connected = connectionStatus === 'connected';
   const otherLabel = useMemo(
@@ -261,57 +215,6 @@ export function SystemPage() {
     }
   };
 
-  const applyUpdateCheck = (next: UpdateCheckState) => {
-    updateCheckCache = next;
-    setUpdateCheck(next);
-  };
-
-  const handleVersionCheck = useCallback(async () => {
-    applyUpdateCheck({ ...updateCheckCache, status: 'checking', message: '' });
-    const checkedAt = Date.now();
-    try {
-      const data = await versionApi.checkLatest();
-      const latestRaw = data?.['latest-version'] ?? data?.latest_version ?? data?.latest ?? '';
-      const latest = typeof latestRaw === 'string' ? latestRaw : String(latestRaw ?? '');
-      if (!latest) {
-        applyUpdateCheck({
-          status: 'error',
-          latest: '',
-          checkedAt,
-          message: t('system_info.version_check_error'),
-        });
-        return;
-      }
-      const comparison = compareVersions(latest, serverVersion);
-      if (comparison === null) {
-        applyUpdateCheck({
-          status: 'unknown',
-          latest,
-          checkedAt,
-          message: t('system_info.version_current_missing'),
-        });
-        return;
-      }
-      applyUpdateCheck({
-        status: comparison > 0 ? 'update' : 'latest',
-        latest,
-        checkedAt,
-        message:
-          comparison > 0
-            ? t('system_info.version_update_available', { version: latest })
-            : t('system_info.version_is_latest'),
-      });
-    } catch (err: unknown) {
-      const suffix = errorText(err) ? `: ${errorText(err)}` : '';
-      applyUpdateCheck({
-        status: 'error',
-        latest: '',
-        checkedAt,
-        message: `${t('system_info.version_check_error')}${suffix}`,
-      });
-    }
-  }, [serverVersion, t]);
-
   useEffect(() => {
     fetchConfig().catch(() => {
       // ignore
@@ -324,7 +227,10 @@ export function SystemPage() {
   }, [connectionStatus, apiBase]);
 
   const meta: PageHeaderMetaSegment[] = [
-    { key: 'ui', text: /^v?\d/i.test(appVersion) ? `UI v${appVersion.replace(/^v/i, '')}` : `UI ${appVersion}` },
+    {
+      key: 'ui',
+      text: /^v?\d/i.test(appVersion) ? `UI v${appVersion.replace(/^v/i, '')}` : `UI ${appVersion}`,
+    },
     {
       key: 'api',
       text: `API ${serverVersion ? `v${serverVersion.replace(/^v/i, '')}` : t('system_info.version_unknown')}`,
@@ -335,18 +241,6 @@ export function SystemPage() {
       tone: connected ? 'ok' : 'attention',
     },
   ];
-
-  const checkedAtText = updateCheck.checkedAt
-    ? formatDateTimeValue(new Date(updateCheck.checkedAt).toISOString(), i18n.language)
-    : '';
-  const updateToneClass =
-    updateCheck.status === 'update'
-      ? styles.checkUpdate
-      : updateCheck.status === 'latest'
-        ? styles.checkLatest
-        : updateCheck.status === 'error'
-          ? styles.checkError
-          : styles.checkMuted;
 
   const modelsEmptyTitle = modelsKeyMissing
     ? t('system_info.models_empty_no_key')
@@ -371,37 +265,11 @@ export function SystemPage() {
               <div className={styles.tileValue}>{appVersion}</div>
             </div>
             <div className={styles.tile}>
-              <div className={styles.tileHeader}>
-                <div className={styles.tileLabel}>{t('system_info.tile_api')}</div>
-                <Button
-                  variant="ghost"
-                  size="xs"
-                  onClick={() => void handleVersionCheck()}
-                  loading={updateCheck.status === 'checking'}
-                >
-                  {t('system_info.version_check_button')}
-                </Button>
-              </div>
+              <div className={styles.tileLabel}>{t('system_info.tile_api')}</div>
               <div className={styles.tileValue}>{apiVersion}</div>
               <div className={styles.tileSub}>
                 {t('system_info.build_time')}: {buildTime}
               </div>
-              {updateCheck.status !== 'idle' && updateCheck.status !== 'checking' ? (
-                <div className={`${styles.checkResult} ${updateToneClass}`} role="status">
-                  <span>{updateCheck.message}</span>
-                  {updateCheck.status === 'update' ? (
-                    <a href={RELEASES_URL} target="_blank" rel="noopener noreferrer">
-                      {t('system_info.view_release')}
-                      <IconExternalLink size={12} aria-hidden="true" />
-                    </a>
-                  ) : null}
-                  {checkedAtText ? (
-                    <span className={styles.checkedAt}>
-                      {t('system_info.last_checked', { time: checkedAtText })}
-                    </span>
-                  ) : null}
-                </div>
-              ) : null}
             </div>
           </div>
           <div className={styles.links}>

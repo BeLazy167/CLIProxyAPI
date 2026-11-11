@@ -3,11 +3,10 @@ import { apiClient } from '@/services/api/client';
 import { apiKeysApi } from '@/services/api/apiKeys';
 import { authFilesApi } from '@/services/api/authFiles';
 import { oauthApi } from '@/services/api/oauth';
-import { pluginsApi, pluginStoreApi } from '@/services/api/plugins';
+import { pluginsApi } from '@/services/api/plugins';
 import { configApi } from '@/services/api/config';
 import { configFileApi } from '@/services/api/configFile';
 import { logsApi } from '@/services/api/logs';
-import { versionApi } from '@/services/api/version';
 import { vertexApi } from '@/services/api/vertex';
 import { apiKeyUsageApi } from '@/services/api/apiKeyUsage';
 
@@ -256,7 +255,6 @@ describe('v8 management API contracts', () => {
   test('plugin enabled is an instance config scalar, preserving sibling config', async () => {
     const get = mock('get', { enabled: false, custom: 'value' });
     const put = mock('put');
-    const post = mock('post');
     expect(await pluginsApi.getConfig('example')).toEqual({ enabled: false, custom: 'value' });
     expect(get).toHaveBeenLastCalledWith('/config/plugins/configs/example');
     await pluginsApi.patchConfig('example', { custom: 'new' });
@@ -266,13 +264,6 @@ describe('v8 management API contracts', () => {
     });
     await pluginsApi.updateEnabled('example', false);
     expect(put).toHaveBeenLastCalledWith('/config/plugins/configs/example/enabled', false);
-    await pluginStoreApi.list();
-    expect(get).toHaveBeenLastCalledWith('/plugins/store');
-    await pluginStoreApi.install('example', { sourceId: 'official', version: '1.2.3' });
-    expect(post).toHaveBeenLastCalledWith(
-      '/plugins/store/example/install?source=official&version=1.2.3',
-      { version: '1.2.3' }
-    );
   });
 
   test('plugin form clears delete fields and object edits replace instead of deep-merging', async () => {
@@ -307,8 +298,6 @@ describe('v8 management API contracts', () => {
     expect(raw.mock.calls.at(-1)?.[0]).toBe('/observability/logs/errors/file.log');
     await logsApi.downloadRequestLogById('request-id');
     expect(raw.mock.calls.at(-1)?.[0]).toBe('/observability/logs/requests/request-id');
-    await versionApi.checkLatest();
-    expect(get).toHaveBeenLastCalledWith('/server/latest-version');
     await apiKeyUsageApi.getUsage();
     expect(get.mock.calls.at(-1)?.[0]).toBe('/observability/usage/api-keys');
     await authFilesApi.resetCooldown('auth-index-1');

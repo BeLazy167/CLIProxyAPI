@@ -69,13 +69,6 @@
   background: color-mix(in srgb, var(--bg-secondary) 55%, transparent);
 }
 
-.tileHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
 .tileLabel {
   font-size: 11px;
   font-weight: 700;
@@ -95,54 +88,6 @@
 .tileSub {
   font-size: var(--fs-meta);
   color: var(--text-tertiary);
-}
-
-.checkResult {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 10px;
-  margin-top: 6px;
-  padding: 6px 10px;
-  border-radius: var(--radius-md);
-  font-size: var(--fs-meta);
-  line-height: 1.45;
-
-  a {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    color: inherit;
-    font-weight: 650;
-  }
-}
-
-.checkedAt {
-  color: var(--text-tertiary);
-}
-
-.checkLatest {
-  color: var(--success-text);
-  background: var(--success-bg);
-  border: 1px solid var(--success-border);
-}
-
-.checkUpdate {
-  color: var(--warning-text);
-  background: var(--warning-bg);
-  border: 1px solid var(--warning-border);
-}
-
-.checkError {
-  color: var(--danger-text);
-  background: var(--danger-bg);
-  border: 1px solid var(--danger-border);
-}
-
-.checkMuted {
-  color: var(--text-secondary);
-  background: color-mix(in srgb, var(--bg-secondary) 85%, transparent);
-  border: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
 }
 
 .links {
