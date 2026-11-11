@@ -149,7 +149,7 @@ func TestReadLimitsResetTimes(t *testing.T) {
 	want := []time.Time{
 		time.Date(2026, 11, 14, 20, 59, 59, 591303000, time.UTC),
 		time.Date(2026, 11, 16, 22, 59, 59, 745160000, time.UTC),
-		time.Date(2026, 11, 11, 15, 0, 0, 123456789, time.UTC),
+		time.Date(2026, 11, 11, 15, 0, 0, 123456000, time.UTC),
 	}
 	if len(got.ResetsAt) != len(want) {
 		t.Fatalf("got %v", got.ResetsAt)

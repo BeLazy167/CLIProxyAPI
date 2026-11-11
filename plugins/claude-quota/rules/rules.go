@@ -112,14 +112,15 @@ func percent(v any) (float64, bool) {
 	return f, err == nil
 }
 
-// ParseTime parses an RFC 3339 time with an offset; anything else is unreadable.
+// ParseTime parses an RFC 3339 time with an offset; anything else is unreadable. It keeps microseconds,
+// as Python's datetime does, so both ports compare a retry time with now the same way.
 func ParseTime(v any) (time.Time, bool) {
 	s, ok := v.(string)
 	if !ok {
 		return time.Time{}, false
 	}
 	t, err := time.Parse(time.RFC3339Nano, s)
-	return t, err == nil
+	return t.Truncate(time.Microsecond), err == nil
 }
 
 // Plan maps each auth file name to its wanted excluded_models (nil clears it).
