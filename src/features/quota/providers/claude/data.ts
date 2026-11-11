@@ -14,6 +14,10 @@ import type {
 } from '@/types';
 import { apiCallApi, getApiCallErrorMessage } from '@/services/api';
 import {
+  parseAnthropicResetGrantStatus,
+  type AnthropicResetGrantStatus,
+} from '@/services/api/claudeResetGrants';
+import {
   CLAUDE_PROFILE_URL,
   CLAUDE_USAGE_URL,
   CLAUDE_REQUEST_HEADERS,
@@ -35,6 +39,7 @@ export type ClaudeQuotaData = {
   windows: ClaudeQuotaWindow[];
   extraUsage?: ClaudeExtraUsage | null;
   planType?: string | null;
+  resetGrants: AnthropicResetGrantStatus | null;
 };
 
 const findFableUsageLimit = (payload: ClaudeUsagePayload) => {
@@ -226,7 +231,12 @@ const fetchClaudeQuota = async (file: AuthFileItem, t: TFunction): Promise<Claud
         )
       : null;
 
-  return { windows, extraUsage: payload.extra_usage, planType };
+  return {
+    windows,
+    extraUsage: payload.extra_usage,
+    planType,
+    resetGrants: parseAnthropicResetGrantStatus(payload.cedar_ember),
+  };
 };
 
 export const CLAUDE_CONFIG: QuotaProviderData<ClaudeQuotaState, ClaudeQuotaData> = {
@@ -242,6 +252,7 @@ export const CLAUDE_CONFIG: QuotaProviderData<ClaudeQuotaState, ClaudeQuotaData>
     windows: data.windows,
     extraUsage: data.extraUsage,
     planType: data.planType,
+    resetGrants: data.resetGrants,
   }),
   buildErrorState: (message, status) => ({
     status: 'error',

@@ -13,15 +13,17 @@ import styles from './ProviderGlyph.module.scss';
 export function ProviderGlyph({
   provider,
   resolvedTheme,
+  className,
 }: {
   provider: QuotaProviderType;
   resolvedTheme: ResolvedTheme;
+  className?: string;
 }) {
   const { t } = useTranslation();
   const iconSrc = getAuthFileIcon(provider, resolvedTheme);
   return (
     <span
-      className={styles.glyph}
+      className={className ? `${styles.glyph} ${className}` : styles.glyph}
       aria-hidden="true"
       style={
         isThemeSurfaceIconProvider(provider)

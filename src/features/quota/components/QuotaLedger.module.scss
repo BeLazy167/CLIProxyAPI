@@ -1,14 +1,14 @@
 @use '../../../styles/mixins' as *;
 
 /* ============================================================
- * 额度明细（Ledger）：每账号一行，按提供商分组；同组共享列集，
- * 缺失窗口显式占位，保证同一限额在组内纵向对齐。
+ * 额度明细（Ledger）：每账号一行，按提供商分组；同组共享列模板
+ * （--ledger-template），列头与各行纵向对齐，缺失窗口显式占位。
  * ============================================================ */
 
 .ledger {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 26px;
   min-width: 0;
 }
 
@@ -20,19 +20,67 @@
 
 .groupHead {
   display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 28px;
+  margin-bottom: 10px;
+}
+
+.groupTitle {
+  display: flex;
   align-items: center;
   gap: 8px;
-  margin: 0 0 4px;
-  font-size: 14px;
-  font-weight: 600;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
   color: var(--text-primary);
+  align-self: center;
 }
 
 .groupCount {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--text-tertiary);
   font-variant-numeric: tabular-nums;
+}
+
+.poolSummary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 28px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+
+  strong {
+    font-weight: 650;
+    color: var(--text-primary);
+  }
+}
+
+.poolNext {
+  color: var(--text-secondary);
+}
+
+.columnHead,
+.row {
+  display: grid;
+  grid-template-columns: var(--ledger-template);
+  align-items: center;
+  column-gap: 28px;
+}
+
+.columnHead {
+  padding: 0 0 8px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 12.5px;
+  color: var(--text-tertiary);
+
+  > span {
+    min-width: 0;
+    @include text-ellipsis;
+  }
 }
 
 .rows {
@@ -42,11 +90,8 @@
 }
 
 .row {
-  display: grid;
-  grid-template-columns: minmax(170px, 250px) minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 8px 20px;
-  padding: 12px 0;
+  row-gap: 10px;
+  padding: 16px 0;
   border-bottom: 1px solid var(--border-color);
 
   &:last-child {
@@ -57,38 +102,47 @@
 .identity {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 5px;
   min-width: 0;
 }
 
 .name {
-  font-family: $font-mono;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 650;
   color: var(--text-primary);
   @include text-ellipsis;
 }
 
-.plan {
-  font-size: 12px;
-  color: var(--text-tertiary);
-  @include text-ellipsis;
-}
-
-.body {
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   min-width: 0;
+  font-size: 12.5px;
+  color: var(--text-tertiary);
 }
 
-.cells {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr));
-  gap: 10px 22px;
+.metaGlyph {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  background: transparent;
+
+  img {
+    width: 13px;
+    height: 13px;
+  }
+}
+
+.metaText {
+  min-width: 0;
+  @include text-ellipsis;
 }
 
 .cell {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 7px;
   min-width: 0;
 }
 
@@ -96,32 +150,42 @@
   opacity: 0.7;
 }
 
-.cellHead {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  min-width: 0;
-  font-size: 12.5px;
-}
-
+/* Column header names each cell on wide screens; the label returns when stacked. */
 .cellLabel {
+  display: none;
   min-width: 0;
-  color: var(--text-secondary);
+  font-size: 12px;
+  color: var(--text-tertiary);
   @include text-ellipsis;
 }
 
 .cellPercent {
-  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  font-size: 14px;
   font-weight: 650;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cellPercentLow {
+  color: var(--warning-text);
+}
+
+.lowMark {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 550;
 }
 
 .track {
-  height: 4px;
+  height: 5px;
   border-radius: $radius-full;
-  background: color-mix(in srgb, var(--text-primary) 10%, transparent);
+  background: color-mix(in srgb, var(--text-primary) 12%, transparent);
   overflow: hidden;
 }
 
@@ -138,26 +202,19 @@
 .fill {
   height: 100%;
   border-radius: inherit;
+  background: color-mix(in srgb, var(--text-primary) 82%, transparent);
   transition: width 360ms var(--ease-out-strong, ease);
 }
 
-.fillHigh {
-  background: var(--viz-success);
-}
-
-.fillMedium {
-  background: var(--quota-medium-color);
-}
-
 .fillLow {
-  background: var(--viz-failure);
+  background: var(--warning-color);
 }
 
 .cellReset {
   min-height: 1.4em;
-  font-size: 11.5px;
+  font-size: 12.5px;
   line-height: 1.4;
-  color: var(--text-secondary);
+  color: var(--text-tertiary);
   font-variant-numeric: tabular-nums;
   @include text-ellipsis;
 }
@@ -171,19 +228,22 @@
 }
 
 .rowMessage {
+  grid-column: span var(--ledger-span);
   margin: 0;
   font-size: 12.5px;
   color: var(--text-tertiary);
 }
 
-.rowNotice {
-  margin-top: 6px;
-  color: var(--text-secondary);
-}
-
 .rowError {
   color: var(--danger-color);
   overflow-wrap: anywhere;
+}
+
+.skeletonCells {
+  grid-column: span var(--ledger-span);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
+  gap: 10px 28px;
 }
 
 .skeletonLabel {
@@ -203,26 +263,27 @@
   }
 }
 
-.action {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 4px;
+.resets {
+  min-width: 0;
 }
 
-.refresh {
+.action {
+  display: flex;
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+.iconButton {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 30px;
-  padding: 0 10px;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
   border: 0;
   border-radius: 8px;
   background: transparent;
   color: var(--text-secondary);
-  font: inherit;
-  font-size: 12.5px;
-  white-space: nowrap;
   cursor: pointer;
 
   &:focus-visible {
@@ -237,7 +298,7 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .refresh:not(:disabled):hover {
+  .iconButton:not(:disabled):hover {
     background: var(--bg-tertiary);
     color: var(--text-primary);
   }
@@ -251,6 +312,10 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+.pulsing {
+  animation: ledger-pulse 1s ease-in-out infinite;
 }
 
 .srOnly {
@@ -271,19 +336,40 @@
   }
 
   .spinning,
+  .pulsing,
   .skeletonTrack {
     animation: none;
   }
 }
 
-/* 平板与手机：身份 + 刷新同行，窗口格整行铺开。 */
+/* 平板与手机：列头隐藏；身份 + 动作同行，窗口格与重置区在下方两列铺开。 */
 @media (max-width: #{$breakpoint-tablet}) {
-  .row {
-    grid-template-columns: minmax(0, 1fr) auto;
+  .columnHead {
+    display: none;
   }
 
-  .body {
+  .row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 20px;
+  }
+
+  .identity {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .action {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .resets,
+  .rowMessage,
+  .skeletonCells {
     grid-column: 1 / -1;
-    grid-row: 2;
+  }
+
+  .cellLabel {
+    display: block;
   }
 }

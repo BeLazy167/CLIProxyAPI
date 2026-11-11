@@ -107,7 +107,8 @@ export const ANTIGRAVITY_REQUEST_HEADERS = {
 // Claude API configuration
 export const CLAUDE_PROFILE_URL = 'https://api.anthropic.com/api/oauth/profile';
 
-export const CLAUDE_USAGE_URL = 'https://api.anthropic.com/api/oauth/usage';
+/** `cedar_ember=1` adds the reset-grant block; without `skip_spend` it keeps `extra_usage`. */
+export const CLAUDE_USAGE_URL = 'https://api.anthropic.com/api/oauth/usage?cedar_ember=1';
 
 export const CLAUDE_REQUEST_HEADERS = {
   'User-Agent': 'claude-cli/2.1.280 (external, cli)',

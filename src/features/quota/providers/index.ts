@@ -10,7 +10,7 @@ import type { TFunction } from 'i18next';
 import { useQuotaStore } from '@/stores';
 import type { AuthFileItem } from '@/types';
 import type { QuotaBodyProps } from '../types';
-import type { QuotaProviderType, QuotaStore } from './types';
+import type { QuotaProviderData, QuotaProviderType, QuotaStore } from './types';
 import { ANTIGRAVITY_CONFIG } from './antigravity/data';
 import { AntigravityQuotaBody } from './antigravity/AntigravityQuotaBody';
 import { CLAUDE_CONFIG } from './claude/data';
@@ -31,6 +31,8 @@ export interface QuotaCardState {
   status: 'idle' | 'loading' | 'success' | 'error';
   error?: string;
   errorStatus?: number;
+  /** When this success state was built; drives the ledger's "loaded N min ago". */
+  loadedAtMs?: number;
 }
 
 export interface QuotaAdapter {
@@ -49,17 +51,28 @@ export interface QuotaAdapter {
   Body: ComponentType<QuotaBodyProps<QuotaCardState>>;
 }
 
+function adapter<TState, TData>(
+  config: QuotaProviderData<TState, TData>,
+  Body: ComponentType<QuotaBodyProps<TState>>
+): QuotaAdapter {
+  return {
+    ...config,
+    buildSuccessState: (data: TData) => ({
+      ...config.buildSuccessState(data),
+      loadedAtMs: Date.now(),
+    }),
+    Body,
+  } as unknown as QuotaAdapter;
+}
+
 export const QUOTA_ADAPTERS: Record<QuotaProviderType, QuotaAdapter> = {
-  antigravity: {
-    ...ANTIGRAVITY_CONFIG,
-    Body: AntigravityQuotaBody,
-  } as unknown as QuotaAdapter,
-  claude: { ...CLAUDE_CONFIG, Body: ClaudeQuotaBody } as unknown as QuotaAdapter,
-  codex: { ...CODEX_CONFIG, Body: CodexQuotaBody } as unknown as QuotaAdapter,
-  devin: { ...DEVIN_CONFIG, Body: DevinQuotaBody } as unknown as QuotaAdapter,
-  kimi: { ...KIMI_CONFIG, Body: KimiQuotaBody } as unknown as QuotaAdapter,
-  meta: { ...META_CONFIG, Body: MetaQuotaBody } as unknown as QuotaAdapter,
-  xai: { ...XAI_CONFIG, Body: XaiQuotaBody } as unknown as QuotaAdapter,
+  antigravity: adapter(ANTIGRAVITY_CONFIG, AntigravityQuotaBody),
+  claude: adapter(CLAUDE_CONFIG, ClaudeQuotaBody),
+  codex: adapter(CODEX_CONFIG, CodexQuotaBody),
+  devin: adapter(DEVIN_CONFIG, DevinQuotaBody),
+  kimi: adapter(KIMI_CONFIG, KimiQuotaBody),
+  meta: adapter(META_CONFIG, MetaQuotaBody),
+  xai: adapter(XAI_CONFIG, XaiQuotaBody),
 };
 
 export type QuotaMapUpdater = (

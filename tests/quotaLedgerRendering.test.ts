@@ -75,9 +75,11 @@ const renderLedger = () =>
       displayNameFor: maskEmails,
       resolvedTheme: 'dark',
       now: NOW,
+      pools: buildProviderPools(entries, quotaFor, NOW),
       canRefresh: () => true,
       resettingKey: null,
       onRefresh: () => {},
+      onReset: () => {},
     })
   );
 
@@ -99,7 +101,49 @@ describe('QuotaLedger rendering', () => {
     // Unknown figure renders as --, never as 0%.
     expect(anaRow).toContain('>--<');
     expect(anaRow).not.toContain('>0%<');
-    expect(anaRow).toContain('99%');
+    expect(anaRow).toContain('99% left');
+  });
+
+  test('a column header names each window once, with the pool summary beside the group', () => {
+    const markup = renderLedger();
+    const claude = markup.slice(
+      markup.indexOf('quota-ledger-claude'),
+      markup.indexOf('quota-ledger-codex')
+    );
+    const head = claude.slice(claude.indexOf('Credential'), claude.indexOf('</div>'));
+    expect(head).toContain('5-hour');
+    expect(head).toContain('7-day Fable');
+    expect(head).toContain('Resets');
+    expect(claude).toContain('of 200% pool');
+    expect(claude).toContain('Next reset +');
+  });
+
+  test('a window reads as percent left with a countdown, and low windows are marked', () => {
+    const lowStates: Record<string, unknown> = {
+      'claude-theo@example.dev.json': {
+        status: 'success',
+        loadedAtMs: NOW - 4 * 60 * 1000,
+        windows: [claudeWindow('seven-day', 89, NOW + 2 * DAY + 30 * 60 * 1000)],
+      },
+    };
+    const markup = renderToStaticMarkup(
+      createElement(QuotaLedger, {
+        entries: [entries[0]],
+        quotaFor: (item: QuotaFileEntry) => lowStates[item.file.name] as QuotaCardState | undefined,
+        displayNameFor: maskEmails,
+        resolvedTheme: 'dark',
+        now: NOW,
+        pools: [],
+        canRefresh: () => true,
+        resettingKey: null,
+        onRefresh: () => {},
+        onReset: () => {},
+      })
+    );
+    expect(markup).toContain('11% left');
+    expect(markup).toContain('Low');
+    expect(markup).toContain('Resets in 2d 0h');
+    expect(markup).toContain('Claude · 4m ago');
   });
 
   test('distinguishes not loaded, failed, and loaded rows', () => {

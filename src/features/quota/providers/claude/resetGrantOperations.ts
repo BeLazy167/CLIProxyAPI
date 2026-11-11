@@ -1,4 +1,5 @@
 import { apiClient } from '@/services/api/client';
+import { authFilesApi } from '@/services/api/authFiles';
 import {
   anthropicResetGrantBlocker,
   claimClaudeResetGrant,
@@ -15,14 +16,19 @@ type Operation = {
   createdAt: number;
   code?: AnthropicResetSettledCode;
 };
+/** A settled claim whose gateway cooldown could not be cleared afterwards. */
+export type ResetGrantRunCode = AnthropicResetSettledCode | 'cooldown_clear_failed';
+
 const defaultDependencies = {
   revision: () => apiClient.getConnectionRevision(),
   readStatus: readClaudeResetGrants,
   readOrganization: readClaudeOrganization,
   claim: claimClaudeResetGrant,
+  resetCooldown: authFilesApi.resetCooldown,
   now: () => Date.now(),
   requestId: () => crypto.randomUUID() as string,
 };
+export type ResetGrantOperationDeps = typeof defaultDependencies;
 
 /** Tab-memory journal: survives dialog/card unmounts, never crosses connections.
  * No automatic retry. Expired ambiguous operations stay blocked until session end.
@@ -45,7 +51,11 @@ export function createResetGrantOperations(deps = defaultDependencies) {
       syncSession();
       return operations.get(key);
     },
-    async run(key: string, authIndex: string, grantId: string) {
+    async run(
+      key: string,
+      authIndex: string,
+      grantId: string
+    ): Promise<{ code: ResetGrantRunCode; unresolved: boolean }> {
       const session = syncSession();
       const assertSession = () => {
         if (deps.revision() !== session) throw new Error('session');
@@ -90,6 +100,17 @@ export function createResetGrantOperations(deps = defaultDependencies) {
         assertSession();
         // A refusal on a retry cannot prove that the earlier ambiguous POST did not spend.
         if (!wasRetry || code === 'reset' || code === 'already_used') operation.code = code;
+        if (code === 'reset' || code === 'already_used') {
+          // The gateway keeps its own cooldown for this credential until told
+          // otherwise, so a reset upstream is useless until it is cleared here.
+          try {
+            await deps.resetCooldown(authIndex);
+          } catch {
+            assertSession();
+            return { code: 'cooldown_clear_failed', unresolved: false };
+          }
+          assertSession();
+        }
         return { code, unresolved: !operation.code };
       } finally {
         if (deps.revision() === session) busy.delete(key);

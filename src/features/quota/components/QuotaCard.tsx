@@ -10,7 +10,8 @@
 import { useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconRefreshCw } from '@/components/ui/icons';
-import type { ResolvedTheme } from '@/types';
+import type { ClaudeQuotaState, ResolvedTheme } from '@/types';
+import { useNow } from '@/hooks/useNow';
 import { resolveQuotaErrorMessage } from '@/utils/quota';
 import { getQuotaDisplayName } from '@/utils/quota/identity';
 import {
@@ -23,6 +24,7 @@ import { bindQuotaClasses } from '../types';
 import { QUOTA_ADAPTERS, type QuotaCardState } from '../providers';
 import { isQuotaRefreshDisabled, type QuotaFileEntry } from '../logic';
 import { useClaudeResetGrants } from '../providers/claude/ClaudeResetGrants';
+import { ClaudeResetGroups } from '../providers/claude/ClaudeResetGroups';
 import bodyStyles from './QuotaBody.module.scss';
 import styles from './QuotaCard.module.scss';
 
@@ -69,11 +71,11 @@ export function QuotaCard(props: QuotaCardProps) {
 
   const status = quota?.status ?? 'idle';
   const loading = status === 'loading';
+  const now = useNow();
   const claudeReset = useClaudeResetGrants(
     file,
-    entry.type === 'claude' && status !== 'idle',
+    entry.type === 'claude' ? (quota as ClaudeQuotaState | undefined) : undefined,
     !canRefresh || loading || resetting,
-    quota,
     onRefresh
   );
   const iconSrc = getAuthFileIcon(entry.type, resolvedTheme);
@@ -117,19 +119,10 @@ export function QuotaCard(props: QuotaCardProps) {
 
       <div className={styles.body}>
         {entry.type === 'claude' && status === 'success' && (
-          <>
-            <div className={quotaClasses.codexPlan}>
-              <span className={quotaClasses.codexPlanItem}>
-                <span className={quotaClasses.codexPlanLabel}>{t('claude_reset.remaining')}</span>
-                <span className={quotaClasses.codexPlanValue}>{claudeReset.count ?? '--'}</span>
-              </span>
-            </div>
-            {claudeReset.message && (
-              <div role="status" className={quotaClasses.codexResetCreditsError}>
-                {t(`claude_reset.${claudeReset.message}`)}
-              </div>
-            )}
-          </>
+          <div className={quotaClasses.codexResetCredits}>
+            <div className={quotaClasses.codexResetCreditsTitle}>{t('claude_reset.remaining')}</div>
+            <ClaudeResetGroups reset={claudeReset} now={now} />
+          </div>
         )}
         {status === 'idle' ? (
           <button
@@ -164,18 +157,6 @@ export function QuotaCard(props: QuotaCardProps) {
 
       {status !== 'idle' && (
         <footer className={styles.actionRow}>
-          {entry.type === 'claude' && (
-            <button
-              type="button"
-              className={styles.actionPill}
-              disabled={claudeReset.blocked}
-              onClick={claudeReset.confirm}
-              title={t(`claude_reset.${claudeReset.buttonLabel}`)}
-            >
-              <IconRefreshCw size={13} className={claudeReset.busy ? styles.spinning : undefined} />
-              {t(`claude_reset.${claudeReset.buttonLabel}`)}
-            </button>
-          )}
           {showReset && (
             <button
               type="button"

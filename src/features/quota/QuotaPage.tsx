@@ -258,14 +258,6 @@ export function QuotaPage() {
     [pools]
   );
 
-  const ledgerColumnOrder = useMemo(
-    () =>
-      Object.fromEntries(
-        pools.map((pool) => [pool.provider, pool.windows.map((window) => window.key)])
-      ) as Partial<Record<QuotaProviderType, string[]>>,
-    [pools]
-  );
-
   const { loadedCount, attentionCount } = useMemo(() => {
     let loaded = 0;
     let attention = 0;
@@ -491,7 +483,7 @@ export function QuotaPage() {
             displayNameFor={displayNameFor}
             resolvedTheme={resolvedTheme}
             now={clock}
-            columnOrder={ledgerColumnOrder}
+            pools={pools}
             canRefresh={(entry) => canUseActions && !entry.file.disabled}
             resettingKey={resettingQuotaName}
             onRefresh={(entry) => void refreshQuota(entry.file, QUOTA_ADAPTERS[entry.type])}
