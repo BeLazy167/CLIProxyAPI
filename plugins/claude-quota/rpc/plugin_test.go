@@ -539,3 +539,39 @@ func TestRestartKeepsReadGap(t *testing.T) {
 		}
 	}
 }
+
+func TestFutureReadTimesAreClampedOnLoad(t *testing.T) {
+	w := newWorld(t, nov11)
+	ahead := time.Now().Add(time.Hour).UTC()
+	saved := map[string]time.Time{}
+	for label := range nov11 {
+		saved["claude-"+label+".json"] = ahead
+	}
+	raw, _ := json.Marshal(saved)
+	if err := os.WriteFile(filepath.Join(w.stateDir, pluginID+".last-try.json"), raw, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	p := New(w.logf)
+	defer p.Shutdown()
+	register(t, p, w.config(""))
+	w.waitFor("19: a read time saved an hour ahead (clock moved back) delays a read by at most one gap", func() bool {
+		return w.readCount("weeklyout") == 1 && w.readCount("fableout") == 1 && w.readCount("fableleft") == 1
+	})
+}
+
+func TestNoUsageReadWhenTheReadGapCannotBeSaved(t *testing.T) {
+	w := newWorld(t, nov11)
+	if err := os.Mkdir(filepath.Join(w.stateDir, pluginID+".last-try.json"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	p := New(w.logf)
+	defer p.Shutdown()
+	register(t, p, w.config(""))
+	w.waitFor("20: the failed save is logged", func() bool { return len(w.lines("read gap state not saved")) >= 1 })
+	time.Sleep(time.Second)
+	for label := range nov11 {
+		if n := w.readCount(label); n != 0 {
+			t.Fatalf("20: %s read %d times while its read time could not be saved", label, n)
+		}
+	}
+}
