@@ -25,6 +25,10 @@ func TestAPICallRefusesClaudeResetClaims(t *testing.T) {
 		"https://API.ANTHROPIC.COM:443/api/organizations/x/reset_rate_limits/",
 		"https://api.anthropic.com//api/organizations/x/../x/reset_rate_limits?a=1",
 		"https://api.anthropic.com/api/organizations/x/RESET_RATE_LIMITS",
+		"https://api.anthropic.com./api/organizations/x/reset_rate_limits",
+		"https://api.anthropic.com/api/organizations/x/%72eset_rate_limits",
+		"https://claude.ai/api/organizations/x/reset_rate_limits",
+		"https://console.anthropic.com/api/organizations/x/reset_rate_limits",
 	}
 	for _, target := range refused {
 		body := `{"method":"POST","url":"` + target + `","data":"{}"}`
@@ -34,6 +38,18 @@ func TestAPICallRefusesClaudeResetClaims(t *testing.T) {
 		router.ServeHTTP(recorder, req)
 		if recorder.Code != http.StatusForbidden {
 			t.Errorf("%s: status = %d, want %d; body = %s", target, recorder.Code, http.StatusForbidden, recorder.Body.String())
+		}
+	}
+
+	// A Host header override that names Anthropic counts as Anthropic, whatever the URL's host is.
+	{
+		body := `{"method":"POST","url":"http://127.0.0.1:1/api/organizations/x/reset_rate_limits","header":{"Host":"API.Anthropic.com."},"data":"{}"}`
+		recorder := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(recorder, req)
+		if recorder.Code != http.StatusForbidden {
+			t.Errorf("Host override: status = %d, want %d", recorder.Code, http.StatusForbidden)
 		}
 	}
 
