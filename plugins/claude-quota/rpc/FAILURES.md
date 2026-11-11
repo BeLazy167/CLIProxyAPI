@@ -12,12 +12,18 @@ a real gateway process and the built `.so`.
 6. Quiesce or shutdown does not release the Opus/Sonnet reservations, or releases a Fable exclusion.
 7. A config with any mode other than the build's mode (`shadow`) starts an engine.
 8. A management base that is not loopback receives the management key.
-9. `min_read_gap` below 5 minutes is accepted against the real Anthropic host.
+9. `min_read_gap` below 5 minutes is accepted against any usage host off loopback, including the Anthropic host
+   written with a port or in upper case.
 10. An unknown config key is ignored, so a typo silently keeps a default.
 11. A missing or empty management key file starts an engine.
 12. A quota 429 for a known credential triggers no usage read; or several 429s trigger more than one read within
-    `min_read_gap`.
+    `min_read_gap`; or a 429 for an account the engine then skips (unreadable, disabled, token expired) stays due,
+    so the engine re-plans in a loop.
 13. A 429 for a credential the engine does not route, or a non-429 failure, triggers a read.
 14. The health route is missing mode, state, last cycle, generation or per-account limit age, or answers another path.
 15. A stale quota cooldown or a changed exclusion list sends a request to the management API in shadow.
 16. The management key or an OAuth token appears in a log line or in the health reply.
+17. A cached account whose auth file has since become unreadable, disabled or token-expired still counts as the
+    Fable-out fallback and keeps the Opus/Sonnet reservation on the healthy account.
+18. A reconfigure or a lock handoff to another loaded copy reads every account again inside `min_read_gap`; or an
+    account skipped for the gap is not read once the gap passes.
