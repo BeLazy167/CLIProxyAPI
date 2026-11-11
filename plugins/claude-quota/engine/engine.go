@@ -89,7 +89,7 @@ type Engine struct {
 	started  time.Time
 	gen      uint64
 	// credFailed is true when the newest plan could not read the gateway's credentials; unhealed lists the
-	// accounts read since the last good credentials read, whose cooldowns are not checked yet.
+	// accounts whose reads owe a cooldown check that no plan has made yet.
 	credFailed bool
 	unhealed   []string
 }
@@ -301,7 +301,7 @@ func (e *Engine) retryCredentials(ctx context.Context) {
 		e.logf("credentials retry skipped: auth dir: %v", err)
 		return
 	}
-	e.apply(ctx, "credentials retry", all, nil, e.unhealed)
+	e.apply(ctx, "credentials retry", all, nil, nil)
 }
 
 func (e *Engine) noteHit(id string) {
@@ -507,7 +507,8 @@ func (e *Engine) loadAll(names []string) map[string]loaded {
 }
 
 // apply plans and writes the routing from the cached limits, then checks the cooldowns of the accounts in heal
-// (those read in this run, or owed a check by a run that could not read the gateway's credentials).
+// (those read in this run) and of every account an earlier run owes a check. An account stays owed until a plan
+// with a good credentials read checks it.
 func (e *Engine) apply(ctx context.Context, why string, all, readNow, heal []string) {
 	now := e.now()
 	accounts := e.loadAll(all)
@@ -538,13 +539,10 @@ func (e *Engine) apply(ctx context.Context, why string, all, readNow, heal []str
 	}
 	creds, credErr := e.gw.Credentials(ctx)
 	e.mapIDs(all, creds, credErr)
-	healCooldowns(ctx, e.w, e.logf, creds, credErr, planned, accounts, heal, now)
+	owed := slices.Compact(slices.Sorted(slices.Values(append(slices.Clone(e.unhealed), heal...))))
+	checked := healCooldowns(ctx, e.w, e.logf, creds, credErr, planned, accounts, owed, now)
 	e.credFailed = credErr != nil
-	if e.credFailed {
-		e.unhealed = slices.Compact(slices.Sorted(slices.Values(append(slices.Clone(e.unhealed), heal...))))
-	} else {
-		e.unhealed = nil
-	}
+	e.unhealed = slices.DeleteFunc(owed, func(name string) bool { return slices.Contains(checked, name) || !slices.Contains(all, name) })
 	e.publish(now, planned)
 	e.logf("plan %d (%s): %d accounts planned, %d read, %d left out", e.gen, why, len(planned), len(readNow), len(all)-len(planned))
 }
