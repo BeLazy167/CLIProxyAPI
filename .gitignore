@@ -13,6 +13,7 @@ conv/*
 temp/*
 refs/*
 plugins/*
+!plugins/claude-quota/
 examples/plugin/bin/*
 
 # Storage backends
