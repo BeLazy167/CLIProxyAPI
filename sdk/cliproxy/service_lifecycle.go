@@ -438,5 +438,7 @@ func (s *Service) startModelCatalogUpdaters(ctx context.Context) {
 		registry.StartModelCatalogUpdaters(ctx, cfg.Models, cfg.Home.Enabled)
 		proxyURL = cfg.ProxyURL
 	}
-	executor.StartXAIVersionUpdater(ctx, proxyURL)
+	if cfg == nil || !cfg.DisableVersionUpdaters {
+		executor.StartXAIVersionUpdater(ctx, proxyURL)
+	}
 }

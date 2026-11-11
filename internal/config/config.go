@@ -17,6 +17,9 @@ type Config struct {
 	ServerResponseCompression ResponseCompressionConfig `yaml:"-" json:"response-compression"`
 	// Models selects optional catalog sources independently for each catalog.
 	Models ModelCatalogs `yaml:"models" json:"models"`
+	// DisableVersionUpdaters skips the Antigravity and xAI client-version fetches at
+	// startup; the built-in versions are used. Changing it requires a restart.
+	DisableVersionUpdaters bool `yaml:"disable-version-updaters" json:"disable-version-updaters"`
 
 	SDKConfig `yaml:",inline"`
 	// Host is the network host/interface on which the API server will bind.
