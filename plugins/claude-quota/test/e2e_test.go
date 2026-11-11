@@ -393,14 +393,24 @@ func TestGatewayE2E(t *testing.T) {
 	r.add("the shadow log shows the three decisions the Python dry-run printed on 2026-11-11",
 		len(got) >= 3 && fmt.Sprint(got[:3]) == fmt.Sprint(want), strings.Join(got, " | "))
 
-	// One usage read per account per cycle.
-	r.waitFor("plan 3", 20*time.Second, func() bool { return r.count("plan 3 (") == 1 })
+	// One usage read per account per cycle. A credentials retry at boot plans without reading usage.
+	readingPlans := func() int { return r.count("plan ") - r.count("(credentials retry)") }
+	r.waitFor("three plans that read usage", 20*time.Second, func() bool { return readingPlans() >= 3 })
 	counts := map[string]int{}
 	for _, l := range labels {
 		counts[l] = r.readCount(l)
 	}
 	r.add("one usage read per account per cycle (3 cycles, 3 reads each)",
 		counts["weekly-out"] == 3 && counts["fable-out"] == 3 && counts["fable-left"] == 3, fmt.Sprint(counts))
+	lines, startFailed := r.pluginLines(), false
+	for i, l := range lines {
+		if strings.HasPrefix(l, "plan 1 (start)") {
+			startFailed = i > 0 && strings.HasPrefix(lines[i-1], "cooldown check skipped")
+			break
+		}
+	}
+	r.add("when the start cycle cannot read the gateway's credentials (not listening yet), the plugin reads them again within seconds",
+		!startFailed || r.count("plan 2 (credentials retry)") == 1, fmt.Sprintf("start read failed: %v, retry plans: %d", startFailed, r.count("(credentials retry)")))
 
 	// Hot reload by config change only: same plugin file, same plugin config.
 	r.writeConfig([]string{"e2e-client-key", "e2e-client-key-2"})

@@ -89,7 +89,7 @@ type Engine struct {
 	started  time.Time
 	gen      uint64
 	// credFailed is true when the newest plan could not read the gateway's credentials; unhealed lists the
-	// accounts that plan read, whose cooldowns are not checked yet.
+	// accounts read since the last good credentials read, whose cooldowns are not checked yet.
 	credFailed bool
 	unhealed   []string
 }
@@ -221,7 +221,7 @@ func (e *Engine) afterReset(ctx context.Context, acct gateway.Account, usageAfte
 		e.logf("%s: routing skipped, no readable weekly or Fable percent", acct.Label)
 	}
 	if all, err := gateway.AuthFiles(e.cfg.AuthDir); err == nil {
-		e.apply(ctx, "claim reset", all, nil)
+		e.apply(ctx, "claim reset", all, nil, nil)
 	}
 	return line
 }
@@ -293,15 +293,15 @@ func (e *Engine) Run(ctx context.Context) {
 	e.releaseAll(stop)
 }
 
-// retryCredentials plans again without reading usage, so the credentials are read again and the accounts the
-// failed plan read get their cooldown check from the limits they had then.
+// retryCredentials plans again without reading usage, so the credentials are read again and the accounts owed a
+// cooldown check get it from the limits they were read with.
 func (e *Engine) retryCredentials(ctx context.Context) {
 	all, err := gateway.AuthFiles(e.cfg.AuthDir)
 	if err != nil {
 		e.logf("credentials retry skipped: auth dir: %v", err)
 		return
 	}
-	e.apply(ctx, "credentials retry", all, e.unhealed)
+	e.apply(ctx, "credentials retry", all, nil, e.unhealed)
 }
 
 func (e *Engine) noteHit(id string) {
@@ -408,7 +408,7 @@ func (e *Engine) cycle(ctx context.Context, why string, names []string) {
 		}
 	}
 	if ctx.Err() == nil {
-		e.apply(ctx, why, all, readNow)
+		e.apply(ctx, why, all, readNow, readNow)
 	}
 }
 
@@ -506,7 +506,9 @@ func (e *Engine) loadAll(names []string) map[string]loaded {
 	return out
 }
 
-func (e *Engine) apply(ctx context.Context, why string, all, readNow []string) {
+// apply plans and writes the routing from the cached limits, then checks the cooldowns of the accounts in heal
+// (those read in this run, or owed a check by a run that could not read the gateway's credentials).
+func (e *Engine) apply(ctx context.Context, why string, all, readNow, heal []string) {
 	now := e.now()
 	accounts := e.loadAll(all)
 	limits := map[string]rules.Limits{}
@@ -536,10 +538,12 @@ func (e *Engine) apply(ctx context.Context, why string, all, readNow []string) {
 	}
 	creds, credErr := e.gw.Credentials(ctx)
 	e.mapIDs(all, creds, credErr)
-	healCooldowns(ctx, e.w, e.logf, creds, credErr, planned, accounts, readNow, now)
-	e.credFailed, e.unhealed = credErr != nil, nil
+	healCooldowns(ctx, e.w, e.logf, creds, credErr, planned, accounts, heal, now)
+	e.credFailed = credErr != nil
 	if e.credFailed {
-		e.unhealed = readNow
+		e.unhealed = slices.Compact(slices.Sorted(slices.Values(append(slices.Clone(e.unhealed), heal...))))
+	} else {
+		e.unhealed = nil
 	}
 	e.publish(now, planned)
 	e.logf("plan %d (%s): %d accounts planned, %d read, %d left out", e.gen, why, len(planned), len(readNow), len(all)-len(planned))
