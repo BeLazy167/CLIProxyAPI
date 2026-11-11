@@ -159,7 +159,7 @@ class Run:
             "min_read_gap": "100ms", "reset_grace": "0s", "lock_retry": "200ms",
             "public_base": self.base, "bark_bases": [self.up], "bark_key_file": f"{t}/bark.key",
             "resend_base": self.up, "resend_key_file": f"{t}/resend.key",
-            "email_from": "claude-reset@blzy.app", "email_to": "me@example.com",
+            "email_from": "reset-alerts@example.com", "email_to": "me@example.com",
             **self.extra_cfg, **(extra or {}),
         }
         lines = "\n".join(f"      {k}: {json.dumps(v)}" for k, v in plugin.items())
@@ -516,7 +516,7 @@ def s_happy_claim():
                 ("exactly one claim sent", len(w["claims"]) == 1, len(w["claims"])),
                 ("claim body program/grant/request_id", claim.get("program") == "cedar_ember" and claim.get("grant_id") == "g1" and len(claim.get("request_id", "")) >= 16, claim),
                 ("before email then after email", len(mails) == 2 and "before" in mails[0]["subject"].lower() + mails[0]["text"].lower() and mails[1]["subject"] != mails[0]["subject"], [m["subject"] for m in mails]),
-                ("emails use resend key, from/to", all(m["auth"] == f"Bearer {RESEND_KEY}" and "<claude-reset@blzy.app>" in m["from"] and m["to"] == ["me@example.com"] for m in mails), [(m["from"], m["to"]) for m in mails]),
+                ("emails use resend key, from/to", all(m["auth"] == f"Bearer {RESEND_KEY}" and "<reset-alerts@example.com>" in m["from"] and m["to"] == ["me@example.com"] for m in mails), [(m["from"], m["to"]) for m in mails]),
                 ("state DONE and verified", o["state"] == "DONE" and o.get("verified") is True, (o["state"], o.get("verified"))),
                 ("second POST sends nothing", len(w2["claims"]) == 1, (again[0], len(w2["claims"]))),
                 ("spent exactly 1", sum(w2["spent"].values()) == 1, w2["spent"])]

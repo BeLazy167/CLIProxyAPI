@@ -132,15 +132,16 @@ plugins:
       bark_key_file: ~/.config/bark/key
       resend_base: ""                    # live build: https://api.resend.com
       resend_key_file: ~/.config/claude-reset/resend.key
-      email_from: claude-reset@blzy.app
-      email_to: dhruvkhara167@gmail.com
+      email_from: ""                     # e2e and live builds: required, for example alerts@example.com
+      email_to: ""                       # e2e and live builds: required, for example you@example.com
       threshold_pct: 90
       min_reset_hours: 24
       expiry_alert_hours: [168, 24]
       stale_token_alert_hours: 2
 ```
 
-Every key except `enabled` has the default shown. Unknown keys are an error. `usage_base` serves the usage reads
+Every key except `enabled` has the default shown. Unknown keys are an error. No email address is built in: a build
+that sends (e2e, live) refuses to start without `email_from` and `email_to`. `usage_base` serves the usage reads
 and the claims. The Bark and Resend key files are read at each send and never logged; a build that sends refuses
 to start when either is missing or empty.
 

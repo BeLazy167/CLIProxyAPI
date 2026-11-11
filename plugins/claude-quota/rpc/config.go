@@ -82,8 +82,6 @@ func defaults() rawConfig {
 		BarkKeyFile:          "~/.config/bark/key",
 		ResendBase:           offers.DefaultResendBase,
 		ResendKeyFile:        "~/.config/claude-reset/resend.key",
-		EmailFrom:            "claude-reset@blzy.app",
-		EmailTo:              "dhruvkhara167@gmail.com",
 		ThresholdPct:         90,
 		MinResetHours:        24,
 		ExpiryAlertHours:     []int{168, 24},
@@ -157,7 +155,8 @@ func ParseConfig(raw []byte) (Config, error) {
 }
 
 // offersConfig fills the offers and sender settings. A build that can send needs its Bark and Resend key
-// files now, so a missing key stops the plugin at load instead of at the first alert.
+// files and the email sender and recipient now, so a missing one stops the plugin at load instead of at the
+// first alert. No address is built in.
 func offersConfig(rc rawConfig, cfg *Config) error {
 	u, err := url.Parse(rc.PublicBase)
 	if err != nil || (u.Scheme != "https" && u.Scheme != "http") || u.Host == "" {
@@ -186,6 +185,14 @@ func offersConfig(rc rawConfig, cfg *Config) error {
 		}
 		if raw, err := os.ReadFile(*k.dst); err != nil || strings.TrimSpace(string(raw)) == "" {
 			return fmt.Errorf("config: %s %s cannot be read or is empty", k.name, *k.dst)
+		}
+	}
+	if offers.Mode == "shadow" {
+		return nil
+	}
+	for name, addr := range map[string]string{"email_from": rc.EmailFrom, "email_to": rc.EmailTo} {
+		if !strings.Contains(addr, "@") {
+			return fmt.Errorf("config: %s must name an email address in a build that sends email", name)
 		}
 	}
 	return nil
