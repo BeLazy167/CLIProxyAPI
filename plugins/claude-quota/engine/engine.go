@@ -288,7 +288,12 @@ func (e *Engine) readOne(ctx context.Context, name string) bool {
 		return false
 	}
 	e.lastTry[name] = now
-	e.saveLastTry()
+	if err := e.saveLastTry(); err != nil {
+		// Without a saved read time a reload would read again inside the gap, so no read happens until saving
+		// works again. Limits then go stale and the stale rule releases the Opus/Sonnet reservations.
+		e.logf("read gap state not saved, %s not read: %v", acct.Label, err)
+		return false
+	}
 	body, err := e.read(ctx, acct)
 	if err != nil {
 		delete(e.cache, name)
@@ -317,10 +322,17 @@ func (e *Engine) loadLastTry() {
 	if err != nil {
 		e.lastTry = map[string]time.Time{}
 		e.logf("read gap state not loaded, every account is read now: %v", err)
+		return
+	}
+	now := e.now()
+	for name, at := range e.lastTry {
+		if at.After(now) { // the clock moved back since the save; wait at most one gap
+			e.lastTry[name] = now
+		}
 	}
 }
 
-func (e *Engine) saveLastTry() {
+func (e *Engine) saveLastTry() error {
 	raw, err := json.Marshal(e.lastTry)
 	tmp := e.cfg.LastTryFile + ".tmp"
 	if err == nil {
@@ -329,9 +341,7 @@ func (e *Engine) saveLastTry() {
 	if err == nil {
 		err = os.Rename(tmp, e.cfg.LastTryFile)
 	}
-	if err != nil {
-		e.logf("read gap state not saved: %v", err)
-	}
+	return err
 }
 
 func (e *Engine) loadAll(names []string) map[string]loaded {
