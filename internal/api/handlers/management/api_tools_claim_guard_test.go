@@ -29,6 +29,9 @@ func TestAPICallRefusesClaudeResetClaims(t *testing.T) {
 		"https://api.anthropic.com/api/organizations/x/%72eset_rate_limits",
 		"https://claude.ai/api/organizations/x/reset_rate_limits",
 		"https://console.anthropic.com/api/organizations/x/reset_rate_limits",
+		"https://api.anthropic。com/api/organizations/x/reset_rate_limits",
+		"https://api．anthropic.com/api/organizations/x/reset_rate_limits",
+		"https://API.Ａnthropic.com/api/organizations/x/reset_rate_limits",
 	}
 	for _, target := range refused {
 		body := `{"method":"POST","url":"` + target + `","data":"{}"}`
