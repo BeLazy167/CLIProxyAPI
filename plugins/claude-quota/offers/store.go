@@ -196,6 +196,28 @@ func (o Offer) isFor(acct gateway.Account, authFile string) bool {
 	return o.sameAccount(Offer{"org": acct.Org, "auth_file": authFile})
 }
 
+// alert is the alert the offer was made for, from its dedupe key. An offer the Python service made has no key, so
+// its alert is rebuilt as Decide builds the key: a near-limit offer's window and reset rounded to the hour, or an
+// expiry reminder's grant and end with the threshold the grant had reached when the offer was made.
+func (o Offer) alert(r Rules) alert {
+	if key := o.str("key"); key != "" {
+		return alertOfKey(key)
+	}
+	switch o.Kind() {
+	case "near_limit":
+		if reset, ok := parseTime(o["window_reset"]); ok {
+			return alert{"near|" + o.Window(), nearestHour(reset)}
+		}
+	case "expiring":
+		ends, okE := o.ExpiresAt()
+		made, okM := parseTime(o["created_at"])
+		if h, ok := expiryThreshold(ends.Sub(made), r.ExpiryAlertHours); okE && okM && ok {
+			return alert{fmt.Sprintf("expiring-%dh|%s", h, o.GrantID()), ends}
+		}
+	}
+	return alert{}
+}
+
 // Clears is the windows the offer's grant clears; an old offer without the list clears its own window.
 func (o Offer) Clears() []string {
 	list, ok := o["clears"].([]any)

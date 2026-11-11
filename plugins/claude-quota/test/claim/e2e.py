@@ -1674,6 +1674,17 @@ def s_email_change_keeps_the_claim_on_the_account():
         r.post_claim(url)
         st1 = offer(r)["state"]
         r.set_auth("a", email="a-renamed@example.com")
+        polls = len([ln for ln in r.plugin_lines() if "(poll)" in ln])
+        polled = wait_until(lambda: len([ln for ln in r.plugin_lines() if "(poll)" in ln]) >= polls + 2, 8)
+        repeated = r.offer_urls()[1:]
+        w = r.world()
+        token = next(iter(w["accounts"]))
+        u = w["accounts"][token]
+        moved = iso(75)
+        u["seven_day"]["resets_at"] = moved
+        for lim in u["limits"]:
+            lim["resets_at"] = moved
+        r.ctl("set", {"accounts": {token: u}})
         w = r.wait_for(lambda w: len(r.offer_urls(w)) >= 2)
         urls = r.offer_urls(w)
         again = r.post_claim(urls[-1]) if len(urls) >= 2 else (0, "no second alert")
@@ -1685,7 +1696,9 @@ def s_email_change_keeps_the_claim_on_the_account():
         others = [o["state"] for k, o in offers.items() if k != first_id]
         unknown = [
             ("a page tap with a lost reply -> UNKNOWN", st1 == "UNKNOWN", st1),
-            ("after the account's email changes, a tap on the new alert is refused while the first claim is unknown",
+            ("after the account's email changes, the same alert is not sent again: the account's UNKNOWN offer holds it",
+             polled and repeated == [], (polled, repeated)),
+            ("once the window's reset moves (a new alert), a tap on it is refused while the first claim is unknown",
              again[0] == 409 and "unknown outcome" in again[1] and claims_after_page == 1, (again[0], claims_after_page)),
             ("the panel re-sends the first claim's request_id", len(ids) == 2 and ids[0] == ids[1], ids),
             ("the panel settles the first offer to DONE, one spend", code == 200 and body.get("offer_id") == first_id and offers[first_id]["state"] == "DONE" and sum(w["spent"].values()) == 1, (code, body, w["spent"])),

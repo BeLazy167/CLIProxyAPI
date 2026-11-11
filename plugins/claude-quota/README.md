@@ -106,9 +106,14 @@ The page sends `Referrer-Policy: same-origin` (a form POST under `no-referrer` c
 configured Origin (`public_base`'s scheme and host), the offer's nonce, a body of at most 4 KB, and at most one
 token, the same in the query and the form. The panel claim uses an open offer for the grant (an UNKNOWN one
 first), or makes one from a fresh read when the grant is what an alert would offer, then runs the same tap.
-It makes no offer for an alert that was already used: one that was sent, one whose dedupe key a settled offer on the
-account holds (offers made by the plugin store it as `key`), or an expiry reminder for a grant claimed since the
-reminder's threshold began. Alerts follow the same rule, so a tap queued behind a claim never spends a second reset.
+It makes no offer for an alert the account already used: one an offer of the account holds after a claim was sent
+for it (SENDING, UNKNOWN, DONE, CLOSED) or after it expired, or an expiry reminder for a grant claimed since the
+reminder's threshold began. An OFFERED offer sent nothing, so it uses nothing: the panel can claim the narrower grant
+the page points to. An offer's alert is its dedupe key without the email (offers made by the plugin store it as
+`key`); for an offer the Python service made it is rebuilt from the offer's window and reset, or its grant, end and
+threshold. Offers of another organization with the same email never count. An alert is not sent again while it is in
+the `sent` map (Python's dedupe) or an offer of the account holds it, so a tap queued behind a claim never spends a
+second reset and an email change repeats no alert.
 It answers `{"message", "offer_id", "state"}` with the tap's status code.
 
 `caddy/reset.caddy` rewrites `https://gw.blzy.app/reset/offer/<token>` and `.../claim` to the two offer routes,

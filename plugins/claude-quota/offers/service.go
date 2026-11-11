@@ -159,7 +159,7 @@ func (s *Service) offer(ctx context.Context, acct gateway.Account, c Candidate, 
 		s.logf("%s: offer skipped: %v", acct.Label, err)
 		return
 	}
-	if _, done := used(st, acct, filepath.Join(s.cfg.AuthDir, acct.Name), c); done {
+	if alerted(st, acct, filepath.Join(s.cfg.AuthDir, acct.Name), c, s.cfg.Rules) {
 		return
 	}
 	token := NewToken()
@@ -176,31 +176,62 @@ func (s *Service) offer(ctx context.Context, acct gateway.Account, c Candidate, 
 	}
 }
 
-// used reports whether candidate c was already acted on for this account, and names the settled offer that did,
-// when there is one. It was when its alert was sent; when a settled offer for the account has its dedupe key,
-// apart from the email the key starts with; or, for an expiry reminder, when a claim on the grant went through
-// after the reminder's threshold began. A new offer needs eligibility that came later.
-func used(st *State, acct gateway.Account, authFile string, c Candidate) (string, bool) {
-	_, sent := st.Sent()[c.Key]
+// alerted reports whether candidate c's alert went out already: its dedupe key is in the sent map, as Python
+// checks, or an offer of the account holds the same alert (made under an earlier email, or by Python without a
+// key), or a claim used it (see usedBy).
+func alerted(st *State, acct gateway.Account, authFile string, c Candidate, r Rules) bool {
+	if _, sent := st.Sent()[c.Key]; sent {
+		return true
+	}
+	a := alertOfKey(c.Key)
+	for _, o := range st.Offers() {
+		if o.isFor(acct, authFile) && o.alert(r).is(a) {
+			return true
+		}
+	}
+	return usedBy(st, acct, authFile, c, r) != ""
+}
+
+// usedBy names the account's offer that used candidate c's alert, the most recently settled one first, or ""
+// when none did. An offer uses its alert once a claim was sent for it (SENDING, UNKNOWN, DONE, CLOSED) or it
+// expired; an OFFERED offer sent nothing and uses nothing. An expiry reminder is also used by a claim on its grant
+// that went through after the reminder's threshold began. Offers of other accounts never count.
+func usedBy(st *State, acct gateway.Account, authFile string, c Candidate, r Rules) string {
+	a := alertOfKey(c.Key)
 	pick, at := "", time.Time{}
-	for id, o := range st.Offers() {
-		if !o.isFor(acct, authFile) || o.State() == "OFFERED" || o.State() == "UNKNOWN" || o.State() == "SENDING" {
+	for _, id := range slices.Sorted(maps.Keys(st.Offers())) {
+		o := st.Offers()[id]
+		if !o.isFor(acct, authFile) || o.State() == "OFFERED" {
 			continue
 		}
 		done, _ := parseTime(asObject(o["after"])["at"])
-		sameKey := keyTail(o.str("key")) != "" && keyTail(o.str("key")) == keyTail(c.Key)
 		claimedSince := c.Kind == "expiring" && o.State() == "DONE" && o.GrantID() == c.GrantID && !done.Before(c.since)
-		if (sameKey || claimedSince) && (pick == "" || done.After(at)) {
+		if (o.alert(r).is(a) || claimedSince) && (pick == "" || done.After(at)) {
 			pick, at = id, done
 		}
 	}
-	return pick, sent || pick != ""
+	return pick
 }
 
-// keyTail is a dedupe key without the email it starts with.
-func keyTail(key string) string {
+// alert is one alert apart from the email its dedupe key starts with: what it is about ("near|<window>" or
+// "expiring-<N>h|<grant>") and the time it is for (the window's reset rounded to the hour, or the grant's end).
+// Times compare as instants, so a key and the same key rebuilt from a Python offer's fields agree.
+type alert struct {
+	what string
+	at   time.Time
+}
+
+func (a alert) is(b alert) bool { return a.what != "" && a.what == b.what && a.at.Equal(b.at) }
+
+// alertOfKey reads a dedupe key, "<email>|near|<window>|<reset>" or "<email>|expiring-<N>h|<grant>|<ends>".
+func alertOfKey(key string) alert {
 	_, tail, _ := strings.Cut(key, "|")
-	return tail
+	i := strings.LastIndex(tail, "|")
+	at, ok := parseTime(tail[i+1:])
+	if i < 0 || !ok {
+		return alert{}
+	}
+	return alert{tail[:i], at}
 }
 
 // reconcile settles claims whose reply was lost, from a read-only status read.

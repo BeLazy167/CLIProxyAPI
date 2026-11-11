@@ -166,8 +166,8 @@ func orEmpty(v any) any {
 // so the panel and the page share the request ID, the UNKNOWN state and every guard: an open offer for the
 // grant is used (an UNKNOWN one first); otherwise an offer is made now from a fresh read, without an alert,
 // only when the grant is what an alert would offer (the narrowest grant for a full window, or one about to
-// expire) and that alert was not used already (see used). It returns the offer ID it used or that settled the
-// grant, or "" when none.
+// expire) and no offer of the account used that alert (see usedBy). It returns the offer ID it used or that
+// settled the grant, or "" when none.
 func (s *Service) PanelClaim(ctx context.Context, name, grantID string) (Result, string) {
 	if Mode == "shadow" {
 		return Result{http.StatusServiceUnavailable, "This plugin build cannot claim (shadow mode). Nothing was claimed."}, ""
@@ -224,16 +224,10 @@ func (s *Service) PanelClaim(ctx context.Context, name, grantID string) (Result,
 		}
 		return Result{http.StatusOK, msg}, last
 	}
-	if done, ok := used(st, acct, path, *cand); ok {
-		msg := fmt.Sprintf("Not claimed: the %s alert for grant %s was already used, so a claim now would spend a second reset on it. "+
-			"A new claim needs a new alert.", strings.ReplaceAll(cand.Kind, "_", "-"), grantID)
-		if done == "" {
-			done = lastSettled(st, acct, path, grantID)
-		}
-		if done != "" {
-			msg += fmt.Sprintf(" Its last offer is %s (result %s).", st.Offers()[done].State(), strPy(st.Offers()[done]["result"]))
-		}
-		return Result{http.StatusOK, msg}, done
+	if done := usedBy(st, acct, path, *cand, s.cfg.Rules); done != "" {
+		return Result{http.StatusOK, fmt.Sprintf("Not claimed: the %s alert for grant %s was already used, so a claim now would spend a second reset on it. "+
+			"A new claim needs a new alert. Its last offer is %s (result %s).", strings.ReplaceAll(cand.Kind, "_", "-"), grantID,
+			st.Offers()[done].State(), strPy(st.Offers()[done]["result"]))}, done
 	}
 	oid := OfferID(NewToken())
 	if !s.update("panel offer", func(st *State) { st.AddOffer(oid, cand.record(path, acct, now)) }) {

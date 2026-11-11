@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -260,8 +260,6 @@ func Decide(label string, usageV any, now time.Time, r Rules) ([]Candidate, []st
 	var problems []string
 	near := map[string]nearPick{}
 	var order []string
-	hours := append([]int(nil), r.ExpiryAlertHours...)
-	sort.Ints(hours)
 	for _, g := range grants(usage) {
 		if !wellFormed(usage, g) {
 			problems = append(problems, fmt.Sprintf("%s: grant %s has fields or windows the rules cannot read: clears=%s",
@@ -288,10 +286,7 @@ func Decide(label string, usageV any, now time.Time, r Rules) ([]Candidate, []st
 				near[w] = nearPick{g, *pct, reset}
 			}
 		}
-		for _, h := range hours { // only the nearest threshold that applies
-			if ends.Sub(now) > time.Duration(h)*time.Hour {
-				continue
-			}
+		if h, ok := expiryThreshold(ends.Sub(now), r.ExpiryAlertHours); ok {
 			blocked := ""
 			if !truthyPy(g["usable_now"]) {
 				blocked = " It is blocked right now."
@@ -307,7 +302,6 @@ func Decide(label string, usageV any, now time.Time, r Rules) ([]Candidate, []st
 				Body: fmt.Sprintf("%s: grant %s (%s) expires %s UTC. Windows it clears: %s.%s", label, gid, strPy(label2),
 					strftime(ends), WindowStatus(usage, g), blocked),
 			})
-			break
 		}
 	}
 	for _, w := range order {
@@ -327,6 +321,16 @@ func Decide(label string, usageV any, now time.Time, r Rules) ([]Candidate, []st
 		})
 	}
 	return out, problems
+}
+
+// expiryThreshold is the nearest expiry alert threshold, in hours, that a grant ending in left has reached.
+func expiryThreshold(left time.Duration, hours []int) (int, bool) {
+	for _, h := range slices.Sorted(slices.Values(hours)) {
+		if left <= time.Duration(h)*time.Hour {
+			return h, true
+		}
+	}
+	return 0, false
 }
 
 // StillValid re-checks an offer against a live read right before a claim, as decide.still_valid does.
