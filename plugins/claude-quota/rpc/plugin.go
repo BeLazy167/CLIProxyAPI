@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"sort"
 	"sync"
@@ -24,12 +25,14 @@ import (
 
 	"github.com/router-for-me/CLIProxyAPI/v8/plugins/claude-quota/engine"
 	"github.com/router-for-me/CLIProxyAPI/v8/plugins/claude-quota/gateway"
+	"github.com/router-for-me/CLIProxyAPI/v8/plugins/claude-quota/offers"
 )
 
 const (
 	pluginID   = "claude-quota"
 	version    = "0.1.0"
-	healthPath = "/v0/management/plugins/claude-quota/health"
+	routeBase  = "/v0/management/plugins/" + pluginID
+	healthPath = routeBase + "/health"
 
 	stateWaiting = "waiting for lock"
 	stateRunning = "running"
@@ -104,17 +107,17 @@ func (p *Plugin) handle(method string, request []byte) (any, error) {
 		p.Shutdown()
 		return struct{}{}, nil
 	case "management.register":
-		return map[string]any{"routes": []any{map[string]any{"Method": http.MethodGet, "Path": "/plugins/" + pluginID + "/health",
-			"Description": "claude-quota engine health"}}}, nil
+		routes := make([]any, 0, len(managementRoutes))
+		for _, r := range managementRoutes {
+			routes = append(routes, map[string]any{"Method": r.method, "Path": "/plugins/" + pluginID + r.path, "Description": r.description})
+		}
+		return map[string]any{"routes": routes}, nil
 	case "management.handle":
-		var req struct{ Method, Path string }
+		var req managementRequest
 		if err := json.Unmarshal(request, &req); err != nil {
 			return nil, fmt.Errorf("decode %s: %w", method, err)
 		}
-		if req.Method != http.MethodGet || req.Path != healthPath {
-			return reply(http.StatusNotFound, map[string]string{"error": "not found"}), nil
-		}
-		return reply(http.StatusOK, p.health(time.Now())), nil
+		return p.serve(req), nil
 	case "usage.handle":
 		var rec struct {
 			AuthID, AuthIndex string
@@ -144,7 +147,7 @@ func reply(status int, body any) map[string]any {
 func (p *Plugin) apply(cfg Config) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	if r := p.cur.Load(); r != nil && r.cfg == cfg {
+	if r := p.cur.Load(); r != nil && reflect.DeepEqual(r.cfg, cfg) {
 		return
 	}
 	p.stopLocked()
@@ -194,6 +197,7 @@ type runner struct {
 
 func (r *runner) run(ctx context.Context, logf engine.Logf) {
 	defer close(r.done)
+	defer r.eng.Close()
 	defer r.state.Store(stateStopped)
 	lock, err := r.waitForLock(ctx, logf)
 	if err != nil {
@@ -204,7 +208,7 @@ func (r *runner) run(ctx context.Context, logf engine.Logf) {
 	}
 	defer func() { _ = lock.Close() }()
 	r.state.Store(stateRunning)
-	logf("engine %s running (mode %s)", r.id, engine.Mode)
+	logf("engine %s running (mode %s)", r.id, offers.Mode)
 	r.eng.Run(ctx)
 	logf("engine %s stopped", r.id)
 }
@@ -247,7 +251,7 @@ type accountHealth struct {
 }
 
 func (p *Plugin) health(now time.Time) map[string]any {
-	h := map[string]any{"plugin": pluginID, "version": version, "mode": engine.Mode, "copy": p.copy, "state": stateStopped}
+	h := map[string]any{"plugin": pluginID, "version": version, "mode": offers.Mode, "copy": p.copy, "state": stateStopped}
 	r := p.cur.Load()
 	if r == nil {
 		return h

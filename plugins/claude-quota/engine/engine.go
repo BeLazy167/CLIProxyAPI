@@ -1,8 +1,9 @@
-// Package engine decides and applies model routing for the gateway's Claude accounts.
+// Package engine decides and applies model routing for the gateway's Claude accounts, and drives the offers.
 //
 // One goroutine (Run) owns all engine state and handles every trigger in turn: the interval poll, a
-// window's natural reset time, and a quota 429 seen by the gateway. That goroutine is the engine's one
-// lock, so usage reads for an account never overlap and plans are applied in generation order.
+// window's natural reset time, a quota 429 seen by the gateway, and each claim tap. That goroutine is the
+// engine's one lock, so usage reads for an account never overlap, plans are applied in generation order,
+// and claims run one at a time, as the Python service's CLAIM_LOCK made them.
 package engine
 
 import (
@@ -16,10 +17,12 @@ import (
 	"os"
 	"slices"
 	"sort"
+	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/router-for-me/CLIProxyAPI/v8/plugins/claude-quota/gateway"
+	"github.com/router-for-me/CLIProxyAPI/v8/plugins/claude-quota/offers"
 	"github.com/router-for-me/CLIProxyAPI/v8/plugins/claude-quota/rules"
 )
 
@@ -39,6 +42,10 @@ type Config struct {
 	// LastTryFile keeps each account's last usage read attempt, so MinReadGap holds across a restart or a
 	// handoff to another loaded copy. Only the engine holding the state dir lock runs, so one writer at a time.
 	LastTryFile string
+	// StateFile is the offers state file shared with the Python service.
+	StateFile string
+	Offers    offers.Config
+	Send      offers.SendConfig
 }
 
 // Status is the engine state the health route reports.
@@ -66,8 +73,13 @@ type Engine struct {
 	logf Logf
 	now  func() time.Time
 	hits chan string
+	jobs chan func()
+
+	stopped   chan struct{}
+	closeOnce sync.Once
 
 	status atomic.Pointer[Status]
+	offers *offers.Service
 
 	cache    map[string]entry
 	lastTry  map[string]time.Time
@@ -84,6 +96,8 @@ func New(cfg Config, gw *gateway.Client, w Writer, logf Logf) *Engine {
 	e := &Engine{
 		cfg: cfg, gw: gw, w: w, logf: logf, now: time.Now,
 		hits:     make(chan string, 64),
+		jobs:     make(chan func()),
+		stopped:  make(chan struct{}),
 		cache:    map[string]entry{},
 		lastTry:  map[string]time.Time{},
 		lastGood: map[string]time.Time{},
@@ -93,9 +107,18 @@ func New(cfg Config, gw *gateway.Client, w Writer, logf Logf) *Engine {
 	e.read = func(ctx context.Context, acct gateway.Account) ([]byte, error) {
 		return readUsage(ctx, client, cfg.UsageBase, cfg.UserAgent, acct.Token)
 	}
+	e.offers = offers.New(cfg.Offers, offers.NewStore(cfg.StateFile), offers.NewSender(cfg.Send, logf), offers.Hooks{
+		ReadUsage:  func(ctx context.Context, acct gateway.Account) ([]byte, error) { return e.read(ctx, acct) },
+		AfterReset: e.afterReset,
+	}, logf)
 	e.status.Store(&Status{Mode: Mode})
 	return e
 }
+
+// statusError is a usage read answered with a status other than 200.
+type statusError struct{ code int }
+
+func (s statusError) Error() string { return fmt.Sprintf("HTTP %d", s.code) }
 
 func readUsage(ctx context.Context, client *http.Client, base, userAgent, token string) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, base+"/api/oauth/usage?cedar_ember=1&skip_spend=1", nil)
@@ -112,7 +135,7 @@ func readUsage(ctx context.Context, client *http.Client, base, userAgent, token 
 	}
 	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("HTTP %d", resp.StatusCode)
+		return nil, statusError{resp.StatusCode}
 	}
 	return io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 }
@@ -130,11 +153,95 @@ func (e *Engine) QuotaHit(id string) {
 	}
 }
 
+// Offers is the engine's offers service. Its page methods only read and may run on any goroutine.
+func (e *Engine) Offers() *offers.Service {
+	return e.offers
+}
+
+// Do runs job on the engine goroutine and waits for it to finish. It reports false, without running job,
+// when the engine stops or does not take the job within wait (it is not running yet, or busy that long).
+func (e *Engine) Do(job func(), wait time.Duration) bool {
+	timer := time.NewTimer(wait)
+	defer timer.Stop()
+	done := make(chan struct{})
+	select {
+	case e.jobs <- func() { defer close(done); job() }:
+		<-done
+		return true
+	case <-e.stopped:
+	case <-timer.C:
+	}
+	return false
+}
+
+// Close marks the engine stopped, so Do stops waiting for it. Run calls it on the way out; the owner calls
+// it when Run never started.
+func (e *Engine) Close() {
+	e.closeOnce.Do(func() { close(e.stopped) })
+}
+
+// PanelClaim claims grantID on the credential the gateway lists under authIndex. Run it inside Do.
+func (e *Engine) PanelClaim(authIndex, grantID string) (offers.Result, string) {
+	ctx := context.Background()
+	creds, err := e.gw.Credentials(ctx)
+	if err != nil {
+		return offers.Result{Code: http.StatusBadGateway, Message: fmt.Sprintf("Could not read the gateway's credentials (%v). Nothing was claimed.", err)}, ""
+	}
+	names, _ := gateway.AuthFiles(e.cfg.AuthDir)
+	for name, c := range creds {
+		if c.AuthIndex == authIndex && slices.Contains(names, name) {
+			return e.offers.PanelClaim(ctx, name, grantID)
+		}
+	}
+	return offers.Result{Code: http.StatusNotFound, Message: "No Claude auth file has this auth_index. Nothing was claimed."}, ""
+}
+
+// afterReset runs after a claim result "reset": it clears the gateway's cooldown for the account and plans
+// again at once from the post-claim read, so a Fable reset is usable without waiting for a cycle.
+func (e *Engine) afterReset(ctx context.Context, acct gateway.Account, usageAfter any) string {
+	line := e.resetAfterClaim(ctx, acct)
+	if usageAfter == nil {
+		return line
+	}
+	raw, _ := json.Marshal(usageAfter)
+	if lim, ok := rules.ReadLimits(raw); ok {
+		e.cache[acct.Name] = entry{limits: lim, readAt: e.now()}
+		e.lastGood[acct.Name] = e.now()
+	} else {
+		delete(e.cache, acct.Name)
+		e.logf("%s: routing skipped, no readable weekly or Fable percent", acct.Label)
+	}
+	if all, err := gateway.AuthFiles(e.cfg.AuthDir); err == nil {
+		e.apply(ctx, "claim reset", all, nil)
+	}
+	return line
+}
+
+func (e *Engine) resetAfterClaim(ctx context.Context, acct gateway.Account) string {
+	creds, err := e.gw.Credentials(ctx)
+	if err != nil {
+		return fmt.Sprintf("gateway cooldown not cleared: %v", err)
+	}
+	idx := creds[acct.Name].AuthIndex
+	if idx == "" {
+		return "gateway cooldown not cleared: the gateway does not list this auth file"
+	}
+	if err := e.w.ResetCooldown(ctx, acct, idx, "after a reset claim"); err != nil {
+		return fmt.Sprintf("gateway cooldown not cleared: %v", err)
+	}
+	if Mode == "shadow" {
+		return "gateway cooldown reset is logged only (shadow routing writer)"
+	}
+	return "gateway cooldown cleared"
+}
+
 // Run plans at once, then on every trigger until ctx ends. On the way out it releases the Opus/Sonnet
 // reservations, so a stopped engine never leaves those models held back.
 func (e *Engine) Run(ctx context.Context) {
+	defer e.Close()
 	e.started = e.now()
 	e.loadLastTry()
+	e.offers.Recover()
 	e.cycle(ctx, "start", nil)
 	poll := time.NewTicker(e.cfg.Interval)
 	defer poll.Stop()
@@ -153,6 +260,8 @@ func (e *Engine) Run(ctx context.Context) {
 			e.cycle(ctx, "window reset or quota 429", e.dueNames(e.now()))
 		case id := <-e.hits:
 			e.noteHit(id)
+		case job := <-e.jobs:
+			job()
 		}
 		timer.Stop()
 	}
@@ -230,6 +339,7 @@ func (e *Engine) knownNames() []string {
 
 // cycle reads usage for the named accounts (every account when names is nil), then plans and writes.
 func (e *Engine) cycle(ctx context.Context, why string, names []string) {
+	e.offers.ExpireOffered(e.now())
 	all, err := gateway.AuthFiles(e.cfg.AuthDir)
 	if err != nil {
 		e.logf("cycle skipped: auth dir: %v", err)
@@ -282,6 +392,7 @@ func (e *Engine) readOne(ctx context.Context, name string) bool {
 		return false
 	case !acct.TokenFresh(now):
 		e.logf("%s: token stale, skipped", acct.Label)
+		e.offers.TokenStale(ctx, acct, now)
 		return false
 	case now.Before(e.lastTry[name].Add(e.cfg.MinReadGap)):
 		e.pending[name] = true
@@ -298,6 +409,14 @@ func (e *Engine) readOne(ctx context.Context, name string) bool {
 	if err != nil {
 		delete(e.cache, name)
 		e.logf("%s: usage read failed: %v", acct.Label, err)
+		var se statusError
+		if errors.As(err, &se) && (se.code == http.StatusUnauthorized || se.code == http.StatusForbidden) {
+			e.offers.TokenStale(ctx, acct, now)
+		}
+		return false
+	}
+	if !e.offers.Observe(ctx, acct, body, now) {
+		delete(e.cache, name)
 		return false
 	}
 	lim, ok := rules.ReadLimits(body)

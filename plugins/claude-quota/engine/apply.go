@@ -84,7 +84,7 @@ func healCooldowns(ctx context.Context, w Writer, logf Logf, creds map[string]ga
 				acct.Label, stale[0].RetryAt.UTC().Format(time.RFC3339))
 			continue
 		}
-		if err := w.ResetCooldown(ctx, acct, cred.AuthIndex, stale[0].RetryAt); err != nil {
+		if err := w.ResetCooldown(ctx, acct, cred.AuthIndex, "stale until "+stale[0].RetryAt.UTC().Format(time.RFC3339)); err != nil {
 			logf("%s: gateway cooldown not cleared: %v", acct.Label, err)
 		}
 	}

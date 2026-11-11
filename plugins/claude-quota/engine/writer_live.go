@@ -4,7 +4,6 @@ package engine
 
 import (
 	"context"
-	"time"
 
 	"github.com/router-for-me/CLIProxyAPI/v8/plugins/claude-quota/gateway"
 )
@@ -30,10 +29,10 @@ func (l liveWriter) SetExcludedModels(ctx context.Context, acct gateway.Account,
 	return nil
 }
 
-func (l liveWriter) ResetCooldown(ctx context.Context, acct gateway.Account, authIndex string, staleUntil time.Time) error {
+func (l liveWriter) ResetCooldown(ctx context.Context, acct gateway.Account, authIndex, why string) error {
 	if err := l.gw.ResetCooldown(ctx, authIndex); err != nil {
 		return err
 	}
-	l.logf("%s: gateway cooldown until %s was stale and is cleared", acct.Label, staleUntil.UTC().Format(time.RFC3339))
+	l.logf("%s: gateway cooldown cleared (%s)", acct.Label, why)
 	return nil
 }

@@ -15,6 +15,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/router-for-me/CLIProxyAPI/v8/plugins/claude-quota/engine"
+	"github.com/router-for-me/CLIProxyAPI/v8/plugins/claude-quota/offers"
 )
 
 const (
@@ -47,11 +48,23 @@ type rawConfig struct {
 	MinReadGap        string    `yaml:"min_read_gap"`
 	ResetGrace        string    `yaml:"reset_grace"`
 	LockRetry         string    `yaml:"lock_retry"`
+
+	PublicBase           string   `yaml:"public_base"`
+	BarkBases            []string `yaml:"bark_bases"`
+	BarkKeyFile          string   `yaml:"bark_key_file"`
+	ResendBase           string   `yaml:"resend_base"`
+	ResendKeyFile        string   `yaml:"resend_key_file"`
+	EmailFrom            string   `yaml:"email_from"`
+	EmailTo              string   `yaml:"email_to"`
+	ThresholdPct         float64  `yaml:"threshold_pct"`
+	MinResetHours        int      `yaml:"min_reset_hours"`
+	ExpiryAlertHours     []int    `yaml:"expiry_alert_hours"`
+	StaleTokenAlertHours int      `yaml:"stale_token_alert_hours"`
 }
 
 func defaults() rawConfig {
 	return rawConfig{
-		Mode:              engine.Mode,
+		Mode:              offers.Mode,
 		Interval:          "15m",
 		ManagementBase:    "http://127.0.0.1:8317",
 		ManagementKeyFile: "~/.config/claude-reset/cpa-mgmt.key",
@@ -63,6 +76,18 @@ func defaults() rawConfig {
 		MinReadGap:        "5m",
 		ResetGrace:        "1m",
 		LockRetry:         "10s",
+
+		PublicBase:           "https://gw.blzy.app/reset",
+		BarkBases:            offers.DefaultBarkBases,
+		BarkKeyFile:          "~/.config/bark/key",
+		ResendBase:           offers.DefaultResendBase,
+		ResendKeyFile:        "~/.config/claude-reset/resend.key",
+		EmailFrom:            "claude-reset@blzy.app",
+		EmailTo:              "dhruvkhara167@gmail.com",
+		ThresholdPct:         90,
+		MinResetHours:        24,
+		ExpiryAlertHours:     []int{168, 24},
+		StaleTokenAlertHours: 2,
 	}
 }
 
@@ -76,8 +101,8 @@ func ParseConfig(raw []byte) (Config, error) {
 	if err := dec.Decode(&rc); err != nil && !errors.Is(err, io.EOF) {
 		return Config{}, fmt.Errorf("config: %w", err)
 	}
-	if rc.Mode != engine.Mode {
-		return Config{}, fmt.Errorf("config: mode %q is not supported by this build, which supports only %q", rc.Mode, engine.Mode)
+	if rc.Mode != offers.Mode {
+		return Config{}, fmt.Errorf("config: mode %q is not supported by this build, which supports only %q", rc.Mode, offers.Mode)
 	}
 	if err := loopback(rc.ManagementBase); err != nil {
 		return Config{}, err
@@ -125,7 +150,45 @@ func ParseConfig(raw []byte) (Config, error) {
 	if cfg.ManagementKey = strings.TrimSpace(string(key)); cfg.ManagementKey == "" {
 		return Config{}, fmt.Errorf("config: management key file %s is empty", keyFile)
 	}
+	if err := offersConfig(rc, &cfg); err != nil {
+		return Config{}, err
+	}
 	return cfg, nil
+}
+
+// offersConfig fills the offers and sender settings. A build that can send needs its Bark and Resend key
+// files now, so a missing key stops the plugin at load instead of at the first alert.
+func offersConfig(rc rawConfig, cfg *Config) error {
+	u, err := url.Parse(rc.PublicBase)
+	if err != nil || (u.Scheme != "https" && u.Scheme != "http") || u.Host == "" {
+		return fmt.Errorf("config: public_base %q must be an absolute http(s) URL", rc.PublicBase)
+	}
+	if rc.ThresholdPct <= 0 || rc.MinResetHours < 0 || rc.StaleTokenAlertHours < 0 || len(rc.ExpiryAlertHours) == 0 {
+		return fmt.Errorf("config: threshold_pct, min_reset_hours, expiry_alert_hours and stale_token_alert_hours must be set and not negative")
+	}
+	e := &cfg.Engine
+	e.StateFile = filepath.Join(cfg.StateDir, "state.json")
+	e.Offers = offers.Config{AuthDir: e.AuthDir, PublicBase: strings.TrimRight(rc.PublicBase, "/"), Origin: u.Scheme + "://" + u.Host,
+		Rules:                offers.Rules{ThresholdPct: rc.ThresholdPct, MinResetHours: rc.MinResetHours, ExpiryAlertHours: rc.ExpiryAlertHours},
+		StaleTokenAlertHours: rc.StaleTokenAlertHours}
+	e.Send = offers.SendConfig{APIBase: e.UsageBase, UserAgent: e.UserAgent, BarkBases: rc.BarkBases,
+		ResendBase: strings.TrimRight(rc.ResendBase, "/"), EmailFrom: rc.EmailFrom, EmailTo: rc.EmailTo}
+	for _, k := range []struct {
+		name string
+		raw  string
+		dst  *string
+	}{{"bark_key_file", rc.BarkKeyFile, &e.Send.BarkKeyFile}, {"resend_key_file", rc.ResendKeyFile, &e.Send.ResendKeyFile}} {
+		if *k.dst, err = expand(k.raw); err != nil {
+			return err
+		}
+		if offers.Mode == "shadow" {
+			continue
+		}
+		if raw, err := os.ReadFile(*k.dst); err != nil || strings.TrimSpace(string(raw)) == "" {
+			return fmt.Errorf("config: %s %s cannot be read or is empty", k.name, *k.dst)
+		}
+	}
+	return nil
 }
 
 func loopback(base string) error {
