@@ -609,3 +609,35 @@ func TestCredentialsReadAgainSoonAfterAFailedStart(t *testing.T) {
 		}
 	}
 }
+
+func TestQuotaReadAfterAFailedStartHealsEveryAccountOwed(t *testing.T) {
+	stale := []map[string]any{{"scope": "credential", "reason": "credential_quota", "retry_at": "2099-01-01T00:00:00Z"}}
+	w := newWorld(t, map[string]acctSpec{
+		"lefta": {weekly: 54, fable: 0, cooldowns: stale},
+		"leftb": {weekly: 40, fable: 0, cooldowns: stale},
+	})
+	w.credsFail = true
+	p := New(w.logf)
+	defer p.Shutdown()
+	if errMsg := register(t, p, w.config("")); errMsg != "" {
+		t.Fatal(errMsg)
+	}
+	w.waitFor("first plan", func() bool { return len(w.lines("plan 1 ")) == 1 })
+	if len(w.lines("cooldown check skipped")) != 1 || len(w.lines("cooldown reset")) != 0 {
+		t.Fatalf("21: the start cycle's credentials read should fail and heal nothing: %q", w.lines("cooldown"))
+	}
+	w.mu.Lock()
+	w.credsFail = false
+	w.mu.Unlock()
+	call(t, p, "usage.handle", map[string]any{"AuthID": "claude-lefta.json", "AuthIndex": "idx-lefta",
+		"Failure": map[string]any{"StatusCode": http.StatusTooManyRequests}})
+	w.waitFor("21: the 429 read of lefta", func() bool { return len(w.lines("(window reset or quota 429)")) == 1 })
+	healed := func(label string) int { return len(w.lines("shadow: " + label + "@example.com cooldown reset")) }
+	if healed("lefta") != 1 || healed("leftb") != 1 {
+		t.Fatalf("21: the first good credentials read healed lefta %d and leftb %d times; both were owed a check:\n%s",
+			healed("lefta"), healed("leftb"), strings.Join(w.lines(""), "\n"))
+	}
+	if w.readCount("leftb") != 1 {
+		t.Fatalf("21: leftb was read again (%d reads); its start read is the proof", w.readCount("leftb"))
+	}
+}

@@ -102,7 +102,7 @@ def build():
 class Run:
     """One fake upstream, one gateway with the plugin, and one Caddy, in a temp dir."""
 
-    def __init__(self, accounts, enabled=True, interval="1s", mode=None, extra_cfg=None):
+    def __init__(self, accounts, enabled=True, interval="1s", mode=None, extra_cfg=None, state=None):
         self.tmp = tempfile.mkdtemp(prefix="cq-claim-")
         self.up_port, self.gw_port, self.caddy_port = free_port(), free_port(), free_port()
         self.up = f"http://127.0.0.1:{self.up_port}"
@@ -127,10 +127,14 @@ class Run:
                 world["gateway"]["cooldowns"][name] = acct["cooldowns"]
             extra = {"excluded_models": acct["excluded_models"]} if "excluded_models" in acct else {}
             with open(os.path.join(auth, name), "w") as f:
-                json.dump({"type": "claude", "email": f"{label}@example.com", "access_token": token,
+                json.dump({"type": "claude", "email": acct.get("email", f"{label}@example.com"), "access_token": token,
                            "organization_uuid": org, "expired": acct.get("expired", iso(5)),
                            "disabled": acct.get("disabled", False), **extra}, f)
         self.ctl("set", world)
+        if state:
+            os.makedirs(os.path.join(self.tmp, "state"))
+            with open(self.state_path(), "w") as f:
+                json.dump(state(auth), f)
         if mode:
             self.ctl("mode", mode)
         for name, val in (("bark.key", BARK_KEY), ("resend.key", RESEND_KEY), ("cpa.key", CPA_KEY), ("caddy-mgmt.key", CPA_KEY)):
@@ -1705,6 +1709,97 @@ def s_email_change_keeps_the_claim_on_the_account():
         r.close()
 
 
+def nearest_hour(t):
+    return (dt.datetime.fromisoformat(t) + dt.timedelta(minutes=30)).replace(minute=0, second=0, microsecond=0).isoformat()
+
+
+def s_legacy_offers_used_after_email_change():
+    reset, ends = iso(72), iso(20)
+    near = grant("g1", [FABLE_W], 95, left=3)
+    soon = grant("g2", ["seven_day"], 0, left=2)
+    soon["ends_at"] = ends
+
+    def python_state(auth):
+        """Offers as the Python service stored them (no key, no org), made while the account's email was a-old@."""
+        common = {"label": "a-old@example.com", "auth_file": os.path.join(auth, "claude-a.json"), "created_at": iso(-0.5)}
+        return {"offers": {
+            "legacy-near": {**common, "kind": "near_limit", "grant_id": "g1", "clears": [FABLE_W], "window": FABLE_W,
+                            "window_reset": reset, "pct_at_alert": 95, "expires_at": iso(48), "state": "DONE", "result": "reset",
+                            "title": "Claude Fable weekly limit 95% used", "after": {"resets_left": 3, "pct": 0, "at": iso(-0.4)}},
+            "legacy-expiring": {**common, "kind": "expiring", "grant_id": "g2", "clears": ["seven_day"], "window": "seven_day",
+                                "window_reset": None, "pct_at_alert": None, "expires_at": ends, "state": "CLOSED", "result": "unavailable_forever",
+                                "title": "Claude reset expires in 20 h", "after": {"resets_left": 2, "pct": 0, "at": iso(-0.4)}}},
+            "sent": {f"a-old@example.com|near|{FABLE_W}|{nearest_hour(reset)}": iso(-0.5),
+                     f"a-old@example.com|expiring-24h|g2|{ends}": iso(-0.5)}}
+
+    r = Run({"a": {"usage": usage([near, soon], fable_pct=95, reset_at=reset)}}, state=python_state)
+    try:
+        polled = r.wait_line(lambda ln: "(poll)" in ln and ln.startswith("plan "), 10)
+        alerts = r.offer_urls()
+        p_near = r.panel_claim("a", "g1")
+        p_soon = r.panel_claim("a", "g2")
+        w = r.world()
+        offers = r.state()["offers"]
+        return [("the account (email now a@) is read and planned at least twice", polled, polled),
+                ("no new alert for the alerts the Python offers (made under a-old@) already used", alerts == [], alerts),
+                ("the panel refuses g1: its near-limit alert was used by the legacy DONE offer",
+                 p_near[0] == 200 and "already used" in p_near[1].get("message", "") and p_near[1].get("offer_id") == "legacy-near", p_near),
+                ("the panel refuses g2: its 24 h expiry alert was used by the legacy CLOSED offer",
+                 p_soon[0] == 200 and "already used" in p_soon[1].get("message", "") and p_soon[1].get("offer_id") == "legacy-expiring", p_soon),
+                ("no claim, no new offer", w["claims"] == [] and sorted(offers) == ["legacy-expiring", "legacy-near"], (w["claims"], sorted(offers)))]
+    finally:
+        r.close()
+
+
+def s_narrower_grant_after_wide_alert_claims_from_panel():
+    full = grant("full-reset", ["seven_day", FABLE_W], 100, ends_h=24 * 30)
+    full["percent_used"] = {"seven_day": 64, FABLE_W: 100}
+    r = Run({"a": {"usage": usage([full], seven_pct=64, fable_pct=100)}})
+    try:
+        url = claimed_offer(r)
+        nonce = r.nonce(url)
+        w = r.world()
+        token = next(iter(w["accounts"]))
+        u = w["accounts"][token]
+        u["cedar_ember"]["grants"].append(grant("fable-only", [FABLE_W], 100, left=2, ends_h=24 * 120))
+        r.ctl("set", {"accounts": {token: u}})
+        page = r.post_claim(url, nonce=nonce)
+        panel = r.panel_claim("a", "fable-only")
+        again = r.post_claim(url, nonce=nonce)
+        w = r.world()
+        states = {o["grant_id"]: o["state"] for o in r.state()["offers"].values()}
+        return [("the page refuses the wide offer and names the narrower grant", page[0] == 409 and "fable-only" in page[1], page[0]),
+                ("the panel claims the narrower grant: the open wide offer sent nothing, so the alert is not used",
+                 panel[0] == 200 and "Reset claimed" in panel[1].get("message", ""), panel),
+                ("one claim, on the narrower grant", [c["grant_id"] for c in w["claims"]] == ["fable-only"] and w["spent"] == {"org-a|fable-only": 1},
+                 (w["claims"], w["spent"])),
+                ("the wide offer expires as the claim's sibling and a later tap on it is refused",
+                 states.get("full-reset") == "EXPIRED" and again[0] == 409 and len(w["claims"]) == 1, (states, again[0]))]
+    finally:
+        r.close()
+
+
+def s_same_email_other_org_claims_from_panel():
+    reset = iso(72)
+    accts = {label: {"email": "same@example.com", "usage": usage([grant("g1", [FABLE_W], 95, left=2)], fable_pct=95, reset_at=reset)}
+             for label in ("a", "b")}
+    r = Run(accts)
+    try:
+        url = claimed_offer(r)
+        polled = r.wait_line(lambda ln: "(poll)" in ln and ln.startswith("plan "), 10)
+        alerts = r.offer_urls()
+        panel = r.panel_claim("b", "g1")
+        page = r.post_claim(url)
+        w = r.world()
+        return [("org-a gets the alert; org-b, same email and same dedupe key, gets none (the Python sent-map dedupe)",
+                 polled and len(alerts) == 1 and list(r.state()["offers"].values())[0]["org"] == "org-a", (polled, alerts)),
+                ("the panel claims g1 on org-b: org-a's alert is not org-b's", panel[0] == 200 and "Reset claimed" in panel[1].get("message", ""), panel),
+                ("org-a's page tap still claims its own offer", page[0] == 200 and "Reset claimed" in page[1], page[0]),
+                ("one spend per organization", w["spent"] == {"org-a|g1": 1, "org-b|g1": 1}, w["spent"])]
+    finally:
+        r.close()
+
+
 def offer_id_of(url):
     return hashlib.sha256(url.rsplit("/", 1)[1].encode()).hexdigest()
 
@@ -1725,7 +1820,9 @@ SCENARIOS = [replay_live_fixtures, routing_rules, s_routing_busy_fallback_and_pa
 NEW = [s_panel_and_page_at_once, s_lost_reply_then_other_interface, s_hot_reload_during_claim, s_stale_wider_offer_refused,
        s_replaced_auth_file_refused, s_natural_reset_every_account_excluded, s_read_fails_during_swap,
        s_python_reads_plugin_state, s_caddy_paths, s_panel_after_page_claim_spends_once,
-       s_email_change_keeps_the_claim_on_the_account, s_credentials_read_again_after_boot]
+       s_email_change_keeps_the_claim_on_the_account, s_credentials_read_again_after_boot,
+       s_legacy_offers_used_after_email_change, s_narrower_grant_after_wide_alert_claims_from_panel,
+       s_same_email_other_org_claims_from_panel]
 
 
 def main():

@@ -31,3 +31,5 @@ a real gateway process and the built `.so`.
     stale cooldown waits a whole poll interval to be healed; or the retry reads usage again.
 20. The plugin folder holds a real email address, or a build that sends email starts without an explicit sender and
     recipient in its config.
+21. The start cycle's credentials read fails, then a quota 429 reads one account and the credentials read works: only
+    that account is healed, and the other accounts owed a check since the start lose it and stay blocked.

@@ -130,3 +130,13 @@ scenarios (`test/claim/e2e.py`, moved from fleet) and the failure lists in fleet
     claim no longer blocks other claims, the panel sends it with a new request_id, a status read no longer settles
     it, and a DONE claim no longer expires the offers made under the new email.
     (`s_email_change_keeps_the_claim_on_the_account`)
+
+## Review round 2 (GPT 6.1 Sol)
+
+63. After an email change, an alert that an offer the Python service made (no `key`, no `org`) already used is sent
+    again and the panel claims it: a DONE near-limit offer, or a CLOSED expiry reminder.
+    (`s_legacy_offers_used_after_email_change`)
+64. An alert for a wide grant, still OFFERED with nothing sent, blocks the panel from claiming the narrower grant that
+    the page then points to. (`s_narrower_grant_after_wide_alert_claims_from_panel`)
+65. An alert or claim of one organization blocks the panel claim of another organization with the same email.
+    (`s_same_email_other_org_claims_from_panel`)
