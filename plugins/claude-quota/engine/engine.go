@@ -7,9 +7,13 @@ package engine
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
+	"os"
 	"slices"
 	"sort"
 	"sync/atomic"
@@ -32,6 +36,9 @@ type Config struct {
 	StaleAfter time.Duration
 	// ResetGrace is how long after a window's reported reset time the engine reads again.
 	ResetGrace time.Duration
+	// LastTryFile keeps each account's last usage read attempt, so MinReadGap holds across a restart or a
+	// handoff to another loaded copy. Only the engine holding the state dir lock runs, so one writer at a time.
+	LastTryFile string
 }
 
 // Status is the engine state the health route reports.
@@ -65,7 +72,7 @@ type Engine struct {
 	cache    map[string]entry
 	lastTry  map[string]time.Time
 	lastGood map[string]time.Time
-	hit      map[string]bool
+	pending  map[string]bool
 	idOf     map[string]string
 	started  time.Time
 	gen      uint64
@@ -80,7 +87,7 @@ func New(cfg Config, gw *gateway.Client, w Writer, logf Logf) *Engine {
 		cache:    map[string]entry{},
 		lastTry:  map[string]time.Time{},
 		lastGood: map[string]time.Time{},
-		hit:      map[string]bool{},
+		pending:  map[string]bool{},
 		idOf:     map[string]string{},
 	}
 	e.read = func(ctx context.Context, acct gateway.Account) ([]byte, error) {
@@ -127,6 +134,7 @@ func (e *Engine) QuotaHit(id string) {
 // reservations, so a stopped engine never leaves those models held back.
 func (e *Engine) Run(ctx context.Context) {
 	e.started = e.now()
+	e.loadLastTry()
 	e.cycle(ctx, "start", nil)
 	poll := time.NewTicker(e.cfg.Interval)
 	defer poll.Stop()
@@ -158,18 +166,19 @@ func (e *Engine) noteHit(id string) {
 	if !ok {
 		return
 	}
-	if !e.hit[name] {
+	if !e.pending[name] {
 		e.logf("%s: quota 429 seen; usage read due at %s", name,
 			maxTime(e.now(), e.lastTry[name].Add(e.cfg.MinReadGap)).UTC().Format(time.RFC3339))
 	}
-	e.hit[name] = true
+	e.pending[name] = true
 }
 
-// dueAt is when an account needs a read outside the poll: after a 429, or once a window it reported has reset.
+// dueAt is when an account needs a read outside the poll: a pending read (after a 429, or one the read gap
+// held back), or once a window it reported has reset.
 func (e *Engine) dueAt(name string) (time.Time, bool) {
 	var at time.Time
 	found := false
-	if e.hit[name] {
+	if e.pending[name] {
 		at, found = e.lastTry[name], true
 	}
 	if c, ok := e.cache[name]; ok {
@@ -194,7 +203,7 @@ func (e *Engine) nextWake() (time.Time, bool) {
 }
 
 func (e *Engine) dueNames(now time.Time) []string {
-	var out []string
+	out := []string{}
 	for _, name := range e.knownNames() {
 		if at, ok := e.dueAt(name); ok && !at.After(now) {
 			out = append(out, name)
@@ -208,7 +217,7 @@ func (e *Engine) knownNames() []string {
 	for name := range e.cache {
 		set[name] = true
 	}
-	for name := range e.hit {
+	for name := range e.pending {
 		set[name] = true
 	}
 	out := make([]string, 0, len(set))
@@ -247,7 +256,7 @@ func (e *Engine) cycle(ctx context.Context, why string, names []string) {
 			return
 		}
 		if !slices.Contains(all, name) {
-			delete(e.hit, name)
+			delete(e.pending, name)
 			continue
 		}
 		if e.readOne(ctx, name) {
@@ -259,27 +268,27 @@ func (e *Engine) cycle(ctx context.Context, why string, names []string) {
 	}
 }
 
-// readOne refreshes one account's limits. It reports whether a usage read succeeded.
+// readOne refreshes one account's limits. It reports whether a usage read succeeded. An account held back
+// only by the read gap stays pending, so it is read once the gap passes; any other skip ends the pending read.
 func (e *Engine) readOne(ctx context.Context, name string) bool {
 	now := e.now()
 	acct, err := gateway.LoadAccount(e.cfg.AuthDir, name)
+	delete(e.pending, name)
 	switch {
 	case err != nil:
-		delete(e.cache, name)
 		e.logf("skip %s: %v", name, err)
 		return false
 	case acct.Disabled:
-		delete(e.cache, name)
 		return false
 	case !acct.TokenFresh(now):
-		delete(e.cache, name)
 		e.logf("%s: token stale, skipped", acct.Label)
 		return false
 	case now.Before(e.lastTry[name].Add(e.cfg.MinReadGap)):
+		e.pending[name] = true
 		return false
 	}
 	e.lastTry[name] = now
-	delete(e.hit, name)
+	e.saveLastTry()
 	body, err := e.read(ctx, acct)
 	if err != nil {
 		delete(e.cache, name)
@@ -297,6 +306,34 @@ func (e *Engine) readOne(ctx context.Context, name string) bool {
 	return true
 }
 
+func (e *Engine) loadLastTry() {
+	raw, err := os.ReadFile(e.cfg.LastTryFile)
+	if errors.Is(err, fs.ErrNotExist) {
+		return
+	}
+	if err == nil {
+		err = json.Unmarshal(raw, &e.lastTry)
+	}
+	if err != nil {
+		e.lastTry = map[string]time.Time{}
+		e.logf("read gap state not loaded, every account is read now: %v", err)
+	}
+}
+
+func (e *Engine) saveLastTry() {
+	raw, err := json.Marshal(e.lastTry)
+	tmp := e.cfg.LastTryFile + ".tmp"
+	if err == nil {
+		err = os.WriteFile(tmp, raw, 0o600)
+	}
+	if err == nil {
+		err = os.Rename(tmp, e.cfg.LastTryFile)
+	}
+	if err != nil {
+		e.logf("read gap state not saved: %v", err)
+	}
+}
+
 func (e *Engine) loadAll(names []string) map[string]loaded {
 	out := make(map[string]loaded, len(names))
 	for _, name := range names {
@@ -312,11 +349,14 @@ func (e *Engine) apply(ctx context.Context, why string, all, readNow []string) {
 	limits := map[string]rules.Limits{}
 	var stale []string
 	for _, name := range all {
+		a := accounts[name]
+		if a.err != nil || a.acct.Disabled || !a.acct.TokenFresh(now) {
+			delete(e.cache, name)
+		}
 		if c, ok := e.cache[name]; ok && now.Sub(c.readAt) <= e.cfg.StaleAfter {
 			limits[name] = c.limits
 			continue
 		}
-		a := accounts[name]
 		since := maxTime(e.lastGood[name], e.started)
 		if a.err == nil && !a.acct.Disabled && now.Sub(since) > e.cfg.StaleAfter &&
 			rules.Changed(a.acct.ExcludedModels, rules.WithoutReserved(a.acct.ExcludedModels)) {

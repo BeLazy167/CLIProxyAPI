@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	anthropicBase   = "https://api.anthropic.com"
-	minAnthropicGap = 5 * time.Minute
+	anthropicBase = "https://api.anthropic.com"
+	minRemoteGap  = 5 * time.Minute
 )
 
 // Config is the validated plugins.configs.claude-quota block.
@@ -68,7 +68,7 @@ func defaults() rawConfig {
 
 // ParseConfig reads the plugin's YAML block and the management key file. It rejects unknown keys,
 // a mode this build does not support, a management base off loopback, and a short read gap
-// against the real Anthropic host.
+// against a usage host off loopback.
 func ParseConfig(raw []byte) (Config, error) {
 	rc := defaults()
 	dec := yaml.NewDecoder(bytes.NewReader(raw))
@@ -102,8 +102,8 @@ func ParseConfig(raw []byte) (Config, error) {
 		*d.dst = v
 	}
 	cfg.Engine.UsageBase = strings.TrimRight(rc.UsageBase, "/")
-	if cfg.Engine.UsageBase == anthropicBase && cfg.Engine.MinReadGap < minAnthropicGap {
-		return Config{}, fmt.Errorf("config: min_read_gap below %s is allowed only against a test usage server", minAnthropicGap)
+	if cfg.Engine.MinReadGap < minRemoteGap && !onLoopback(cfg.Engine.UsageBase) {
+		return Config{}, fmt.Errorf("config: min_read_gap below %s is allowed only against a usage server on loopback", minRemoteGap)
 	}
 	cfg.Engine.UserAgent = rc.UserAgent
 	var err error
@@ -113,6 +113,7 @@ func ParseConfig(raw []byte) (Config, error) {
 	if cfg.StateDir, err = expand(rc.StateDir); err != nil {
 		return Config{}, err
 	}
+	cfg.Engine.LastTryFile = filepath.Join(cfg.StateDir, pluginID+".last-try.json")
 	keyFile, err := expand(rc.ManagementKeyFile)
 	if err != nil {
 		return Config{}, err
@@ -132,11 +133,20 @@ func loopback(base string) error {
 	if err != nil || u.Scheme != "http" {
 		return fmt.Errorf("config: management_base %q must be an http URL on loopback", base)
 	}
-	host := u.Hostname()
-	if ip := net.ParseIP(host); host != "localhost" && (ip == nil || !ip.IsLoopback()) {
+	if !onLoopback(base) {
 		return fmt.Errorf("config: management_base %q must be on loopback, since it receives the management key", base)
 	}
 	return nil
+}
+
+func onLoopback(base string) bool {
+	u, err := url.Parse(base)
+	if err != nil {
+		return false
+	}
+	host := u.Hostname()
+	ip := net.ParseIP(host)
+	return host == "localhost" || (ip != nil && ip.IsLoopback())
 }
 
 func expand(path string) (string, error) {
