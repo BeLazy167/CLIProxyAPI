@@ -1577,6 +1577,116 @@ def s_caddy_paths():
         r.close()
 
 
+def expiring_account():
+    """A grant that ends in 20 h with two resets left and nothing used: only the 24 h expiry reminder offers it."""
+    return {"a": {"usage": usage([grant("g1", ["seven_day"], 0, left=2, ends_h=20)], seven_pct=0)}}
+
+
+def resets_left(w):
+    return next(iter(w["accounts"].values()))["cedar_ember"]["grants"][0]["resets_left"]
+
+
+def s_panel_after_page_claim_spends_once():
+    r = Run(expiring_account(), mode={"claim": "slow", "slow_s": 2})
+    try:
+        url = claimed_offer(r)
+        page = []
+        t = threading.Thread(target=lambda: page.append(r.post_claim(url)))
+        t.start()
+        r.wait_for(lambda w: len(w["claims"]) >= 1, timeout=10)
+        panel = r.panel_claim("a", "g1")
+        t.join()
+        time.sleep(2.5)
+        w = r.world()
+        offers = r.state()["offers"]
+        queued = [
+            ("the page claims the 24 h expiry offer", page and page[0][0] == 200 and "Reset claimed" in page[0][1], page and page[0][0]),
+            ("a panel tap queued behind it sends no second claim: one spend, one reset left",
+             len(w["claims"]) == 1 and sum(w["spent"].values()) == 1 and resets_left(w) == 1, (len(w["claims"]), w["spent"], resets_left(w))),
+            ("the panel answer names the page's DONE offer", panel[0] == 200 and panel[1].get("state") == "DONE" and panel[1].get("offer_id") in offers, panel),
+            ("no new offer or alert for the used reminder", len(offers) == 1 and len(r.offer_urls(w)) == 1, (len(offers), len(r.offer_urls(w)))),
+        ]
+    finally:
+        r.close()
+    r = Run(expiring_account())
+    try:
+        url = claimed_offer(r)
+        nonce = r.nonce(url)
+        panel = r.panel_claim("a", "g1")
+        page = r.post_claim(url, nonce=nonce)
+        w = r.world()
+        reverse = [
+            ("reverse order: the panel claims the alert's offer", panel[0] == 200 and "Reset claimed" in panel[1].get("message", "") and len(r.state()["offers"]) == 1, panel),
+            ("reverse order: the page tap is refused as done; one claim, one spend",
+             page[0] == 409 and len(w["claims"]) == 1 and sum(w["spent"].values()) == 1, (page[0], len(w["claims"]), w["spent"])),
+        ]
+    finally:
+        r.close()
+    both = grant("g1", [FABLE_W], 95, left=2, ends_h=20)
+    r = Run({"a": {"usage": usage([both], fable_pct=95)}}, interval="60s", mode={"bark_fail": 1})
+    try:
+        url = claimed_offer(r)
+        kinds = [o["kind"] for o in r.state()["offers"].values()]
+        page = r.post_claim(url)
+        panel = r.panel_claim("a", "g1")
+        w = r.world()
+        return queued + reverse + [
+            ("the expiry reminder's push failed, so only the near-limit offer exists", kinds == ["near_limit"], kinds),
+            ("the page claims the near-limit offer", page[0] == 200 and "Reset claimed" in page[1], page[0]),
+            ("a panel tap after it makes no offer from the unsent reminder of the same grant: one claim, one spend",
+             len(w["claims"]) == 1 and sum(w["spent"].values()) == 1 and len(r.state()["offers"]) == 1, (len(w["claims"]), w["spent"], panel)),
+        ]
+    finally:
+        r.close()
+
+
+def s_email_change_keeps_the_claim_on_the_account():
+    r = Run(one_near_limit_account(), mode={"claim": "drop_no_spend"})
+    try:
+        url = claimed_offer(r)
+        first_id = offer_id_of(url)
+        r.post_claim(url)
+        st1 = offer(r)["state"]
+        r.set_auth("a", email="a-renamed@example.com")
+        w = r.wait_for(lambda w: len(r.offer_urls(w)) >= 2)
+        urls = r.offer_urls(w)
+        again = r.post_claim(urls[-1]) if len(urls) >= 2 else (0, "no second alert")
+        claims_after_page = len(r.world()["claims"])
+        code, body = r.panel_claim("a", "g1")
+        w = r.world()
+        ids = [c["request_id"] for c in w["claims"]]
+        offers = r.state()["offers"]
+        others = [o["state"] for k, o in offers.items() if k != first_id]
+        unknown = [
+            ("a page tap with a lost reply -> UNKNOWN", st1 == "UNKNOWN", st1),
+            ("after the account's email changes, a tap on the new alert is refused while the first claim is unknown",
+             again[0] == 409 and "unknown outcome" in again[1] and claims_after_page == 1, (again[0], claims_after_page)),
+            ("the panel re-sends the first claim's request_id", len(ids) == 2 and ids[0] == ids[1], ids),
+            ("the panel settles the first offer to DONE, one spend", code == 200 and body.get("offer_id") == first_id and offers[first_id]["state"] == "DONE" and sum(w["spent"].values()) == 1, (code, body, w["spent"])),
+            ("the offer made under the new email expires as the claimed offer's sibling", others and all(s == "EXPIRED" for s in others), others),
+        ]
+    finally:
+        r.close()
+    r = Run(one_near_limit_account(), mode={"claim": "drop_after_spend"})
+    try:
+        url = claimed_offer(r)
+        r.post_claim(url)
+        st1 = offer(r)["state"]
+        r.set_auth("a", email="a-renamed@example.com")
+        settled = wait_until(lambda: offer(r)["state"] == "DONE", 8)
+        w = r.world()
+        return unknown + [
+            ("a lost reply after the spend -> UNKNOWN", st1 == "UNKNOWN", st1),
+            ("after the email change a status read still settles it to DONE; nothing is re-sent", settled and len(w["claims"]) == 1, (offer(r)["state"], len(w["claims"]))),
+        ]
+    finally:
+        r.close()
+
+
+def offer_id_of(url):
+    return hashlib.sha256(url.rsplit("/", 1)[1].encode()).hexdigest()
+
+
 SCENARIOS = [replay_live_fixtures, routing_rules, s_routing_busy_fallback_and_partial_heal, s_routing_failed_free_skips_reserve,
              s_claim_reroutes_now, s_removed_account_is_no_fallback_after_claim, s_expiring_offer_shows_windows, s_real_browser_claim, s_jittered_reset_one_alert,
              s_fable_only_limit_offers_narrow_grant, s_claim_clears_gateway_cooldown, s_claim_gateway_down_still_done,
@@ -1592,7 +1702,8 @@ SCENARIOS = [replay_live_fixtures, routing_rules, s_routing_busy_fallback_and_pa
              s_bad_interval_exits, s_email_protocol_error_bark_fallback, s_string_eligible_blocks_claim]
 NEW = [s_panel_and_page_at_once, s_lost_reply_then_other_interface, s_hot_reload_during_claim, s_stale_wider_offer_refused,
        s_replaced_auth_file_refused, s_natural_reset_every_account_excluded, s_read_fails_during_swap,
-       s_python_reads_plugin_state, s_caddy_paths]
+       s_python_reads_plugin_state, s_caddy_paths, s_panel_after_page_claim_spends_once,
+       s_email_change_keeps_the_claim_on_the_account]
 
 
 def main():

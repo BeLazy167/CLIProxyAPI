@@ -575,3 +575,37 @@ func TestNoUsageReadWhenTheReadGapCannotBeSaved(t *testing.T) {
 		}
 	}
 }
+
+// 19: at gateway boot the first cycle runs before the gateway's HTTP server listens, so its credentials read
+// fails. The engine reads the credentials again within seconds, not at the next poll, and heals a stale
+// cooldown from the start cycle's usage reads, without reading usage again.
+func TestCredentialsReadAgainSoonAfterAFailedStart(t *testing.T) {
+	accts := map[string]acctSpec{}
+	for k, v := range nov11 {
+		accts[k] = v
+	}
+	stale := accts["fableleft"]
+	stale.cooldowns = []map[string]any{{"scope": "credential", "reason": "credential_quota", "retry_at": "2099-01-01T00:00:00Z"}}
+	accts["fableleft"] = stale
+	w := newWorld(t, accts)
+	w.credsFail = true
+	p := New(w.logf)
+	defer p.Shutdown()
+	if errMsg := register(t, p, w.config("")); errMsg != "" {
+		t.Fatal(errMsg)
+	}
+	w.waitFor("first plan", func() bool { return len(w.lines("plan 1 ")) == 1 })
+	if len(w.lines("cooldown check skipped")) != 1 || len(w.lines("cooldown reset")) != 0 {
+		t.Fatalf("19: the start cycle's credentials read should fail and heal nothing: %q", w.lines("cooldown"))
+	}
+	w.mu.Lock()
+	w.credsFail = false
+	w.mu.Unlock()
+	w.waitFor("the stale cooldown healed after the credentials are read again",
+		func() bool { return len(w.lines("cooldown reset (stale until 2099-01-01T00:00:00Z)")) == 1 })
+	for label := range nov11 {
+		if n := w.readCount(label); n != 1 {
+			t.Fatalf("19: the retry read usage again: %s read %d times", label, n)
+		}
+	}
+}

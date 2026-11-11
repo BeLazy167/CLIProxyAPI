@@ -117,3 +117,16 @@ scenarios (`test/claim/e2e.py`, moved from fleet) and the failure lists in fleet
 57. A tap that arrives while this copy waits for the state lock blocks forever. (`s_hot_reload_during_claim`)
 58. A legacy offer (made by Python, no `org`) cannot be claimed, or is bound to an organization other than the one
     in its auth file when the plugin first loads it. (unit `TestBindLegacyOffers`)
+
+## Review round (GPT 6.1 Sol)
+
+59. (unit) The SENDING record and its request ID are not durable before the claim POST: the rename's directory entry
+    is not synced, or a failed sync still lets the claim go out.
+60. (unit) A usage body or state file with data after the first JSON value is accepted, where Python refuses it.
+61. A panel tap after the page claimed a grant (queued behind it, or later) makes a new offer from a candidate that
+    claim used up, and spends a second reset: the same expiry reminder, or the unsent reminder of the same grant.
+    The reverse order spends twice. (`s_panel_after_page_claim_spends_once`)
+62. An account is told apart by its email, so after an email change (same organization, same auth file) an UNKNOWN
+    claim no longer blocks other claims, the panel sends it with a new request_id, a status read no longer settles
+    it, and a DONE claim no longer expires the offers made under the new email.
+    (`s_email_change_keeps_the_claim_on_the_account`)

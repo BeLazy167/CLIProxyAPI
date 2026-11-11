@@ -27,3 +27,7 @@ a real gateway process and the built `.so`.
     Fable-out fallback and keeps the Opus/Sonnet reservation on the healthy account.
 18. A reconfigure or a lock handoff to another loaded copy reads every account again inside `min_read_gap`; or an
     account skipped for the gap is not read once the gap passes.
+19. At gateway boot the first cycle's credentials read fails (the gateway's HTTP server is not listening yet), and a
+    stale cooldown waits a whole poll interval to be healed; or the retry reads usage again.
+20. The plugin folder holds a real email address, or a build that sends email starts without an explicit sender and
+    recipient in its config.
