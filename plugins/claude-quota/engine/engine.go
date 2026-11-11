@@ -266,7 +266,10 @@ func (e *Engine) Run(ctx context.Context) {
 		if timed {
 			wake = timer.C
 		}
-		if e.credFailed && len(retries) > 0 {
+		if !e.credFailed {
+			retries = nil
+		}
+		if len(retries) > 0 {
 			retry = time.After(time.Until(retryAt.Add(retries[0])))
 		}
 		select {
