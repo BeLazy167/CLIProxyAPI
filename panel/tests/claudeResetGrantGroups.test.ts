@@ -2,20 +2,14 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import type { TFunction } from 'i18next';
 import fixture from './fixtures/claudeUsageFableExhausted.json';
 import {
-  confirmGuard,
   groupResetGrants,
   type ResetGrantGroup,
 } from '../src/features/quota/providers/claude/resetGrantGroups';
 import { CLAUDE_CONFIG } from '../src/features/quota/providers/claude/data';
-import {
-  createResetGrantOperations,
-  type ResetGrantOperationDeps,
-} from '../src/features/quota/providers/claude/resetGrantOperations';
 import { apiCallApi, type ApiCallRequest } from '../src/services/api/apiCall';
 import {
   parseAnthropicResetGrantStatus,
   type AnthropicResetGrantStatus,
-  type AnthropicResetSettledCode,
 } from '../src/services/api/claudeResetGrants';
 import type { AuthFileItem, ClaudeQuotaWindow } from '../src/types';
 
@@ -270,7 +264,6 @@ describe('reset grant groups', () => {
     expect(groups[0].action).toEqual({
       state: 'ready',
       grantId: 'account',
-      retry: false,
       windows: [
         {
           window: 'seven_day',
@@ -298,36 +291,6 @@ describe('reset grant groups', () => {
       state: 'ready',
       windows: [{ window: 'seven_day_overage_included', usedPercent: 97, resetAtMs: null }],
     });
-  });
-
-  test('a pending unknown claim retries its own grant and blocks the other group', () => {
-    const status = statusOf([
-      grant('model-soon', { ends_at: '2027-01-01T00:00:00Z' }),
-      grant('model-late'),
-      grant('account', { clears: ACCOUNT_CLEARS }),
-    ]);
-    const quiet = [window('seven-day', 10, 5 * 24 * HOUR), window('seven-day-fable', 10, HOUR)];
-    const groups = groupResetGrants(status, quiet, NOW, { grantId: 'model-late', expired: false });
-    expect(byKind(groups, 'model')?.action).toMatchObject({
-      state: 'ready',
-      grantId: 'model-late',
-      retry: true,
-    });
-    expect(blockReason(byKind(groups, 'account'))).toBe('pending');
-    const expired = groupResetGrants(status, quiet, NOW, { grantId: 'model-late', expired: true });
-    expect(expired.map(blockReason)).toEqual(['expired', 'expired']);
-  });
-
-  test('the group a pending claim belongs to stays visible after its count drops to 0', () => {
-    const groups = groupResetGrants(
-      statusOf([grant('model', { resets_left: 0, usable_now: false })]),
-      fableExhausted,
-      NOW,
-      { grantId: 'model', expired: false }
-    );
-    expect(groups).toHaveLength(1);
-    expect(groups[0]).toMatchObject({ kind: 'model', resetsLeft: 0 });
-    expect(spendGrant(groups[0])).toBe('model');
   });
 });
 
@@ -372,99 +335,5 @@ describe('Claude quota fetch reads grants from the one usage call', () => {
       expect(state.resetGrants).toBeNull();
       expect(state.windows).toHaveLength(2);
     }
-  });
-});
-
-describe('the waste guard is checked again at confirm time', () => {
-  const organization = '11111111-2222-3333-4444-555555555555';
-  const run = async (freshPercent: number, at: number, resetInMs: number) => {
-    let claims = 0;
-    const deps: ResetGrantOperationDeps = {
-      revision: () => 1,
-      now: () => at,
-      requestId: () => 'request-1',
-      readStatus: async () =>
-        statusOf([grant('model', { percent_used: { seven_day_overage_included: freshPercent } })]),
-      readOrganization: async () => organization,
-      claim: async () => {
-        claims += 1;
-        return 'reset';
-      },
-      resetCooldown: async (authIndex: string) => ({
-        status: 'ok' as const,
-        auth_index: authIndex,
-        models: [],
-      }),
-    };
-    const windows = [window('seven-day-fable', 95, resetInMs)];
-    const guard = confirmGuard('model', 'model', windows);
-    const outcome = await createResetGrantOperations(deps)
-      .run('key', 'idx-1', 'model', guard)
-      .then(
-        () => 'sent',
-        (error: Error) => error.message
-      );
-    return { outcome, claims };
-  };
-
-  test('a window that crossed inside 24 h while the dialog was open blocks the claim', async () => {
-    const open = await run(95, NOW, 24 * HOUR + 60_000);
-    expect(open).toEqual({ outcome: 'sent', claims: 1 });
-    const late = await run(95, NOW + 2 * 60_000, 24 * HOUR + 60_000);
-    expect(late).toEqual({ outcome: 'blocked', claims: 0 });
-  });
-
-  test('fresh use under 90% blocks the claim even when the page still shows 95%', async () => {
-    expect(await run(40, NOW, 5 * 24 * HOUR)).toEqual({ outcome: 'blocked', claims: 0 });
-  });
-});
-
-describe('a settled claim clears the gateway cooldown', () => {
-  const organization = '11111111-2222-3333-4444-555555555555';
-  const setup = (code: AnthropicResetSettledCode) => {
-    const cleared: string[] = [];
-    const deps: ResetGrantOperationDeps = {
-      revision: () => 1,
-      now: () => NOW,
-      requestId: () => 'request-1',
-      readStatus: async () => statusOf([grant('model')]),
-      readOrganization: async () => organization,
-      claim: async () => code,
-      resetCooldown: async (authIndex: string) => {
-        cleared.push(authIndex);
-        return { status: 'ok' as const, auth_index: authIndex, models: [] };
-      },
-    };
-    return { deps, cleared };
-  };
-
-  test('reset and already_used clear the cooldown for that credential', async () => {
-    for (const code of ['reset', 'already_used'] as const) {
-      const { deps, cleared } = setup(code);
-      const answer = await createResetGrantOperations(deps).run('key', 'idx-1', 'model');
-      expect(answer).toEqual({ code, unresolved: false });
-      expect(cleared).toEqual(['idx-1']);
-    }
-  });
-
-  test('refusals leave the cooldown alone', async () => {
-    for (const code of ['not_limited', 'cooldown', 'ineligible', 'rate_limited'] as const) {
-      const { deps, cleared } = setup(code);
-      await createResetGrantOperations(deps).run('key', 'idx-1', 'model');
-      expect(cleared).toEqual([]);
-    }
-  });
-
-  test('a failed cooldown clear is reported, and the claim still counts as settled', async () => {
-    const { deps } = setup('reset');
-    deps.resetCooldown = async () => {
-      throw new Error('gateway down');
-    };
-    const operations = createResetGrantOperations(deps);
-    expect(await operations.run('key', 'idx-1', 'model')).toEqual({
-      code: 'cooldown_clear_failed',
-      unresolved: false,
-    });
-    expect(operations.inspect('key')?.code).toBe('reset');
   });
 });

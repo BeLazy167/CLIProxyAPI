@@ -2559,30 +2559,18 @@
     "remaining": "Còn lại {{percent}}%"
   },
   "claude_reset": {
-    "retry_confirm": "Thử lại lượt đặt lại chưa rõ kết quả cho “{{name}}” với ID yêu cầu ban đầu? Một lượt đặt lại có thể đã được tiêu tốn. Hãy thử lại trong vòng 10 phút; không tải lại trang hoặc bắt đầu nhận ở tab khác.",
     "remaining": "Lượt đặt lại còn lại",
     "title": "Lượt đặt lại dự trữ",
     "scope": "Sử dụng một quyền đặt lại có hạn để xóa chu kỳ sử dụng Claude đủ điều kiện. Chỉ xác nhận khi bạn muốn tiêu tốn một lượt đặt lại. Việc khôi phục chỉ giới hạn trong tab/phiên này; không tải lại hoặc dùng tab khác trong khi kết quả chưa rõ.",
     "loading": "Đang tải…",
     "read_error": "Không thể đọc quyền đặt lại. Chưa gửi yêu cầu nào.",
-    "blocked": "Chưa gửi yêu cầu đặt lại: không thể xác minh tính đủ điều kiện, danh tính tài khoản hoặc phiên. Hãy làm mới và kiểm tra lại.",
-    "unknown": "Kết quả chưa xác định. Một lượt đặt lại có thể đã được sử dụng. Thử lại trong vòng 10 phút bằng cùng ID yêu cầu; không bắt đầu yêu cầu khác ở nơi khác.",
-    "expired": "Khoảng thời gian thử lại đã hết hạn. Các yêu cầu tiếp theo bị chặn trong phiên này. Hãy kiểm tra tài khoản Claude của bạn trước khi thực hiện thêm hành động.",
-    "retry": "Thử lại cùng yêu cầu",
+    "unknown": "Plugin claude-quota không phản hồi. Nếu yêu cầu đã được gửi, plugin sẽ lưu kết quả và xác nhận ở lần kiểm tra tiếp theo. Hãy làm mới trước khi dùng lại.",
     "empty": "Không có quyền đặt lại dự trữ nào.",
     "count": "Còn {{left}} / {{total}} lượt đặt lại",
     "ends": "Hết hạn: {{date}}",
     "use": "Đặt lại giới hạn",
     "confirm": "Xác nhận đặt lại",
     "confirm_text": "Dùng một lượt đặt lại ({{kind}}) cho “{{name}}”? Sẽ xóa: {{windows}}. Số lượt đặt lại có hạn.",
-    "reset": "Đã đặt lại giới hạn sử dụng.",
-    "already_used": "Quyền này đã được sử dụng.",
-    "not_limited": "Không đặt lại: tài khoản hiện không bị giới hạn.",
-    "cooldown": "Không đặt lại: đang trong thời gian cooldown.",
-    "ineligible": "Tài khoản này không đủ điều kiện.",
-    "unavailable": "Tính năng đặt lại hiện không khả dụng.",
-    "rate_limited": "Yêu cầu bị giới hạn tốc độ.",
-    "auth_error": "Ủy quyền đã bị từ chối.",
     "kind_account": "tài khoản",
     "kind_model": "mô hình",
     "window_use": "{{label}} (đã dùng {{percent}}%)",
@@ -2595,8 +2583,6 @@
     "block_not_limited": "Dùng dưới 90%",
     "block_resets_soon": "Tự hồi trong 24 giờ",
     "block_use_model_reset": "Dùng lượt đặt lại theo mô hình",
-    "block_pending": "Lượt khác đang chờ",
-    "block_expired": "Hết hạn thử lại",
-    "cooldown_clear_failed": "Đã dùng lượt đặt lại nhưng chưa xóa thời gian chờ của gateway. Hãy xóa ở trang Auth Files."
+    "answer": "{{message}} (trạng thái trong claude-quota: {{state}})"
   }
 }

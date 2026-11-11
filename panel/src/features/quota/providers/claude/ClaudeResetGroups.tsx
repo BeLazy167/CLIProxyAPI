@@ -15,12 +15,7 @@ export function ClaudeResetGroups({ reset, now }: { reset: ClaudeResetGrantsView
         const kind = t(`claude_reset.kind_${group.kind}`);
         const reason =
           group.action.state === 'blocked' ? t(`claude_reset.block_${group.action.reason}`) : null;
-        const spendLabel = t(
-          group.action.state === 'ready' && group.action.retry
-            ? 'claude_reset.retry'
-            : 'claude_reset.spend_label',
-          { kind }
-        );
+        const spendLabel = t('claude_reset.spend_label', { kind });
         return (
           <div key={group.kind} className={styles.group}>
             <span

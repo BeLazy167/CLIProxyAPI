@@ -6,10 +6,11 @@
  * group spends its own grants, so a Fable-only shortfall never burns the
  * account-wide reset.
  *
- * The waste guard refuses a spend unless some cleared window is at least
- * RESET_LIMITED_PERCENT used and at least one such window stays limited for
- * more than RESET_NATURAL_WINDOW_MS. A window that refills on its own within a
- * day is not worth a reset.
+ * The waste guard keeps the spend button off unless some cleared window is at
+ * least RESET_LIMITED_PERCENT used and at least one such window stays limited
+ * for more than RESET_NATURAL_WINDOW_MS. A window that refills on its own within
+ * a day is not worth a reset. The claude-quota plugin, which sends every claim,
+ * checks its own guards again before it claims.
  *
  * Pure and clock-free: `now` is passed in.
  */
@@ -48,16 +49,10 @@ export interface ResetWindowReading {
 }
 
 export type ResetGroupBlock =
-  | 'cooldown'
-  | 'unavailable'
-  | 'not_limited'
-  | 'resets_soon'
-  | 'use_model_reset'
-  | 'pending'
-  | 'expired';
+  'cooldown' | 'unavailable' | 'not_limited' | 'resets_soon' | 'use_model_reset';
 
 export type ResetGroupAction =
-  | { state: 'ready'; grantId: string; retry: boolean; windows: ResetWindowReading[] }
+  | { state: 'ready'; grantId: string; windows: ResetWindowReading[] }
   | { state: 'blocked'; reason: ResetGroupBlock };
 
 export interface ResetGrantGroup {
@@ -67,12 +62,6 @@ export interface ResetGrantGroup {
   /** Soonest end among grants that still have resets left. */
   endsAtMs: number | null;
   action: ResetGroupAction;
-}
-
-/** A claim whose outcome is unknown; only its own request may be retried. */
-export interface PendingResetClaim {
-  grantId: string;
-  expired: boolean;
 }
 
 export const resetGrantKind = (grant: AnthropicResetGrant): ResetGrantKind =>
@@ -139,18 +128,8 @@ function groupAction(
   status: AnthropicResetGrantStatus,
   grants: AnthropicResetGrant[],
   windows: readonly ClaudeQuotaWindow[],
-  now: number,
-  pending: PendingResetClaim | null
+  now: number
 ): ResetGroupAction {
-  if (pending) {
-    if (pending.expired) return { state: 'blocked', reason: 'expired' };
-    const own = grants.find((grant) => grant.id === pending.grantId);
-    // A retry reuses the original request ID, so it cannot spend twice; the
-    // guard and availability checks would only strand an unknown outcome.
-    return own
-      ? { state: 'ready', grantId: own.id, retry: true, windows: readWindows(own, windows) }
-      : { state: 'blocked', reason: 'pending' };
-  }
   const cooldownUntil = parseMs(status.cooldownUntil);
   if (cooldownUntil !== null && cooldownUntil > now)
     return { state: 'blocked', reason: 'cooldown' };
@@ -160,7 +139,7 @@ function groupAction(
   const guard = wasteGuard(readings, now);
   return guard
     ? { state: 'blocked', reason: guard }
-    : { state: 'ready', grantId: grant.id, retry: false, windows: readings };
+    : { state: 'ready', grantId: grant.id, windows: readings };
 }
 
 /**
@@ -169,52 +148,36 @@ function groupAction(
  */
 function preferNarrowerReset(groups: ResetGrantGroup[]): ResetGrantGroup[] {
   const model = groups.find((group) => group.kind === 'model')?.action;
-  if (model?.state !== 'ready' || model.retry) return groups;
+  if (model?.state !== 'ready') return groups;
   const covered = new Set(model.windows.map((reading) => reading.window));
   return groups.map((group) =>
     group.kind === 'account' &&
     group.action.state === 'ready' &&
-    !group.action.retry &&
     group.action.windows.filter(isLimited).every((reading) => covered.has(reading.window))
       ? { ...group, action: { state: 'blocked', reason: 'use_model_reset' } }
       : group
   );
 }
 
-/** Account group first, then model; a group shows while it has resets or a pending claim. */
+/** Account group first, then model; a group shows while it has resets left. */
 export function groupResetGrants(
   status: AnthropicResetGrantStatus,
   windows: readonly ClaudeQuotaWindow[],
-  now: number,
-  pending: PendingResetClaim | null = null
+  now: number
 ): ResetGrantGroup[] {
   const groups = RESET_GRANT_KINDS.flatMap((kind): ResetGrantGroup[] => {
     const grants = status.grants.filter((grant) => resetGrantKind(grant) === kind);
     const live = grants.filter((grant) => grant.resetsLeft > 0 && !hasEnded(grant, now));
-    const holdsPending = grants.some((grant) => grant.id === pending?.grantId);
-    if (live.length === 0 && !holdsPending) return [];
+    if (live.length === 0) return [];
     const ends = live.map((grant) => parseMs(grant.endsAt)).filter((ms) => ms !== null);
     return [
       {
         kind,
         resetsLeft: live.reduce((sum, grant) => sum + grant.resetsLeft, 0),
         endsAtMs: ends.length > 0 ? Math.min(...ends) : null,
-        action: groupAction(status, grants, windows, now, pending),
+        action: groupAction(status, grants, windows, now),
       },
     ];
   });
   return preferNarrowerReset(groups);
 }
-
-/**
- * The check a claim repeats on the status it re-reads right before sending:
- * the confirmed group must still be ready to spend the confirmed grant.
- */
-export const confirmGuard =
-  (kind: ResetGrantKind, grantId: string, windows: readonly ClaudeQuotaWindow[]) =>
-  (status: AnthropicResetGrantStatus, now: number): boolean => {
-    const action = groupResetGrants(status, windows, now).find(
-      (group) => group.kind === kind
-    )?.action;
-    return action?.state === 'ready' && action.grantId === grantId;
-  };
