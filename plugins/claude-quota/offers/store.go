@@ -1,12 +1,10 @@
 package offers
 
 import (
-	"bytes"
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -41,10 +39,8 @@ type State struct {
 type Offer map[string]any
 
 func decodeState(raw []byte) (map[string]any, error) {
-	dec := json.NewDecoder(bytes.NewReader(raw))
-	dec.UseNumber()
 	var doc map[string]any
-	if err := dec.Decode(&doc); err != nil || doc == nil {
+	if err := decodePy(raw, &doc); err != nil || doc == nil {
 		return nil, fmt.Errorf("state file is not a JSON object: %v", err)
 	}
 	return doc, nil

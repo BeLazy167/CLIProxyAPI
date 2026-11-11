@@ -3,7 +3,9 @@ package offers
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"math"
 	"sort"
 	"strconv"
@@ -37,13 +39,25 @@ type Candidate struct {
 
 // ParseUsage decodes a usage body, keeping each number's int or float form as Python's json does.
 func ParseUsage(body []byte) (any, error) {
-	dec := json.NewDecoder(bytes.NewReader(body))
-	dec.UseNumber()
 	var v any
-	if err := dec.Decode(&v); err != nil {
+	if err := decodePy(body, &v); err != nil {
 		return nil, err
 	}
 	return v, nil
+}
+
+// decodePy reads one JSON value into v, keeping each number's int or float form, and refuses anything but
+// whitespace after it, as Python's json.loads does.
+func decodePy(raw []byte, v any) error {
+	dec := json.NewDecoder(bytes.NewReader(raw))
+	dec.UseNumber()
+	if err := dec.Decode(v); err != nil {
+		return err
+	}
+	if _, err := dec.Token(); err != io.EOF {
+		return errors.New("extra data after the JSON value")
+	}
+	return nil
 }
 
 func asObject(v any) map[string]any {
