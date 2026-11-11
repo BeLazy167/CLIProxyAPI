@@ -83,8 +83,10 @@ func (s *Store) Read() (*State, error) {
 	return s.load()
 }
 
-// Update loads the state, applies fn and saves the result (temp file, fsync, rename), as store.py's tx does.
-// A build that does not own the state file (writesState false) applies fn to a copy and saves nothing.
+// Update loads the state, applies fn and saves the result (temp file, fsync, rename), as store.py's tx does,
+// then syncs the directory so the rename survives a power loss. An error means the change may not be durable:
+// the claim path stops before its POST. A build that does not own the state file (writesState false) applies
+// fn to a copy and saves nothing.
 func (s *Store) Update(fn func(*State)) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -114,7 +116,18 @@ func (s *Store) Update(fn func(*State)) error {
 	if err != nil {
 		return err
 	}
-	return os.Rename(tmp, s.path)
+	if err := os.Rename(tmp, s.path); err != nil {
+		return err
+	}
+	dir, err := os.Open(filepath.Dir(s.path))
+	if err != nil {
+		return err
+	}
+	err = dir.Sync()
+	if errClose := dir.Close(); err == nil {
+		err = errClose
+	}
+	return err
 }
 
 func (st *State) CSRFKey() string {
