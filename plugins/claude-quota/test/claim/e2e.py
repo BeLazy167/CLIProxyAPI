@@ -1577,6 +1577,28 @@ def s_caddy_paths():
         r.close()
 
 
+def s_credentials_read_again_after_boot():
+    accts = {"fableleft": {"usage": usage([], seven_pct=54, fable_pct=0),
+                           "cooldowns": [{"scope": "credential", "reason": "credential_quota", "retry_at": nano(80)}]}}
+    r = Run(accts, interval="60s", mode={"gw_down": 1})
+    try:
+        r.wait_line(lambda ln: ln.startswith("plan 1 "))
+        skipped = r.wait_line(lambda ln: ln.startswith("cooldown check skipped"), 2)
+        at_start = r.cooldown_resets()
+        r.ctl("mode", {"gw_down": 0})
+        t0 = time.time()
+        healed = wait_until(lambda: r.cooldown_resets(), 25)
+        took = round(time.time() - t0, 1)
+        retried = [ln for ln in r.plugin_lines() if ln.startswith("plan ") and "(credentials retry)" in ln]
+        reads = r.world()["status_reads"]
+        return [("the start cycle's credentials read fails, as at gateway boot, and heals nothing", skipped and at_start == [], at_start),
+                ("the credentials are read again within seconds and the stale cooldown is healed, without the 60 s poll",
+                 healed and took < 20 and retried, (r.cooldown_resets(), took, retried)),
+                ("the retry reads no usage", reads == 1, reads)]
+    finally:
+        r.close()
+
+
 def expiring_account():
     """A grant that ends in 20 h with two resets left and nothing used: only the 24 h expiry reminder offers it."""
     return {"a": {"usage": usage([grant("g1", ["seven_day"], 0, left=2, ends_h=20)], seven_pct=0)}}
@@ -1703,7 +1725,7 @@ SCENARIOS = [replay_live_fixtures, routing_rules, s_routing_busy_fallback_and_pa
 NEW = [s_panel_and_page_at_once, s_lost_reply_then_other_interface, s_hot_reload_during_claim, s_stale_wider_offer_refused,
        s_replaced_auth_file_refused, s_natural_reset_every_account_excluded, s_read_fails_during_swap,
        s_python_reads_plugin_state, s_caddy_paths, s_panel_after_page_claim_spends_once,
-       s_email_change_keeps_the_claim_on_the_account]
+       s_email_change_keeps_the_claim_on_the_account, s_credentials_read_again_after_boot]
 
 
 def main():

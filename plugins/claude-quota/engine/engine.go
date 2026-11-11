@@ -88,7 +88,16 @@ type Engine struct {
 	idOf     map[string]string
 	started  time.Time
 	gen      uint64
+	// credFailed is true when the newest plan could not read the gateway's credentials; unhealed lists the
+	// accounts that plan read, whose cooldowns are not checked yet.
+	credFailed bool
+	unhealed   []string
 }
+
+// credRetry is the wait before each new credentials read after the start cycle's read failed. At gateway boot
+// the first cycle runs before the gateway's HTTP server listens, and a whole poll interval is too long to leave
+// a stale cooldown in place.
+var credRetry = []time.Duration{2 * time.Second, 5 * time.Second, 15 * time.Second}
 
 // New builds an engine that reads usage over HTTP and writes through w.
 func New(cfg Config, gw *gateway.Client, w Writer, logf Logf) *Engine {
@@ -243,14 +252,22 @@ func (e *Engine) Run(ctx context.Context) {
 	e.loadLastTry()
 	e.offers.Recover()
 	e.cycle(ctx, "start", nil)
+	var retries []time.Duration
+	if e.credFailed {
+		retries = credRetry
+	}
+	retryAt := e.now()
 	poll := time.NewTicker(e.cfg.Interval)
 	defer poll.Stop()
 	for ctx.Err() == nil {
-		var wake <-chan time.Time
+		var wake, retry <-chan time.Time
 		at, timed := e.nextWake()
 		timer := time.NewTimer(time.Until(at))
 		if timed {
 			wake = timer.C
+		}
+		if e.credFailed && len(retries) > 0 {
+			retry = time.After(time.Until(retryAt.Add(retries[0])))
 		}
 		select {
 		case <-ctx.Done():
@@ -258,6 +275,9 @@ func (e *Engine) Run(ctx context.Context) {
 			e.cycle(ctx, "poll", nil)
 		case <-wake:
 			e.cycle(ctx, "window reset or quota 429", e.dueNames(e.now()))
+		case <-retry:
+			retryAt, retries = e.now(), retries[1:]
+			e.retryCredentials(ctx)
 		case id := <-e.hits:
 			e.noteHit(id)
 		case job := <-e.jobs:
@@ -268,6 +288,17 @@ func (e *Engine) Run(ctx context.Context) {
 	stop, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	e.releaseAll(stop)
+}
+
+// retryCredentials plans again without reading usage, so the credentials are read again and the accounts the
+// failed plan read get their cooldown check from the limits they had then.
+func (e *Engine) retryCredentials(ctx context.Context) {
+	all, err := gateway.AuthFiles(e.cfg.AuthDir)
+	if err != nil {
+		e.logf("credentials retry skipped: auth dir: %v", err)
+		return
+	}
+	e.apply(ctx, "credentials retry", all, e.unhealed)
 }
 
 func (e *Engine) noteHit(id string) {
@@ -503,6 +534,10 @@ func (e *Engine) apply(ctx context.Context, why string, all, readNow []string) {
 	creds, credErr := e.gw.Credentials(ctx)
 	e.mapIDs(all, creds, credErr)
 	healCooldowns(ctx, e.w, e.logf, creds, credErr, planned, accounts, readNow, now)
+	e.credFailed, e.unhealed = credErr != nil, nil
+	if e.credFailed {
+		e.unhealed = readNow
+	}
 	e.publish(now, planned)
 	e.logf("plan %d (%s): %d accounts planned, %d read, %d left out", e.gen, why, len(planned), len(readNow), len(all)-len(planned))
 }

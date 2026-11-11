@@ -36,6 +36,9 @@ The default build never writes `state.json`: the Python service owns it until cu
   `<state_dir>/claude-quota.last-try.json`, so the gap holds across a reconfigure and a handoff between loaded copies.
 - Before each plan it checks every cached account again: an account whose auth file is now unreadable, disabled, or
   has a token that expires within a minute is left out, as in the Python service.
+- At gateway boot the plugin starts before the gateway's HTTP server listens, so the start cycle's credentials read
+  fails. It then reads the credentials again after 2 s, 5 s and 15 s (no new usage reads), until one read works, and
+  checks the cooldowns of the accounts the start cycle read.
 - Fail open: once an account has no usage read newer than `stale_after` (45 min), or when the engine stops, it
   releases the Opus/Sonnet reservation. Fable exclusions stay.
 - One goroutine owns all engine state and handles every trigger in turn. Each plan has a generation number.
