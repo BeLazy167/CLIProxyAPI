@@ -27,5 +27,7 @@ release-panel: release-args
 	install -D -m 644 panel/dist/index.html "$(OUT)/static/management.html"
 
 # The in-tree claude-quota plugin, built by its own script (which also refuses a write path in a shadow build).
+# Releases always run the live plugin (it sends routing writes, claims, Bark and email); the environment cannot change
+# that. The no-send build: plugins/claude-quota/build.sh with no CLAUDE_QUOTA_MODE.
 release-claude-quota: release-args
-	plugins/claude-quota/build.sh "$(OUT)/plugins/linux/amd64/claude-quota.so" >/dev/null
+	CLAUDE_QUOTA_MODE=live plugins/claude-quota/build.sh "$(OUT)/plugins/linux/amd64/claude-quota.so" >/dev/null
