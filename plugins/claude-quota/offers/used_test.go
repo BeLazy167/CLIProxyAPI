@@ -38,6 +38,22 @@ func TestOnlyAClaimUsesAnAlert(t *testing.T) {
 				return o
 			}(),
 		}, "sib"},
+		{"marked by the claim that expired it, even with the clock moved back", map[string]any{
+			"sib": func() map[string]any {
+				o := near("EXPIRED", "wide", fable, "2026-11-11T12:00:00+00:00", "seven_day", fable)
+				o["expired_by"] = "claim"
+				return o
+			}(),
+			"claim": func() map[string]any {
+				o := near("DONE", "full", "seven_day", "2026-11-11T11:00:00+00:00", "seven_day", fable)
+				o["after"] = map[string]any{"at": "2026-11-11T11:05:00+00:00"}
+				return o
+			}(),
+		}, "sib"},
+		{"legacy sibling of a claim with no settle time counts", map[string]any{
+			"sib":   near("EXPIRED", "wide", fable, "2026-11-11T10:00:00+00:00", "seven_day", fable),
+			"claim": near("DONE", "full", "seven_day", "2026-11-11T11:00:00+00:00", "seven_day", fable),
+		}, "sib"},
 		{"expired on its own, made after an unrelated claim", map[string]any{
 			"later": near("EXPIRED", "wide", fable, "2026-11-11T12:00:00+00:00", "seven_day", fable),
 			"claim": func() map[string]any {
