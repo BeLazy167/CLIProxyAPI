@@ -1708,6 +1708,7 @@
     "drain_of": "trên {{capacity}}%",
     "drain_unrecorded_one": "{{count}} tài khoản chưa có lịch sử, không dự báo",
     "drain_unrecorded_other": "{{count}} tài khoản chưa có lịch sử, không dự báo",
+    "drain_sparse": "Chưa đủ lịch sử để dự báo theo cách này",
     "drain_stat_pool_empty": "Hết toàn bộ",
     "drain_stat_first_empty": "Hết đầu tiên",
     "drain_stat_next_reset": "Lần đặt lại tới",

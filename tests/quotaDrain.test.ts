@@ -1,4 +1,11 @@
-import { describe, expect, test } from 'bun:test';
+import { beforeAll, describe, expect, test } from 'bun:test';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import i18n from '@/i18n';
+import { DrainCard } from '@/features/quota/components/DrainCard';
+import { buildDrainCard } from '@/features/quota/drainCard';
+import type { QuotaFileEntry } from '@/features/quota/logic';
+import type { PoolWindow } from '@/features/quota/quotaPool';
 import {
   currentSegment,
   hourlyDrain,
@@ -16,10 +23,15 @@ import {
   projectAccount,
   sumProjections,
   valueAt,
+  type FutureUsage,
 } from '@/features/quota/quotaForecast';
 
 const H = 3_600_000;
 const NOW = Date.UTC(2026, 10, 11, 12);
+
+beforeAll(async () => {
+  await i18n.changeLanguage('en');
+});
 
 /** Readings at `NOW + hours` offsets. */
 const at = (pairs: [number, number][], passive = false): Reading[] =>
@@ -364,5 +376,96 @@ describe('recorded history', () => {
     ]);
     const bars = hourlyDrain([a], NOW, NOW + 2 * H);
     expect(bars.map((bar) => bar.drain)).toEqual([1, 10]);
+  });
+});
+
+describe('drain card', () => {
+  const entry: QuotaFileEntry = { file: { name: 'a.json', type: 'claude' }, type: 'claude' };
+  const window: PoolWindow = {
+    key: 'claude:seven-day',
+    label: { text: 'seven-day' },
+    periodHours: 168,
+    members: [{ entry, status: 'reported', remainingPercent: 30, resetAtMs: NOW + 100 * H }],
+    reportedCount: 1,
+    unknownCount: 0,
+    absentCount: 0,
+    totalRemaining: 30,
+    capacity: 100,
+    nextReset: null,
+    allResetAtMs: null,
+    staleCount: 0,
+  };
+  const series = (points: [number, number, 0 | 1][]): QuotaHistorySeries[] => [
+    {
+      auth_index: 'a',
+      window: 'seven-day',
+      points: points.map(([hours, remaining, passive]) => [
+        (NOW + hours * H) / 1000,
+        remaining,
+        passive,
+      ]),
+    },
+  ];
+  const card = (history: QuotaHistorySeries[], usage: FutureUsage) =>
+    buildDrainCard({
+      provider: 'claude',
+      window,
+      history: 'seven-day',
+      size: 'full',
+      authIndexOf: () => 'a',
+      rateSeries: history,
+      drawSeries: history,
+      nowMs: NOW,
+      fromMs: NOW - 24 * H,
+      toMs: NOW + 24 * H,
+      options: { usage, burnHours: 3 },
+    });
+  const forecastRate = (model: ReturnType<typeof card>) =>
+    model?.kind === 'forecast' ? model.accounts[0].rate.perHour : null;
+
+  test('a refill seen only in a passive reading still starts a new segment', () => {
+    const history = series([
+      [-3, 50, 0],
+      [-2, 90, 1],
+      [-1, 40, 0],
+      [0, 30, 0],
+    ]);
+    expect(forecastRate(card(history, 'refill'))).toBeCloseTo(10);
+  });
+
+  test('passive readings alone give no drain rate for the history methods', () => {
+    const history = series([
+      [-3, 90, 1],
+      [-2, 70, 1],
+      [-1, 50, 1],
+      [0, 30, 1],
+    ]);
+    expect(card(history, 'refill')?.kind).toBe('sparse');
+    expect(card(history, 'same')?.kind).toBe('sparse');
+    expect(card(history, 'average')?.kind).toBe('forecast');
+  });
+
+  test('history too sparse for the method keeps a card that says so', () => {
+    const history = series([[0, 30, 0]]);
+    const model = card(history, 'refill');
+    expect(model?.kind).toBe('sparse');
+    expect(card([], 'refill')).toBeNull();
+
+    const html = renderToStaticMarkup(
+      createElement(DrainCard, {
+        model: model as NonNullable<typeof model>,
+        tab: 'remaining',
+        burnHours: 3,
+        showAccounts: false,
+        now: NOW,
+        fromMs: NOW - 24 * H,
+        toMs: NOW + 24 * H,
+        resolvedTheme: 'light',
+        nameOf: () => 'a',
+      })
+    );
+    expect(html).toContain(i18n.t('quota_management.drain_sparse'));
+    expect(html).toContain('30%');
+    expect(html).not.toContain('<svg');
   });
 });

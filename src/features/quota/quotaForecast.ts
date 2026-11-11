@@ -68,7 +68,13 @@ export interface PoolProjection extends AccountProjection {
   drainPerHour: number;
 }
 
-/** The rate an account projects with; null when it has no recorded history. */
+/**
+ * The rate an account projects with; null when it has no recorded history.
+ *
+ * Every reading, passive ones included, can mark a refill, so segments are cut
+ * from all of them. Drain inside the segment comes from active polls only:
+ * passive reads wobble by a point, which reads as fake drain.
+ */
 export function accountRate(
   live: LiveWindow,
   readings: readonly Reading[],
@@ -83,7 +89,9 @@ export function accountRate(
     live.resetAtMs !== null && live.periodHours && live.resetAtMs > nowMs
       ? live.resetAtMs - live.periodHours * HOUR_MS
       : null;
-  const segment = currentSegment(readings, windowOpenMs, nowMs);
+  const segment = currentSegment(readings, windowOpenMs, nowMs).filter(
+    (reading) => !reading.passive
+  );
   return options.usage === 'refill'
     ? segmentAverageRate(segment, nowMs)
     : recentBurnRate(segment, nowMs, options.burnHours);

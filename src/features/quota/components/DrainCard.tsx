@@ -108,12 +108,54 @@ export function DrainCard({
   const { t } = useTranslation();
   const clipId = useId();
   const [hoverMs, setHoverMs] = useState<number | null>(null);
-  const { pool, recorded, accounts } = model;
   const compact = model.size === 'compact';
   const H = compact ? 170 : 290;
 
   const colors = TYPE_COLORS[model.provider] ?? TYPE_COLORS.unknown;
   const accent = (resolvedTheme === 'dark' && colors.dark ? colors.dark : colors.light).text;
+  const title = compact
+    ? `${getTypeLabel(t, model.provider)} · ${formatQuotaWindowLabel(t, model.window.label)}`
+    : getTypeLabel(t, model.provider);
+  const cardProps = {
+    className: compact ? `${styles.card} ${styles.compact}` : styles.card,
+    style: { '--drain-accent': accent } as CSSProperties,
+    'aria-label': title,
+  };
+  const identity = (
+    <div className={styles.identity}>
+      <p className={styles.name}>
+        <ProviderGlyph provider={model.provider} resolvedTheme={resolvedTheme} />
+        <span>{title}</span>
+        <span className={styles.count}>
+          {t('quota_management.drain_accounts_count', { count: model.window.reportedCount })}
+        </span>
+      </p>
+      <p className={styles.total}>
+        <span className={styles.value}>{percent(model.liveRemaining)}</span>
+        <span className={styles.of}>
+          {t('quota_management.drain_of', { capacity: model.capacity })}
+        </span>
+      </p>
+      {model.kind === 'sparse' && (
+        <p className={styles.note}>{t('quota_management.drain_sparse')}</p>
+      )}
+      {model.kind === 'forecast' && model.unrecordedCount > 0 && (
+        <p className={styles.note}>
+          {t('quota_management.drain_unrecorded', { count: model.unrecordedCount })}
+        </p>
+      )}
+    </div>
+  );
+
+  if (model.kind === 'sparse') {
+    return (
+      <section {...cardProps}>
+        <header className={styles.cardHead}>{identity}</header>
+      </section>
+    );
+  }
+
+  const { pool, recorded, accounts } = model;
 
   const x = (ms: number) =>
     PAD.left + ((ms - fromMs) / (toMs - fromMs)) * (W - PAD.left - PAD.right);
@@ -211,10 +253,6 @@ export function DrainCard({
   const horizonEnd = pool.points[pool.points.length - 1].atMs;
   const notBy = t('quota_management.drain_not_by', { when: monthDay(horizonEnd - 1) });
   const nextReset = pool.refills.find((r) => r.restore >= 0.5);
-  const title = compact
-    ? `${getTypeLabel(t, model.provider)} · ${formatQuotaWindowLabel(t, model.window.label)}`
-    : getTypeLabel(t, model.provider);
-
   const stats = [
     {
       label: t('quota_management.drain_stat_pool_empty'),
@@ -261,32 +299,9 @@ export function DrainCard({
   ];
 
   return (
-    <section
-      className={compact ? `${styles.card} ${styles.compact}` : styles.card}
-      style={{ '--drain-accent': accent } as CSSProperties}
-      aria-label={title}
-    >
+    <section {...cardProps}>
       <header className={styles.cardHead}>
-        <div className={styles.identity}>
-          <p className={styles.name}>
-            <ProviderGlyph provider={model.provider} resolvedTheme={resolvedTheme} />
-            <span>{title}</span>
-            <span className={styles.count}>
-              {t('quota_management.drain_accounts_count', { count: model.window.reportedCount })}
-            </span>
-          </p>
-          <p className={styles.total}>
-            <span className={styles.value}>{percent(model.liveRemaining)}</span>
-            <span className={styles.of}>
-              {t('quota_management.drain_of', { capacity: model.capacity })}
-            </span>
-          </p>
-          {model.unrecordedCount > 0 && (
-            <p className={styles.note}>
-              {t('quota_management.drain_unrecorded', { count: model.unrecordedCount })}
-            </p>
-          )}
-        </div>
+        {identity}
         <dl className={styles.stats}>
           {stats.map((stat) => (
             <div key={stat.label} className={styles.stat}>

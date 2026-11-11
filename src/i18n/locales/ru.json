@@ -1751,6 +1751,7 @@
     "drain_of": "из {{capacity}}%",
     "drain_unrecorded_one": "{{count}} аккаунт без истории не прогнозируется",
     "drain_unrecorded_other": "{{count}} аккаунта без истории не прогнозируются",
+    "drain_sparse": "Пока недостаточно истории для этого способа прогноза",
     "drain_stat_pool_empty": "Пул исчерпан",
     "drain_stat_first_empty": "Первым исчерпается",
     "drain_stat_next_reset": "Следующий сброс",

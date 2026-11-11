@@ -53,15 +53,19 @@ export interface DrainAccount {
   projection: AccountProjection;
 }
 
-export interface DrainCardModel {
+interface DrainCardHead {
   provider: QuotaProviderType;
   window: PoolWindow;
   size: 'full' | 'compact';
-  accounts: DrainAccount[];
-  /** Reported accounts with no recorded readings: not projected. */
-  unrecordedCount: number;
   liveRemaining: number;
   capacity: number;
+}
+
+export interface DrainForecastCard extends DrainCardHead {
+  kind: 'forecast';
+  accounts: DrainAccount[];
+  /** Reported accounts with no rate under the chosen method: not projected. */
+  unrecordedCount: number;
   pool: PoolProjection;
   recorded: { runs: ForecastPoint[][]; refills: Refill[] };
   /** Summed recent rate of accounts that still have quota; `estimated` when any fell back to a segment average. */
@@ -69,6 +73,13 @@ export interface DrainCardModel {
   firstEmpty: { account: DrainAccount; atMs: number } | null;
   emptyNowCount: number;
 }
+
+/** History is recorded, but too little of it for the chosen method to give any account a rate. */
+export interface DrainSparseCard extends DrainCardHead {
+  kind: 'sparse';
+}
+
+export type DrainCardModel = DrainForecastCard | DrainSparseCard;
 
 /** Active polls when there are any: passive reads wobble by a point, which reads as fake drain. */
 export function steadyReadings(readings: readonly Reading[]): Reading[] {
@@ -95,6 +106,7 @@ export function buildDrainCard(input: {
   const reported = window.members.filter((member) => member.status === 'reported');
   const accounts: DrainAccount[] = [];
   let unrecordedCount = 0;
+  let anyRecorded = false;
   const horizonMs = Math.max(input.toMs, nowMs + MIN_HORIZON_MS);
 
   const historyFrom = Math.ceil(input.fromMs / HISTORY_STEP_MS) * HISTORY_STEP_MS;
@@ -104,9 +116,8 @@ export function buildDrainCard(input: {
 
   for (const member of reported) {
     const authIndex = input.authIndexOf(member.entry);
-    const rateReadings = authIndex
-      ? steadyReadings(readingsOf(input.rateSeries, authIndex, input.history))
-      : [];
+    const rateReadings = authIndex ? readingsOf(input.rateSeries, authIndex, input.history) : [];
+    anyRecorded ||= rateReadings.length > 0;
     const live = {
       remaining: member.remainingPercent as number,
       resetAtMs: member.resetAtMs,
@@ -128,7 +139,14 @@ export function buildDrainCard(input: {
       projection: projectAccount({ ...live, perHour: rate.perHour }, nowMs, horizonMs),
     });
   }
-  if (accounts.length === 0) return null;
+  const head = {
+    provider: input.provider,
+    window,
+    size: input.size,
+    liveRemaining: window.totalRemaining ?? 0,
+    capacity: window.capacity,
+  };
+  if (accounts.length === 0) return anyRecorded ? { kind: 'sparse', ...head } : null;
 
   const pool = sumProjections(
     accounts.map((a) => ({ projection: a.projection, perHour: a.rate.perHour }))
@@ -140,13 +158,10 @@ export function buildDrainCard(input: {
     .sort((a, b) => a.atMs - b.atMs)[0];
 
   return {
-    provider: input.provider,
-    window,
-    size: input.size,
+    kind: 'forecast',
+    ...head,
     accounts,
     unrecordedCount,
-    liveRemaining: window.totalRemaining ?? 0,
-    capacity: window.capacity,
     pool,
     recorded: recordedOf(accounts.map((a) => a.readings)),
     burn: {

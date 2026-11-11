@@ -1751,6 +1751,7 @@
     "drain_of": "of {{capacity}}%",
     "drain_unrecorded_one": "{{count}} account has no history and is not projected",
     "drain_unrecorded_other": "{{count}} accounts have no history and are not projected",
+    "drain_sparse": "Not enough recorded history for this forecast method yet",
     "drain_stat_pool_empty": "Pool empty",
     "drain_stat_first_empty": "First empty",
     "drain_stat_next_reset": "Next reset",

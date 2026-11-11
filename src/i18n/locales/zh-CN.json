@@ -1751,6 +1751,7 @@
     "drain_of": "共 {{capacity}}%",
     "drain_unrecorded_one": "{{count}} 个账号没有历史记录，未计入预测",
     "drain_unrecorded_other": "{{count}} 个账号没有历史记录，未计入预测",
+    "drain_sparse": "历史记录还不够，暂时无法用这种方式预测",
     "drain_stat_pool_empty": "额度池耗尽",
     "drain_stat_first_empty": "最先耗尽",
     "drain_stat_next_reset": "下次重置",
