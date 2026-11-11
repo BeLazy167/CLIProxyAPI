@@ -1,4 +1,4 @@
-claude-quota claim e2e run 2026-11-11T18:08:24.861531+00:00
+claude-quota claim e2e run 2026-11-11T18:31:30.054646+00:00
 gateway built from /work/tmp/cpa-offers, plugin built with -tags claude_quota_e2e, caddy/reset.caddy on Caddy
 
 # moved from fleet services/claude-reset
@@ -254,7 +254,8 @@ gateway built from /work/tmp/cpa-offers, plugin built with -tags claude_quota_e2
   PASS  a panel tap after it makes no offer from the unsent reminder of the same grant: one claim, one spend
 ## s_email_change_keeps_the_claim_on_the_account
   PASS  a page tap with a lost reply -> UNKNOWN
-  PASS  after the account's email changes, a tap on the new alert is refused while the first claim is unknown
+  PASS  after the account's email changes, the same alert is not sent again: the account's UNKNOWN offer holds it
+  PASS  once the window's reset moves (a new alert), a tap on it is refused while the first claim is unknown
   PASS  the panel re-sends the first claim's request_id
   PASS  the panel settles the first offer to DONE, one spend
   PASS  the offer made under the new email expires as the claimed offer's sibling
@@ -264,5 +265,21 @@ gateway built from /work/tmp/cpa-offers, plugin built with -tags claude_quota_e2
   PASS  the start cycle's credentials read fails, as at gateway boot, and heals nothing
   PASS  the credentials are read again within seconds and the stale cooldown is healed, without the 60 s poll
   PASS  the retry reads no usage
+## s_legacy_offers_used_after_email_change
+  PASS  the account (email now a@) is read and planned at least twice
+  PASS  no new alert for the alerts the Python offers (made under a-old@) already used
+  PASS  the panel refuses g1: its near-limit alert was used by the legacy DONE offer
+  PASS  the panel refuses g2: its 24 h expiry alert was used by the legacy CLOSED offer
+  PASS  no claim, no new offer
+## s_narrower_grant_after_wide_alert_claims_from_panel
+  PASS  the page refuses the wide offer and names the narrower grant
+  PASS  the panel claims the narrower grant: the open wide offer sent nothing, so the alert is not used
+  PASS  one claim, on the narrower grant
+  PASS  the wide offer expires as the claim's sibling and a later tap on it is refused
+## s_same_email_other_org_claims_from_panel
+  PASS  org-a gets the alert; org-b, same email and same dedupe key, gets none (the Python sent-map dedupe)
+  PASS  the panel claims g1 on org-b: org-a's alert is not org-b's
+  PASS  org-a's page tap still claims its own offer
+  PASS  one spend per organization
 
-201 of 201 checks passed
+215 of 215 checks passed
