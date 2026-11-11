@@ -13,6 +13,30 @@ The fork adds files and avoids editing upstream files, so taking an upstream rel
 | `.forgejo/workflows/fork-ci.yml` | Fork CI, run by the mini PC Forgejo runner. |
 | `scripts/ci/` | The CI checks, runnable locally. |
 
+## Outbound traffic and its switches
+
+Besides requests to the AI providers and their login hosts, the gateway makes these requests. None carries prompts,
+tokens or usage.
+
+| What | Host | When | Off switch |
+|---|---|---|---|
+| Panel updater | api.github.com, GitHub release downloads, cpamc.router-for.me | start, every 3 h | `remote-management.disable-auto-update-panel: true`. A missing `static/management.html` is still downloaded when someone opens the panel. |
+| Model catalogs | raw.githubusercontent.com, models.router-for.me | start, every 3 h | the `-local-model` flag, which uses the catalogs built into the binary. The config cannot name the built-in catalogs; a local file path also works. |
+| Antigravity and xAI client versions | antigravity-hub-auto-updater-974169037036.us-central1.run.app, registry.npmjs.org | start, every 3 h | `disable-version-updaters: true` (v8 layout: `requests.disable-version-updaters`). Read at start only. |
+| Latest-version check, plugin store | api.github.com, raw.githubusercontent.com, GitHub releases | when the panel asks | none |
+| Public-IP lookup | api.ipify.org, ifconfig.me, icanhazip.com, ipinfo.io | an OAuth login started from the CLI | none |
+
+`disable-version-updaters` is this fork's only change to upstream files: the field in `internal/config/config.go`, its v8
+path in `internal/config/config_v8.go`, and the guards in `cmd/server/main.go` (Antigravity) and
+`sdk/cliproxy/service_lifecycle.go` (xAI). With it set, the gateway sends the built-in versions:
+`antigravityFallbackVersion` in `internal/misc/antigravity_version.go` and `DefaultXAIFallbackClientVersion` in
+`internal/runtime/executor/helps/xai_version.go`. No config key sets the xAI version. To send a newer one, add
+`"headers": {"x-grok-client-version": "<v>", "User-Agent": "xai-grok-workspace/<v>"}` to the xAI auth file; these
+headers replace the built-in ones.
+
+Third-party plugins make their own requests, which these switches do not cover. The ops repo pins them
+(`deploy/cliproxyapi.plugins`).
+
 ## Branches
 
 - `main` is what runs. Every change lands through a PR. After a merge, Fork CI runs on `main`, and when it is green
