@@ -1362,10 +1362,15 @@ def s_panel_and_page_at_once():
         idx = r.auth_index("a")
         page, panel = parallel([lambda: r.post_claim(url, nonce=nonce), lambda: r.panel_claim("a", "g1", idx)])
         w = r.world()
-        codes = sorted([page[0], panel[0]])
+        again = r.panel_claim("a", "g1", idx)
+        answers = [page[1], panel[1].get("message", "")]
+        claimed = [a for a in answers if "Reset claimed" in a]
+        refused = [a for a in answers if "Reset claimed" not in a and ("is done" in a or "last offer is DONE" in a)]
         return [("panel and page tapped at once -> one claim, one spend", len(w["claims"]) == 1 and sum(w["spent"].values()) == 1, (len(w["claims"]), w["spent"])),
-                ("one interface gets the reset, the other is told the offer is done", codes == [200, 409], (page[0], panel)),
-                ("the panel answer carries the settled offer state", panel[1].get("state") == "DONE", panel[1])]
+                ("one interface gets the reset, the other is told it is done, whichever ran first", len(claimed) == 1 and len(refused) == 1, (page[0], panel)),
+                ("the panel answer carries the settled offer state", panel[1].get("state") == "DONE", panel[1]),
+                ("a later panel claim of the spent grant names its DONE offer and sends nothing",
+                 again[0] == 200 and "last offer is DONE" in again[1].get("message", "") and again[1].get("state") == "DONE" and len(r.world()["claims"]) == 1, again)]
     finally:
         r.close()
 

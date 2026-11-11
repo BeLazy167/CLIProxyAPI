@@ -213,9 +213,14 @@ func (s *Service) PanelClaim(ctx context.Context, name, grantID string) (Result,
 		}
 	}
 	if cand == nil {
-		return Result{http.StatusOK, fmt.Sprintf("Not claimed: grant %s is not worth using now. No window it clears is at %s%% with more than %d h to its own reset "+
+		msg := fmt.Sprintf("Not claimed: grant %s is not worth using now. No window it clears is at %s%% with more than %d h to its own reset "+
 			"for which it is the narrowest grant, and it does not expire within %d h.", grantID, reprFloat(s.cfg.Rules.ThresholdPct), s.cfg.Rules.MinResetHours,
-			slices.Max(append([]int{0}, s.cfg.Rules.ExpiryAlertHours...)))}, ""
+			slices.Max(append([]int{0}, s.cfg.Rules.ExpiryAlertHours...)))
+		last := lastSettled(st, acct.Label, grantID)
+		if last != "" {
+			msg += fmt.Sprintf(" Its last offer is %s (result %s).", st.Offers()[last].State(), strPy(st.Offers()[last]["result"]))
+		}
+		return Result{http.StatusOK, msg}, last
 	}
 	oid := OfferID(NewToken())
 	if !s.update("panel offer", func(st *State) { st.AddOffer(oid, cand.record(filepath.Join(s.cfg.AuthDir, name), acct, now)) }) {
@@ -223,6 +228,20 @@ func (s *Service) PanelClaim(ctx context.Context, name, grantID string) (Result,
 	}
 	s.logf("%s: offer %s made from the quota panel for %s (%s)", acct.Label, short(oid), grantID, cand.Kind)
 	return s.Claim(ctx, oid), oid
+}
+
+// lastSettled is the account's most recently settled offer for a grant, so a panel tap that lost the race to
+// the page can say the grant was just claimed.
+func lastSettled(st *State, label, grantID string) string {
+	pick, at := "", ""
+	for id, o := range st.Offers() {
+		a, _ := o["after"].(map[string]any)
+		t, _ := a["at"].(string)
+		if o.Label() == label && o.GrantID() == grantID && t != "" && (pick == "" || t > at) {
+			pick, at = id, t
+		}
+	}
+	return pick
 }
 
 // OfferState is the state an offer is in now, or "" when it is unknown.
