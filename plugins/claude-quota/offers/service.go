@@ -159,7 +159,7 @@ func (s *Service) offer(ctx context.Context, acct gateway.Account, c Candidate, 
 		s.logf("%s: offer skipped: %v", acct.Label, err)
 		return
 	}
-	if _, sent := st.Sent()[c.Key]; sent {
+	if _, done := used(st, acct, filepath.Join(s.cfg.AuthDir, acct.Name), c); done {
 		return
 	}
 	token := NewToken()
@@ -174,6 +174,33 @@ func (s *Service) offer(ctx context.Context, acct gateway.Account, c Candidate, 
 	}) {
 		s.logf("%s: offer %s sent for %s (%s)", acct.Label, short(oid), c.GrantID, c.Kind)
 	}
+}
+
+// used reports whether candidate c was already acted on for this account, and names the settled offer that did,
+// when there is one. It was when its alert was sent; when a settled offer for the account has its dedupe key,
+// apart from the email the key starts with; or, for an expiry reminder, when a claim on the grant went through
+// after the reminder's threshold began. A new offer needs eligibility that came later.
+func used(st *State, acct gateway.Account, authFile string, c Candidate) (string, bool) {
+	_, sent := st.Sent()[c.Key]
+	pick, at := "", time.Time{}
+	for id, o := range st.Offers() {
+		if !o.isFor(acct, authFile) || o.State() == "OFFERED" || o.State() == "UNKNOWN" || o.State() == "SENDING" {
+			continue
+		}
+		done, _ := parseTime(asObject(o["after"])["at"])
+		sameKey := keyTail(o.str("key")) != "" && keyTail(o.str("key")) == keyTail(c.Key)
+		claimedSince := c.Kind == "expiring" && o.State() == "DONE" && o.GrantID() == c.GrantID && !done.Before(c.since)
+		if (sameKey || claimedSince) && (pick == "" || done.After(at)) {
+			pick, at = id, done
+		}
+	}
+	return pick, sent || pick != ""
+}
+
+// keyTail is a dedupe key without the email it starts with.
+func keyTail(key string) string {
+	_, tail, _ := strings.Cut(key, "|")
+	return tail
 }
 
 // reconcile settles claims whose reply was lost, from a read-only status read.

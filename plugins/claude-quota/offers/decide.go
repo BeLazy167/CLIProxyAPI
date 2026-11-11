@@ -35,6 +35,8 @@ type Candidate struct {
 	ExpiresAt   string // when an offer for this candidate stops being claimable
 	Title       string
 	Body        string
+	// since is when an expiry reminder's threshold began (the grant's end minus the threshold); zero for near_limit.
+	since time.Time
 }
 
 // ParseUsage decodes a usage body, keeping each number's int or float form as Python's json does.
@@ -300,7 +302,7 @@ func Decide(label string, usageV any, now time.Time, r Rules) ([]Candidate, []st
 			}
 			out = append(out, Candidate{
 				Kind: "expiring", Key: fmt.Sprintf("%s|expiring-%dh|%s|%s", label, h, gid, g["ends_at"]), GrantID: gid,
-				Clears: clears, Window: clears[0], ExpiresAt: isoformat(ends),
+				Clears: clears, Window: clears[0], ExpiresAt: isoformat(ends), since: ends.Add(-time.Duration(h) * time.Hour),
 				Title: "Claude reset expires in " + human(ends.Sub(now)),
 				Body: fmt.Sprintf("%s: grant %s (%s) expires %s UTC. Windows it clears: %s.%s", label, gid, strPy(label2),
 					strftime(ends), WindowStatus(usage, g), blocked),

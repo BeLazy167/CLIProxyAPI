@@ -215,11 +215,12 @@ func (o Offer) snapshot() map[string]any {
 	return m
 }
 
-// record is the offer Python's _offer stores for this candidate, bound to the account's organization.
+// record is the offer Python's _offer stores for this candidate, bound to the account's organization, with the
+// candidate's dedupe key.
 func (c Candidate) record(authFile string, acct gateway.Account, now time.Time) Offer {
 	f := c.pythonFields()
 	return Offer{
-		"label": acct.Label, "auth_file": authFile, "org": acct.Org, "kind": c.Kind, "grant_id": c.GrantID,
+		"label": acct.Label, "auth_file": authFile, "org": acct.Org, "key": c.Key, "kind": c.Kind, "grant_id": c.GrantID,
 		"clears": c.Clears, "window": c.Window, "window_reset": f["window_reset"], "pct_at_alert": f["pct"],
 		"expires_at": c.ExpiresAt, "created_at": isoformat(now), "state": "OFFERED", "title": c.Title,
 	}

@@ -85,8 +85,9 @@ At start, before the first cycle, SENDING offers become UNKNOWN, and open offers
 binding (by the Python service) are bound to the organization their auth file holds then.
 
 The state file is `<state_dir>/state.json`, with the same keys (`csrf_key`, `offers`, `sent`, `stale`), the same
-offer fields, the same offer IDs, nonces and dedupe keys as Python's `store.py`, written byte for byte as Python
-writes it (`json.dump(indent=1, sort_keys=True)`), by temp file and rename. Unknown keys are kept. A rollback to
+offer fields (plus `org` and `key`, which Python ignores), the same offer IDs, nonces and dedupe keys as Python's
+`store.py`, written byte for byte as Python writes it (`json.dump(indent=1, sort_keys=True)`), by temp file, rename
+and a sync of the directory. Unknown keys are kept. A rollback to
 the Python service reads what the plugin wrote.
 
 ## Routes
@@ -105,6 +106,9 @@ The page sends `Referrer-Policy: same-origin` (a form POST under `no-referrer` c
 configured Origin (`public_base`'s scheme and host), the offer's nonce, a body of at most 4 KB, and at most one
 token, the same in the query and the form. The panel claim uses an open offer for the grant (an UNKNOWN one
 first), or makes one from a fresh read when the grant is what an alert would offer, then runs the same tap.
+It makes no offer for an alert that was already used: one that was sent, one whose dedupe key a settled offer on the
+account holds (offers made by the plugin store it as `key`), or an expiry reminder for a grant claimed since the
+reminder's threshold began. Alerts follow the same rule, so a tap queued behind a claim never spends a second reset.
 It answers `{"message", "offer_id", "state"}` with the tap's status code.
 
 `caddy/reset.caddy` rewrites `https://gw.blzy.app/reset/offer/<token>` and `.../claim` to the two offer routes,
