@@ -62,7 +62,7 @@ func (s *Service) Claim(ctx context.Context, oid string) Result {
 		return Result{http.StatusGone, "This offer expired. Nothing was claimed."}
 	}
 	for id, x := range offers {
-		if id != oid && x.Label() == o.Label() && (x.State() == "SENDING" || x.State() == "UNKNOWN") {
+		if id != oid && x.sameAccount(o) && (x.State() == "SENDING" || x.State() == "UNKNOWN") {
 			return Result{http.StatusConflict, "An earlier claim on this account has an unknown outcome. Nothing was claimed. " +
 				"Wait for the next check, or open that earlier offer."}
 		}
@@ -171,6 +171,7 @@ func (s *Service) PanelClaim(ctx context.Context, name, grantID string) (Result,
 	if Mode == "shadow" {
 		return Result{http.StatusServiceUnavailable, "This plugin build cannot claim (shadow mode). Nothing was claimed."}, ""
 	}
+	path := filepath.Join(s.cfg.AuthDir, name)
 	acct, err := gateway.LoadAccount(s.cfg.AuthDir, name)
 	if err != nil {
 		return Result{http.StatusNotFound, "Could not read the account file. Nothing was claimed."}, ""
@@ -184,7 +185,7 @@ func (s *Service) PanelClaim(ctx context.Context, name, grantID string) (Result,
 	for _, id := range slices.Sorted(maps.Keys(st.Offers())) {
 		o := st.Offers()[id]
 		r, open := rank[o.State()]
-		if !open || o.Label() != acct.Label || o.GrantID() != grantID || (o.Org() != "" && o.Org() != acct.Org) {
+		if !open || !o.isFor(acct, path) || o.GrantID() != grantID {
 			continue
 		}
 		if o.Kind() != "near_limit" {
@@ -216,14 +217,14 @@ func (s *Service) PanelClaim(ctx context.Context, name, grantID string) (Result,
 		msg := fmt.Sprintf("Not claimed: grant %s is not worth using now. No window it clears is at %s%% with more than %d h to its own reset "+
 			"for which it is the narrowest grant, and it does not expire within %d h.", grantID, reprFloat(s.cfg.Rules.ThresholdPct), s.cfg.Rules.MinResetHours,
 			slices.Max(append([]int{0}, s.cfg.Rules.ExpiryAlertHours...)))
-		last := lastSettled(st, acct.Label, grantID)
+		last := lastSettled(st, acct, path, grantID)
 		if last != "" {
 			msg += fmt.Sprintf(" Its last offer is %s (result %s).", st.Offers()[last].State(), strPy(st.Offers()[last]["result"]))
 		}
 		return Result{http.StatusOK, msg}, last
 	}
 	oid := OfferID(NewToken())
-	if !s.update("panel offer", func(st *State) { st.AddOffer(oid, cand.record(filepath.Join(s.cfg.AuthDir, name), acct, now)) }) {
+	if !s.update("panel offer", func(st *State) { st.AddOffer(oid, cand.record(path, acct, now)) }) {
 		return Result{http.StatusInternalServerError, "The offer could not be saved, so nothing was claimed."}, ""
 	}
 	s.logf("%s: offer %s made from the quota panel for %s (%s)", acct.Label, short(oid), grantID, cand.Kind)
@@ -232,12 +233,12 @@ func (s *Service) PanelClaim(ctx context.Context, name, grantID string) (Result,
 
 // lastSettled is the account's most recently settled offer for a grant, so a panel tap that lost the race to
 // the page can say the grant was just claimed.
-func lastSettled(st *State, label, grantID string) string {
+func lastSettled(st *State, acct gateway.Account, authFile, grantID string) string {
 	pick, at := "", ""
 	for id, o := range st.Offers() {
 		a, _ := o["after"].(map[string]any)
 		t, _ := a["at"].(string)
-		if o.Label() == label && o.GrantID() == grantID && t != "" && (pick == "" || t > at) {
+		if o.isFor(acct, authFile) && o.GrantID() == grantID && t != "" && (pick == "" || t > at) {
 			pick, at = id, t
 		}
 	}

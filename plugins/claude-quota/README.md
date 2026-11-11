@@ -67,7 +67,9 @@ against the plugin (`test/claim/`). On every usage read the engine:
   near-limit key holds the reset time rounded to the hour, so Claude's sub-second jitter does not alert again.
 
 An offer is stored only after its Bark push lands. The push links to `<public_base>/offer/<token>`; the state file
-holds sha256(token), never the token. Each offer is bound to the account's `organization_uuid`.
+holds sha256(token), never the token. Each offer is bound to the account's `organization_uuid`. The claim guards,
+the panel's choice of offer, the settling of lost replies and sibling expiry tell accounts apart by that
+organization (by the auth file for an offer not bound yet). The email in `label` can change and is only shown.
 
 A tap runs on the engine goroutine, so taps from the page and the panel never overlap. In order it checks: offer
 known, OFFERED or UNKNOWN, not expired, no other claim on the account SENDING or UNKNOWN, no Claude cooldown,

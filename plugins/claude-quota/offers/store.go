@@ -182,6 +182,20 @@ func (o Offer) Org() string      { return o.str("org") }
 
 func (o Offer) ExpiresAt() (time.Time, bool) { return parseTime(o["expires_at"]) }
 
+// sameAccount reports whether two offers were made for one Claude account: the same organization when both are
+// bound to one, else the same auth file. The email in "label" can change and is only shown.
+func (o Offer) sameAccount(x Offer) bool {
+	if o.Org() != "" && x.Org() != "" {
+		return o.Org() == x.Org()
+	}
+	return filepath.Clean(o.AuthFile()) == filepath.Clean(x.AuthFile())
+}
+
+// isFor reports whether the offer was made for the account that auth file authFile holds now.
+func (o Offer) isFor(acct gateway.Account, authFile string) bool {
+	return o.sameAccount(Offer{"org": acct.Org, "auth_file": authFile})
+}
+
 // Clears is the windows the offer's grant clears; an old offer without the list clears its own window.
 func (o Offer) Clears() []string {
 	list, ok := o["clears"].([]any)

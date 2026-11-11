@@ -182,9 +182,10 @@ func (s *Service) reconcile(ctx context.Context, acct gateway.Account, usage any
 	if err != nil {
 		return
 	}
+	path := filepath.Join(s.cfg.AuthDir, acct.Name)
 	for _, oid := range slices.Sorted(maps.Keys(st.Offers())) {
 		o := st.Offers()[oid]
-		if o.Label() == acct.Label && o.State() == "UNKNOWN" && (o.Org() == "" || o.Org() == acct.Org) && wentThrough(o, usage) {
+		if o.State() == "UNKNOWN" && o.isFor(acct, path) && wentThrough(o, usage) {
 			s.finish(ctx, oid, "reset", usage, "confirmed by a status read after a lost response", nil)
 		}
 	}
@@ -220,7 +221,7 @@ func (s *Service) finish(ctx context.Context, oid, result string, after any, not
 			cur["verified"] = okB && okL && l == before-1 && okP && p < 10
 			cleared := cur.Clears()
 			for id, other := range st.Offers() {
-				if id != oid && other.State() == "OFFERED" && other.Label() == cur.Label() &&
+				if id != oid && other.State() == "OFFERED" && other.sameAccount(cur) &&
 					(other.GrantID() == cur.GrantID() || slices.ContainsFunc(other.Clears(), func(w string) bool { return slices.Contains(cleared, w) })) {
 					other["state"] = "EXPIRED"
 				}
