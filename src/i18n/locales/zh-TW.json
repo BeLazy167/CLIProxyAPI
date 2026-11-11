@@ -2565,6 +2565,7 @@
     "block_unavailable": "暫不可用",
     "block_not_limited": "用量未達 90%",
     "block_resets_soon": "24 小時內自動恢復",
+    "block_use_model_reset": "請使用模型重置",
     "block_pending": "另一項重置待確認",
     "block_expired": "重試時限已過",
     "cooldown_clear_failed": "重置已消耗，但閘道冷卻未清除。請在認證檔案頁面清除。"

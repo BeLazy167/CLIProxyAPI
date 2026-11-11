@@ -48,7 +48,13 @@ export interface ResetWindowReading {
 }
 
 export type ResetGroupBlock =
-  'cooldown' | 'unavailable' | 'not_limited' | 'resets_soon' | 'pending' | 'expired';
+  | 'cooldown'
+  | 'unavailable'
+  | 'not_limited'
+  | 'resets_soon'
+  | 'use_model_reset'
+  | 'pending'
+  | 'expired';
 
 export type ResetGroupAction =
   | { state: 'ready'; grantId: string; retry: boolean; windows: ResetWindowReading[] }
@@ -116,10 +122,11 @@ function readWindows(grant: AnthropicResetGrant, windows: readonly ClaudeQuotaWi
   });
 }
 
+const isLimited = (reading: ResetWindowReading) =>
+  reading.usedPercent !== null && reading.usedPercent >= RESET_LIMITED_PERCENT;
+
 function wasteGuard(readings: ResetWindowReading[], now: number): ResetGroupBlock | null {
-  const limited = readings.filter(
-    (reading) => reading.usedPercent !== null && reading.usedPercent >= RESET_LIMITED_PERCENT
-  );
+  const limited = readings.filter(isLimited);
   if (limited.length === 0) return 'not_limited';
   const refillsSoon = (reading: ResetWindowReading) =>
     reading.resetAtMs !== null && reading.resetAtMs - now <= RESET_NATURAL_WINDOW_MS;
@@ -154,6 +161,24 @@ function groupAction(
     : { state: 'ready', grantId: grant.id, retry: false, windows: readings };
 }
 
+/**
+ * The account reset also clears the model window, so it would be ready whenever
+ * a model reset is. Hold it back while the narrower reset covers every limited window.
+ */
+function preferNarrowerReset(groups: ResetGrantGroup[]): ResetGrantGroup[] {
+  const model = groups.find((group) => group.kind === 'model')?.action;
+  if (model?.state !== 'ready' || model.retry) return groups;
+  const covered = new Set(model.windows.map((reading) => reading.window));
+  return groups.map((group) =>
+    group.kind === 'account' &&
+    group.action.state === 'ready' &&
+    !group.action.retry &&
+    group.action.windows.filter(isLimited).every((reading) => covered.has(reading.window))
+      ? { ...group, action: { state: 'blocked', reason: 'use_model_reset' } }
+      : group
+  );
+}
+
 /** Account group first, then model; a group shows while it has resets or a pending claim. */
 export function groupResetGrants(
   status: AnthropicResetGrantStatus,
@@ -161,7 +186,7 @@ export function groupResetGrants(
   now: number,
   pending: PendingResetClaim | null = null
 ): ResetGrantGroup[] {
-  return RESET_GRANT_KINDS.flatMap((kind) => {
+  const groups = RESET_GRANT_KINDS.flatMap((kind): ResetGrantGroup[] => {
     const grants = status.grants.filter((grant) => resetGrantKind(grant) === kind);
     const live = grants.filter((grant) => grant.resetsLeft > 0 && !hasEnded(grant, now));
     const holdsPending = grants.some((grant) => grant.id === pending?.grantId);
@@ -176,4 +201,5 @@ export function groupResetGrants(
       },
     ];
   });
+  return preferNarrowerReset(groups);
 }

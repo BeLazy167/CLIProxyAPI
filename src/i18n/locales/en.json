@@ -2565,6 +2565,7 @@
     "block_unavailable": "Not usable now",
     "block_not_limited": "Under 90% used",
     "block_resets_soon": "Refills within 24 h",
+    "block_use_model_reset": "Use the model reset",
     "block_pending": "Other claim pending",
     "block_expired": "Retry window expired",
     "cooldown_clear_failed": "Reset spent, but the gateway cooldown was not cleared. Clear it on the Auth Files page."

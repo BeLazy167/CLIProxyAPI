@@ -2565,6 +2565,7 @@
     "block_unavailable": "Chưa dùng được",
     "block_not_limited": "Dùng dưới 90%",
     "block_resets_soon": "Tự hồi trong 24 giờ",
+    "block_use_model_reset": "Dùng lượt đặt lại theo mô hình",
     "block_pending": "Lượt khác đang chờ",
     "block_expired": "Hết hạn thử lại",
     "cooldown_clear_failed": "Đã dùng lượt đặt lại nhưng chưa xóa thời gian chờ của gateway. Hãy xóa ở trang Auth Files."

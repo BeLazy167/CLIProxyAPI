@@ -85,7 +85,7 @@ describe('reset grant groups', () => {
     const groups = groupResetGrants(status, fableExhausted, NOW);
     expect(groups.map((group) => group.kind)).toEqual(['account', 'model']);
     expect(spendGrant(byKind(groups, 'model'))).toBe('launch-2610-fable');
-    expect(spendGrant(byKind(groups, 'account'))).toBe('full-reset-2611');
+    expect(blockReason(byKind(groups, 'account'))).toBe('use_model_reset');
     expect(byKind(groups, 'model')).toMatchObject({
       resetsLeft: 1,
       endsAtMs: Date.parse('2027-03-09T07:59:00+00:00'),
@@ -102,7 +102,7 @@ describe('reset grant groups', () => {
         grant('fable-sounding-name', { clears: ACCOUNT_CLEARS, label: 'Fable reset' }),
         grant('full-reset-sounding', { clears: MODEL_CLEARS, label: 'Full reset' }),
       ]),
-      fableExhausted,
+      [window('seven-day', 100, 5 * 24 * HOUR), window('seven-day-fable', 100, 5 * 24 * HOUR)],
       NOW
     );
     expect(spendGrant(byKind(groups, 'account'))).toBe('fable-sounding-name');
@@ -218,6 +218,31 @@ describe('reset grant groups', () => {
       NOW
     );
     expect(blockReason(groups[0])).toBe('resets_soon');
+  });
+
+  test('the account reset is held back when a ready model reset covers every limited window', () => {
+    const grants = [grant('full', { clears: ACCOUNT_CLEARS }), grant('model')];
+    const fableOnly = groupResetGrants(
+      statusOf(grants),
+      [window('seven-day', 64, 5 * 24 * HOUR), window('seven-day-fable', 100, 5 * 24 * HOUR)],
+      NOW
+    );
+    expect(blockReason(fableOnly[0])).toBe('use_model_reset');
+    expect(fableOnly[1].action.state).toBe('ready');
+
+    const weeklyToo = groupResetGrants(
+      statusOf(grants),
+      [window('seven-day', 100, 5 * 24 * HOUR), window('seven-day-fable', 100, 5 * 24 * HOUR)],
+      NOW
+    );
+    expect(weeklyToo[0].action.state).toBe('ready');
+
+    const noModelGrant = groupResetGrants(
+      statusOf([grant('full', { clears: ACCOUNT_CLEARS })]),
+      [window('seven-day', 64, 5 * 24 * HOUR), window('seven-day-fable', 100, 5 * 24 * HOUR)],
+      NOW
+    );
+    expect(noModelGrant[0].action.state).toBe('ready');
   });
 
   test('unknown use is not a limit; an unknown reset time is not "soon"', () => {
