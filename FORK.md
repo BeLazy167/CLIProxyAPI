@@ -10,6 +10,7 @@ The fork adds files and avoids editing upstream files, so taking an upstream rel
 |---|---|
 | `FORK.md` | This file. |
 | `Makefile` | `make release`, the build that deploys use. |
+| `panel/` | The quota panel the gateway serves as `/management.html` (see Panel below). |
 | `.forgejo/workflows/fork-ci.yml` | Fork CI, run by the mini PC Forgejo runner. |
 | `scripts/ci/` | The CI checks, runnable locally. |
 
@@ -20,10 +21,10 @@ tokens or usage.
 
 | What | Host | When | Off switch |
 |---|---|---|---|
-| Panel updater | api.github.com, GitHub release downloads, cpamc.router-for.me | start, every 3 h | `remote-management.disable-auto-update-panel: true`. A missing `static/management.html` is still downloaded when someone opens the panel. |
+| Panel updater | api.github.com, GitHub release downloads, cpamc.router-for.me | start, every 3 h | `remote-management.disable-auto-update-panel: true`. A missing panel file is still downloaded when someone opens the panel, so the deploy health check requires the release's `static/management.html`. |
 | Model catalogs | raw.githubusercontent.com, models.router-for.me | start, every 3 h | the `-local-model` flag, which uses the catalogs built into the binary. The config cannot name the built-in catalogs; a local file path also works. |
 | Antigravity and xAI client versions | antigravity-hub-auto-updater-974169037036.us-central1.run.app, registry.npmjs.org | start, every 3 h | `disable-version-updaters: true` (v8 layout: `requests.disable-version-updaters`). Read at start only. |
-| Latest-version check, plugin store | api.github.com, raw.githubusercontent.com, GitHub releases | when the panel asks | none |
+| Latest-version check, plugin store | api.github.com, raw.githubusercontent.com, GitHub releases | when a panel asks | none. This fork's panel never asks (`panel/tests/gatewayGithubRoutes.test.ts`). |
 | Public-IP lookup | api.ipify.org, ifconfig.me, icanhazip.com, ipinfo.io | an OAuth login started from the CLI | none |
 
 `disable-version-updaters` is this fork's only change to upstream files: the field in `internal/config/config.go`, its v8
@@ -104,11 +105,11 @@ make release OUT=<release dir> VERSION=<version> COMMIT=<first 8 hex of sha>
 ```
 
 The version is the newest upstream release tag merged into the commit, with `+<7 hex>` added when the commit is not the
-tag itself. A release directory holds `bin/cliproxyapi` from `make release`. The deploy then adds `plugins/`: copies of the
-third-party plugins pinned by checksum in the ops repo (`deploy/cliproxyapi.plugins`), that pins file, and `data`, a
-symlink to `~/.cli-proxy-api/plugins/data`, where plugins keep their state. Later steps add
-`plugins/linux/amd64/claude-quota.so` and `static/management.html`, each as a new target in the Makefile's `RELEASE_PARTS`.
-They must be real files: the gateway skips symlinked plugins. The symlink `/work/deploy/cliproxyapi/current` names the
+tag itself. `make release` writes `bin/cliproxyapi`, `static/management.html` (the panel) and
+`plugins/linux/amd64/claude-quota.so`, each from its own target in the Makefile's `RELEASE_PARTS`. The panel build needs
+`bun` on the PATH. The deploy then adds to `plugins/`: copies of the third-party plugins pinned by checksum in the ops
+repo (`deploy/cliproxyapi.plugins`), that pins file, and `data`, a symlink to `~/.cli-proxy-api/plugins/data`, where
+plugins keep their state. Plugins must be real files: the gateway skips symlinked plugins. The symlink `/work/deploy/cliproxyapi/current` names the
 running release, and the systemd drop-in runs `current/bin/cliproxyapi`.
 
 Config and auth files stay outside releases. Once `plugins.dir` in the gateway's config is
@@ -119,6 +120,38 @@ A deploy passes its health check only when, within 60 seconds, the gateway answe
 exactly the pinned plugins with their checksums, each registered in this process's log, one small request each to Claude
 and Codex succeeds, and no plugin failed, panicked, or was unloaded or reloaded in this process. A failed restart or check
 switches back to the previous release.
+
+## Panel
+
+`panel/` is the quota panel: a React app that Vite builds into one HTML file. It came in as a git subtree of
+`belazy/cpamc-ledger` (`main` at `e87b5052`), with its history. `panel/go.mod` exists only to keep `panel/` out of the
+gateway's `go build ./...`, `go vet ./...` and `go test ./...`: after `bun install`, `panel/node_modules` holds Go files.
+The systemd drop-in in the ops repo points `MANAGEMENT_STATIC_PATH` at `current/static/management.html`, so a release
+switches the gateway, its plugins and its panel together.
+
+Its upstreams:
+
+- [philly0105/cpamc-ledger](https://github.com/philly0105/cpamc-ledger), the panel `belazy/cpamc-ledger` forked. It
+  carries the history of the next one.
+- [router-for-me/Cli-Proxy-API-Management-Center](https://github.com/router-for-me/Cli-Proxy-API-Management-Center),
+  upstream's own panel.
+
+This fork's panel differs from them in two ways. The Claude reset button asks the `claude-quota` plugin to claim
+(`POST /v0/management/plugins/claude-quota/claim`) instead of claiming from the browser. And it has no latest-version
+check and no plugin store, because the gateway answers both by fetching from GitHub.
+
+Panel updates are taken by hand, from the repo root:
+
+```sh
+git fetch https://github.com/philly0105/cpamc-ledger.git main
+git subtree pull --prefix panel FETCH_HEAD -m "panel: merge philly0105/cpamc-ledger <short sha>"
+cd panel && bun install --frozen-lockfile --ignore-scripts && bun run test && bun run lint && bun run build
+```
+
+For the Management Center itself, fetch `https://github.com/router-for-me/Cli-Proxy-API-Management-Center.git main`
+the same way. A conflict in the Claude reset files or in the plugin store keeps this fork's side. Two panel tests fail
+on `e87b5052` already ("provider model options > gates fields by provider capability" and "provider filter overflow >
+allocates remaining quota toolbar width without shrinking the sort control").
 
 ## Rollback
 
