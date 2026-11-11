@@ -1,0 +1,160 @@
+@use '../../../styles/mixins' as *;
+
+/* Request error log files as a dense ledger (Quota ledger vocabulary):
+ * meta line, search, newest-first rows with aligned mono cells. */
+
+.ledger {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.meta {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  font-family: $font-mono;
+  font-size: var(--fs-base);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+.metaDot {
+  color: var(--text-quaternary);
+  user-select: none;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1 1 320px;
+  gap: 8px;
+  min-width: 0;
+}
+
+.table {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.head,
+.row {
+  display: grid;
+  grid-template-columns: minmax(150px, 180px) 96px 80px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+.head {
+  padding: 0 0 6px;
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.rows {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border-color);
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.modified,
+.requestId,
+.size,
+.file {
+  font-family: $font-mono;
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.modified {
+  color: var(--text-primary);
+}
+
+.requestId {
+  color: var(--primary-color);
+}
+
+.size {
+  color: var(--text-secondary);
+  text-align: right;
+}
+
+.file {
+  min-width: 0;
+  color: var(--text-secondary);
+  @include text-ellipsis;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.skeletons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 8px;
+}
+
+@media (max-width: #{$breakpoint-tablet}) {
+  .head {
+    display: none;
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+  }
+
+  .file {
+    flex: 1 1 100%;
+    order: -1;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .size {
+    text-align: left;
+  }
+
+  .actions {
+    margin-left: auto;
+  }
+}

@@ -1,0 +1,54 @@
+@use '../../../styles/mixins' as *;
+
+/* 删除确认：说清数量、提供商、前几条身份与后果；超阈值需勾选确认。 */
+
+.provider {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.list {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  list-style: none;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.item {
+  font-family: $font-mono;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--text-primary);
+  @include text-ellipsis;
+}
+
+.more {
+  font-family: inherit;
+  color: var(--text-tertiary);
+}
+
+.consequence {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.ack {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  cursor: pointer;
+
+  input {
+    margin-top: 3px;
+    accent-color: var(--danger-color);
+  }
+}

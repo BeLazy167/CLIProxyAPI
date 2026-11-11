@@ -1,10 +1,10 @@
 # Fork release build (FORK.md). The ops deploy script runs: make release OUT=<dir> VERSION=<v> COMMIT=<8 hex>
-# A release directory holds bin/cliproxyapi; later parts add plugins/linux/amd64/claude-quota.so and static/management.html,
-# as real files (the gateway skips symlinked plugins). The deploy adds the pinned third-party plugins itself.
+# A release directory holds bin/cliproxyapi, plugins/linux/amd64/claude-quota.so and static/management.html, as real files
+# (the gateway skips symlinked plugins). The deploy adds the pinned third-party plugins itself.
 # Each part is its own target in RELEASE_PARTS.
 GO ?= go
 BUILD_DATE ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
-RELEASE_PARTS := release-gateway release-claude-quota
+RELEASE_PARTS := release-gateway release-panel release-claude-quota
 
 .PHONY: release release-args $(RELEASE_PARTS)
 
@@ -20,6 +20,11 @@ release-gateway: release-args
 	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 $(GO) build -buildvcs=false -trimpath \
 		-ldflags "-s -w -X main.Version=$(VERSION) -X main.Commit=$(COMMIT) -X main.BuildDate=$(BUILD_DATE)" \
 		-o "$(OUT)/bin/cliproxyapi" ./cmd/server
+
+# The quota panel (panel/, FORK.md): locked dependencies, no install scripts. VERSION becomes the panel's shown version.
+release-panel: release-args
+	cd panel && bun install --frozen-lockfile --ignore-scripts && VERSION=$(VERSION) bun run build
+	install -D -m 644 panel/dist/index.html "$(OUT)/static/management.html"
 
 # The in-tree claude-quota plugin, built by its own script (which also refuses a write path in a shadow build).
 # Releases always run the live plugin (it sends routing writes, claims, Bark and email); the environment cannot change

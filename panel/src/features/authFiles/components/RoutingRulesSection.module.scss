@@ -1,0 +1,12 @@
+/* OAuth 配置双卡：折叠区内的两列网格 */
+
+.configGrid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr);
+  padding-top: 12px;
+
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

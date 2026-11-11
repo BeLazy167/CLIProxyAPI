@@ -1,0 +1,15 @@
+/* 配额回退分区：指向配额页的内联链接 */
+
+.quotaLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+
+  &:hover {
+    color: var(--primary-color);
+  }
+}

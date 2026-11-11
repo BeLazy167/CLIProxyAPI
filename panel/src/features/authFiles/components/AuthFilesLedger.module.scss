@@ -1,0 +1,432 @@
+@use '../../../styles/mixins' as *;
+
+/* ============================================================
+ * 凭证明细（Ledger）：每凭证一行，按提供商分组；密度与额度页 Ledger 对齐。
+ * ============================================================ */
+
+.ledger {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.groupHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.groupToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 4px 6px 4px 2px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 1px;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .groupToggle:hover {
+    background: var(--bg-tertiary);
+  }
+}
+
+.chevron {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+  transition: transform $transition-fast;
+}
+
+.chevronCollapsed {
+  transform: rotate(-90deg);
+}
+
+.glyph {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--bg-tertiary) 60%, transparent);
+}
+
+.glyphIcon {
+  display: block;
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+
+.glyphFallback {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.groupLabel {
+  @include text-ellipsis;
+}
+
+.groupCount {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.groupProblem {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: $radius-full;
+  background: color-mix(in srgb, var(--danger-color) 12%, transparent);
+  color: var(--danger-color);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ---------- 行 ---------- */
+
+.row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 150px auto auto;
+  align-items: center;
+  gap: 6px 16px;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 8px;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.rowClickable {
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .rowClickable:hover {
+    background: color-mix(in srgb, var(--bg-tertiary) 60%, transparent);
+  }
+}
+
+.rowSelected {
+  background: color-mix(in srgb, var(--primary-color) 7%, transparent);
+}
+
+.rowDisabled > :not(.actions) {
+  opacity: 0.68;
+}
+
+.select {
+  display: flex;
+  align-items: center;
+  width: 20px;
+}
+
+.identity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.primaryLine {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  min-width: 0;
+}
+
+.primary {
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  @include text-ellipsis;
+}
+
+.mono {
+  font-family: $font-mono;
+}
+
+.secondary,
+.problemMessage {
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+  @include text-ellipsis;
+}
+
+.secondary {
+  font-family: $font-mono;
+}
+
+.problemMessage {
+  color: var(--danger-text);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: $radius-full;
+  border: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.chipMuted {
+  color: var(--text-tertiary);
+}
+
+.chipDanger {
+  border-color: color-mix(in srgb, var(--danger-color) 35%, transparent);
+  background: color-mix(in srgb, var(--danger-color) 12%, transparent);
+  color: var(--danger-color);
+}
+
+/* ---------- 额度格 ---------- */
+
+.quota {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.quotaNone {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.quotaMeter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+}
+
+.quotaHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.quotaPercent {
+  flex-shrink: 0;
+  font-weight: 650;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.quotaReset {
+  min-width: 0;
+  color: var(--text-tertiary);
+  font-size: 11px;
+  @include text-ellipsis;
+}
+
+.quotaLoading {
+  display: block;
+  width: 100%;
+}
+
+.track {
+  display: block;
+  width: 100%;
+  height: 4px;
+  border-radius: $radius-full;
+  background: color-mix(in srgb, var(--text-primary) 10%, transparent);
+  overflow: hidden;
+}
+
+.trackSkeleton {
+  animation: ledger-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes ledger-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transition: width 360ms var(--ease-out-strong, ease);
+}
+
+.fillHigh {
+  background: var(--viz-success);
+}
+
+.fillMedium {
+  background: var(--quota-medium-color);
+}
+
+.fillLow {
+  background: var(--viz-failure);
+}
+
+.quotaAction {
+  padding: 3px 8px;
+  border: 1px dashed var(--border-color);
+  border-radius: 6px;
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 1px;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .quotaAction:hover:not(:disabled) {
+    color: var(--text-primary);
+    border-color: var(--border-hover);
+  }
+}
+
+.quotaError {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--danger-color) 35%, transparent);
+  color: var(--danger-color);
+}
+
+/* ---------- 计数 ---------- */
+
+.counts {
+  display: flex;
+  gap: 8px;
+  font-family: $font-mono;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.countOk {
+  color: var(--text-secondary);
+}
+
+.countFail {
+  color: var(--text-tertiary);
+}
+
+.countFailLive {
+  color: var(--danger-text);
+}
+
+/* ---------- 行动作 ---------- */
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.actions :global(.btn > span) {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  line-height: 1;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fill,
+  .chevron {
+    transition: none;
+  }
+
+  .trackSkeleton {
+    animation: none;
+  }
+}
+
+/* 平板：额度与计数换到第二行，动作留在首行。 */
+@media (max-width: #{$breakpoint-tablet}) {
+  .row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .quota,
+  .counts {
+    grid-column: 2 / -1;
+  }
+
+  .quota {
+    max-width: 240px;
+  }
+}
+
+@include mobile {
+  .actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+
+  .groupHead {
+    flex-wrap: wrap;
+  }
+}

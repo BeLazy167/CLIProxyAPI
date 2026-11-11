@@ -1,0 +1,136 @@
+@use '../../../styles/mixins' as *;
+
+/* 工作区工具栏：高频操作区，无入场动画，反馈即时 */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+}
+
+/* ---------- 搜索 ---------- */
+
+.search {
+  flex: 1 1 220px;
+  min-width: 180px;
+  max-width: 340px;
+}
+
+/* ---------- 分段控件（状态 / 视图） ---------- */
+
+.segmented {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: $radius-full;
+  border: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+}
+
+.segment {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  padding: 5px 12px;
+  border-radius: $radius-full;
+  font-size: 12px;
+  font-weight: 550;
+  line-height: 1.3;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  transition:
+    color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out),
+    background-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out),
+    box-shadow var(--dur-hover, 200ms) var(--ease-out-strong, ease-out),
+    transform var(--dur-press, 160ms) var(--ease-out-strong, ease-out);
+
+  &:active {
+    transform: scale(0.96);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: -1px;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .segment:hover:not(.segmentActive) {
+    color: var(--text-primary);
+  }
+}
+
+.segmentActive {
+  color: var(--text-primary);
+  font-weight: 650;
+  background: var(--floating-surface, var(--bg-primary));
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.12),
+    0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.segmentProblem.segmentActive {
+  color: var(--danger-color);
+  background: color-mix(
+    in srgb,
+    var(--danger-color) 12%,
+    var(--floating-surface, var(--bg-primary))
+  );
+  box-shadow:
+    0 1px 3px color-mix(in srgb, var(--danger-color) 20%, transparent),
+    0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+/* ---------- 排序 ---------- */
+
+.sort {
+  flex: 0 0 auto;
+  min-width: 148px;
+  max-width: 100%;
+}
+
+/* ---------- 右端：视图切换 + 溢出菜单 ---------- */
+
+.trailing {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---------- 响应式 ---------- */
+
+@media (max-width: 900px) {
+  .search {
+    flex-basis: 100%;
+    max-width: none;
+  }
+
+  .trailing {
+    margin-left: 0;
+  }
+}
+
+@include mobile {
+  .segmented {
+    overflow-x: auto;
+    max-width: 100%;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .segment {
+    transition: none;
+  }
+
+  .segment:active {
+    transform: none;
+  }
+}

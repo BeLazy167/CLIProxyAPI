@@ -1,0 +1,509 @@
+@use '../../styles/mixins' as *;
+
+/* 可视化配色与动效 tokens（--viz-*、--ease-out-strong、--dur-*）已提升到 themes.scss :root。 */
+.page {
+  max-width: 1120px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xl;
+}
+
+/* ---------- 关注条 / 首次使用 ---------- */
+
+.attention {
+  list-style: none;
+  margin: 0;
+  padding: $spacing-sm $spacing-md;
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs $spacing-lg;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--warning-border, var(--border-color));
+  background: var(--warning-bg);
+}
+
+.attentionItem {
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--warning-text);
+  text-decoration: none;
+
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.firstRun {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  padding: $spacing-lg;
+  border-radius: var(--radius-lg);
+  border: 1px dashed var(--border-primary);
+  background: color-mix(in srgb, var(--bg-secondary) 60%, transparent);
+}
+
+.firstRunTitle {
+  font-size: var(--fs-title);
+  font-weight: 650;
+  color: var(--text-primary);
+}
+
+.firstRunHint {
+  font-size: var(--fs-base);
+  color: var(--text-secondary);
+}
+
+.firstRunLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm $spacing-lg;
+  margin-top: $spacing-xs;
+}
+
+.firstRunLink {
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--primary-active);
+  text-decoration: none;
+
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+/* ---------- KPI 行 ---------- */
+
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: $spacing-md;
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: $spacing-sm;
+  }
+
+  @media (max-width: 360px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.statTile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: $spacing-md $spacing-lg;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--bg-primary) 82%, transparent);
+
+  /* 左上角色签：语义色调由 --tile-accent 注入 */
+  &::before {
+    content: '';
+    width: 28px;
+    height: 3px;
+    margin-bottom: 2px;
+    border-radius: $radius-full;
+    background: var(--tile-accent, var(--border-hover));
+  }
+
+  @media (max-width: 900px) {
+    padding: $spacing-md;
+  }
+}
+
+.statLabel {
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.statValue {
+  font-family: $font-mono;
+  font-size: var(--fs-stat);
+  line-height: 1.1;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+
+  @media (max-width: 600px) {
+    font-size: 22px;
+  }
+}
+
+.statMeter {
+  margin: 4px 0 2px;
+}
+
+.statSpark {
+  height: 24px;
+}
+
+.statHint {
+  font-size: var(--fs-body);
+  line-height: 1.45;
+  color: var(--text-tertiary);
+}
+
+.statError {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $spacing-xs $spacing-sm;
+  font-size: var(--fs-body);
+  line-height: 1.45;
+  color: var(--danger-text);
+}
+
+/* 成功/失败构成比例条 */
+.splitBar {
+  display: flex;
+  gap: 2px;
+  height: 6px;
+  margin-top: 4px;
+}
+
+.splitSegment {
+  display: block;
+  min-width: 4px;
+  border-radius: 3px;
+}
+
+.splitSuccess {
+  background: var(--viz-success);
+}
+
+.splitFailure {
+  background: var(--viz-failure);
+}
+
+/* 凭证分段条：相邻色块之间用 2px 表面色间隙分隔 */
+.healthBar {
+  display: flex;
+  gap: 2px;
+  height: 6px;
+  margin-top: 4px;
+}
+
+.healthSegment {
+  display: block;
+  border-radius: 3px;
+  min-width: 4px;
+}
+
+.healthActive {
+  background: var(--viz-success);
+}
+
+.healthUnavailable {
+  background: var(--amber-color);
+}
+
+.healthDisabled {
+  background: var(--text-tertiary);
+}
+
+/* ---------- 通用区块 ---------- */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.sectionHead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sectionHeadRow {
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: $spacing-sm $spacing-md;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.3;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+.sectionDescription {
+  margin: 0;
+  max-width: 64ch;
+  font-size: var(--fs-base);
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.sortToggle {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: $radius-full;
+  border: 1px solid var(--border-color);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  padding: $spacing-lg;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--bg-primary) 82%, transparent);
+
+  @include mobile {
+    padding: $spacing-md;
+  }
+}
+
+.panelLink {
+  align-self: flex-start;
+  margin-top: auto;
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--primary-active);
+  text-decoration: none;
+
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.emptyNote {
+  margin: 0;
+  padding: $spacing-lg 0;
+  text-align: center;
+  font-size: var(--fs-base);
+  color: var(--text-tertiary);
+}
+
+.skeletonRows {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+/* ---------- 供应商列表 ---------- */
+
+.fleetList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+
+  li + li .fleetRow {
+    border-top: 1px solid var(--border-color);
+  }
+}
+
+/* 整行可点：链到 AI Providers 或额度页 */
+.fleetRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(80px, 1fr) auto minmax(96px, 0.7fr);
+  grid-template-areas: 'identity spark counts rate';
+  align-items: center;
+  gap: $spacing-md;
+  padding: 10px 0;
+  color: inherit;
+  text-decoration: none;
+  transition: background-color $transition-fast;
+
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      background: color-mix(in srgb, var(--bg-hover) 60%, transparent);
+
+      .fleetName {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  &:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-md);
+  }
+
+  /* 窄屏折成两行：名字 + 成功率 / 计数 + 迷你图 */
+  @media (max-width: 760px) {
+    grid-template-columns: minmax(0, 1fr) minmax(96px, 0.6fr);
+    grid-template-areas:
+      'identity rate'
+      'counts spark';
+    row-gap: $spacing-sm;
+  }
+}
+
+.fleetIdentity {
+  grid-area: identity;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.fleetName {
+  font-size: var(--fs-title);
+  font-weight: 600;
+  color: var(--text-primary);
+  @include text-ellipsis;
+}
+
+.fleetMeta {
+  font-size: var(--fs-body);
+  color: var(--text-tertiary);
+}
+
+.fleetSpark {
+  grid-area: spark;
+  height: 28px;
+}
+
+.fleetCounts {
+  grid-area: counts;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  font-family: $font-mono;
+  font-size: var(--fs-body);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+
+  @media (max-width: 760px) {
+    flex-direction: row;
+    align-items: center;
+    gap: $spacing-sm;
+  }
+}
+
+.fleetOk {
+  color: var(--text-secondary);
+}
+
+.fleetFailed {
+  font-weight: 600;
+  color: var(--danger-text);
+}
+
+.fleetRate {
+  grid-area: rate;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.fleetRateValue {
+  font-family: $font-mono;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.fleetMeter {
+  height: 5px;
+}
+
+/* ---------- 运行参数表 ---------- */
+
+.specList {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.specRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: $spacing-md;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-color);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.specLabel {
+  font-size: var(--fs-base);
+  color: var(--text-secondary);
+}
+
+.specValue {
+  margin: 0;
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: right;
+  min-width: 0;
+  font-variant-numeric: tabular-nums;
+  @include text-ellipsis;
+}
+
+.specMono {
+  font-family: $font-mono;
+  font-weight: 500;
+  font-size: var(--fs-body);
+}
+
+.toggleList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.togglePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: $radius-full;
+  border: 1px solid var(--border-color);
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+
+  b {
+    font-weight: 650;
+  }
+}
+
+.toggleOn {
+  border-color: color-mix(in srgb, var(--viz-success) 40%, transparent);
+  background: color-mix(in srgb, var(--viz-success) 10%, transparent);
+
+  b {
+    color: var(--success-text);
+  }
+}
+
+.toggleOff {
+  background: color-mix(in srgb, var(--bg-secondary) 60%, transparent);
+
+  b {
+    color: var(--text-tertiary);
+  }
+}

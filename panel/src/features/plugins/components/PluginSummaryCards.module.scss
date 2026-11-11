@@ -1,0 +1,89 @@
+@use '../../../styles/variables' as *;
+@use '../../../styles/mixins' as *;
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+  gap: 10px;
+}
+
+.card {
+  --summary-accent: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--bg-primary) 82%, transparent);
+  color: var(--text-secondary);
+  font: inherit;
+  text-align: left;
+}
+
+.cardButton {
+  cursor: pointer;
+  transition:
+    border-color $transition-fast,
+    background-color $transition-fast;
+
+  &:focus-visible {
+    outline: var(--focus-ring);
+    outline-offset: 1px;
+  }
+}
+
+.cardActive {
+  border-color: color-mix(in srgb, var(--summary-accent) 55%, var(--border-color));
+  background: color-mix(in srgb, var(--summary-accent) 10%, var(--bg-primary));
+  color: var(--text-primary);
+}
+
+.count {
+  font-family: $font-mono;
+  font-size: var(--fs-stat);
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--summary-accent);
+}
+
+.label {
+  font-size: var(--fs-body);
+  font-weight: 550;
+  @include text-ellipsis;
+}
+
+.toneOk {
+  --summary-accent: var(--success-text);
+}
+
+.toneMuted {
+  --summary-accent: var(--text-tertiary);
+}
+
+.toneWarning {
+  --summary-accent: var(--warning-text);
+}
+
+.toneDanger {
+  --summary-accent: var(--danger-color);
+}
+
+.toneAccent {
+  --summary-accent: var(--primary-color);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .cardButton:hover {
+    border-color: var(--border-hover);
+    color: var(--text-primary);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cardButton {
+    transition: none;
+  }
+}

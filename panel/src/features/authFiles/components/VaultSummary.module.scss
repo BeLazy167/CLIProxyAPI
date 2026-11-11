@@ -1,0 +1,84 @@
+@use '../../../styles/mixins' as *;
+
+/* 状态摘要芯片：既是计数也是过滤器（aria-pressed）。 */
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  --chip-accent: var(--text-secondary);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: $radius-full;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--bg-primary) 82%, transparent);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 550;
+  line-height: 30px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color $transition-fast,
+    border-color $transition-fast,
+    background-color $transition-fast;
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 1px;
+  }
+}
+
+.chipCount {
+  font-family: $font-mono;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--chip-accent);
+}
+
+.chipLabel {
+  min-width: 0;
+}
+
+.chipOk {
+  --chip-accent: var(--viz-success);
+}
+
+.chipDanger {
+  --chip-accent: var(--danger-color);
+}
+
+.chipWarning {
+  --chip-accent: var(--quota-medium-color);
+}
+
+.chipMuted {
+  --chip-accent: var(--text-tertiary);
+}
+
+.chipActive {
+  color: var(--text-primary);
+  border-color: color-mix(in srgb, var(--chip-accent) 55%, var(--border-color));
+  background: color-mix(in srgb, var(--chip-accent) 10%, var(--bg-primary));
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .chip:hover {
+    color: var(--text-primary);
+    border-color: var(--border-hover);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chip {
+    transition: none;
+  }
+}

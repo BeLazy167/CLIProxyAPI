@@ -1,0 +1,516 @@
+@use '../../../../styles/mixins' as *;
+
+/* 字段原语：表单控件的 scoped 覆盖 + 开关行 / 网格 / 字段组 / 搜索锚点。
+   交互反馈一律引用全局动效 tokens（--dur-* / --ease-out-strong）。 */
+
+/* ---------- 表单控件宿主（原 .visualEditor 的 :global 覆盖收编于此） ---------- */
+
+.fieldsRoot {
+  :global(.form-group) {
+    gap: 7px;
+    margin-bottom: 0;
+  }
+
+  :global(.form-group > label) {
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  :global(.input) {
+    min-height: 42px;
+    border-radius: 10px;
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+    box-shadow: none;
+    transition:
+      border-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out),
+      background-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out),
+      box-shadow var(--dur-hover, 200ms) var(--ease-out-strong, ease-out);
+  }
+
+  :global(.input:focus) {
+    background: var(--bg-primary);
+    border-color: var(--text-primary);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--text-primary) 12%, transparent);
+  }
+
+  :global(textarea.input) {
+    min-height: 112px;
+  }
+
+  :global(.input-wrap:has(.input-right) > .input) {
+    padding-right: 72px;
+  }
+
+  :global(.hint) {
+    color: var(--text-secondary);
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
+  :global(.error-box) {
+    border-radius: 10px;
+  }
+
+  :global(.item-list) {
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  :global(.item-row) {
+    border-radius: 10px;
+    padding: 12px;
+    background: transparent;
+    border-color: var(--border-color);
+  }
+
+  :global(.item-row .item-meta) {
+    gap: 4px;
+  }
+
+  :global(.item-row .item-actions) {
+    flex-wrap: wrap;
+  }
+
+  :global(.pill) {
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-secondary);
+  }
+}
+
+/* ---------- 开关行 ---------- */
+
+.toggleRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  min-height: 52px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-left-width: 3px;
+  border-radius: 10px;
+  background: transparent;
+  transition:
+    border-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out),
+    background-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out);
+
+  /* 键盘聚焦开关时整行描边（finding 20） */
+  &:has(:focus-visible) {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 1px;
+  }
+}
+
+/* 危险开关：琥珀左规线 + 后果行（finding 3） */
+.toggleRowDanger {
+  border-left-color: var(--amber-color);
+}
+
+.toggleRowDisabled .toggleCopy {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.toggleControl {
+  display: inline-flex;
+  align-items: center;
+  justify-self: end;
+}
+
+.toggleConsequence {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 5px;
+  color: var(--amber-text);
+  font-size: 12px;
+  line-height: 1.5;
+
+  > svg {
+    flex-shrink: 0;
+    margin-top: 3px;
+  }
+}
+
+.toggleRequires {
+  color: var(--text-tertiary);
+  font-size: 12px;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .toggleRow:hover {
+    border-color: var(--border-hover);
+    background: color-mix(in srgb, var(--bg-tertiary) 40%, transparent);
+  }
+}
+
+.toggleCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.toggleTitle {
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.toggleDescription {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+/* ---------- 布局原语 ---------- */
+
+.fieldGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+
+  @include mobile {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.fieldStack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.divider {
+  height: 1px;
+  background: var(--border-color);
+}
+
+/* ---------- 搜索锚点与脉冲高亮 ---------- */
+
+.fieldAnchor {
+  display: block;
+  min-width: 0;
+  /* 顶部粘性工具栏（搜索 + tabs）约 100px，跳转时留出空间 */
+  scroll-margin-top: calc(var(--header-height, 64px) + 116px);
+}
+
+/* 脏字段：琥珀左规线（finding 7）；校验错误：失败色规线 */
+.fieldAnchorDirty,
+.fieldAnchorInvalid {
+  padding-left: 10px;
+  border-left: 3px solid var(--amber-color);
+  border-radius: 2px;
+}
+
+.fieldAnchorInvalid {
+  border-left-color: var(--viz-failure);
+}
+
+/* 字段上方的元信息行：重启 pill / 已更改 · 重置 */
+.fieldMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin-bottom: 6px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.restartPill {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border: 1px solid var(--amber-30);
+  border-radius: $radius-full;
+  background: var(--amber-10);
+  color: var(--amber-text);
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.dirtyMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  color: var(--amber-text);
+  font-family: $font-mono;
+  font-weight: 650;
+}
+
+.dirtyLabel::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 5px;
+  border-radius: $radius-full;
+  background: var(--amber-color);
+  vertical-align: 1px;
+}
+
+.resetButton {
+  @include button-reset;
+  padding: 1px 6px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+
+  &:hover {
+    color: var(--text-primary);
+    background: color-mix(in srgb, var(--text-primary) 6%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 1px;
+  }
+}
+
+/* 跨两列的字段（如长文本的代理 URL）；移动端单列布局下回退为一列。 */
+.fieldAnchorWide {
+  grid-column: span 2;
+
+  @include mobile {
+    grid-column: auto;
+  }
+}
+
+/* 代理 URL 提示里的赞助跳转行（finding 23：跟随 hint，不再占标签区高度）。 */
+.fieldSponsorHint {
+  display: block;
+  margin: 2px 0 0;
+}
+
+/* 与正文融为一体的高亮链接：同字号，复用全站金色（amber）badge 配方，hover 底色加深。 */
+.fieldSponsorLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 5px;
+  border: 1px solid var(--amber-30);
+  border-radius: 5px;
+  background: var(--amber-10);
+  color: var(--amber-text);
+  font-weight: 600;
+  text-decoration: none;
+  vertical-align: baseline;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background: var(--amber-30);
+    text-decoration: none;
+  }
+}
+
+.fieldSponsorLogo {
+  display: block;
+  width: auto;
+  height: 13px;
+}
+
+.fieldHighlightActive {
+  border-radius: 10px;
+  animation: config-field-highlight 1.8s ease-out;
+}
+
+@keyframes config-field-highlight {
+  0% {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-primary) 55%, transparent);
+  }
+  55% {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-primary) 32%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 3px transparent;
+  }
+}
+
+/* ---------- 字段组（原 subsection） ---------- */
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: transparent;
+}
+
+.groupHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.groupTitle {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.groupDescription {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* ---------- 字段外壳 ---------- */
+
+.fieldShell {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.fieldLabel {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.fieldControl {
+  position: relative;
+}
+
+.fieldHint {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+/* 提示里单独一行的 YAML 键名 */
+.yamlKey {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-tertiary);
+  font-family: $font-mono;
+  font-size: 11px;
+  letter-spacing: 0.01em;
+}
+
+/* Select 当前选项说明：与 hint 同字号，前置短横杠区分 */
+.optionDescription {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.55;
+
+  &::before {
+    content: '— ';
+    color: var(--text-tertiary);
+  }
+}
+
+/* 密码输入右侧的显示/隐藏按钮 */
+.revealButton {
+  @include button-reset;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  color: var(--text-tertiary);
+
+  &:hover {
+    color: var(--text-primary);
+    background: color-mix(in srgb, var(--text-primary) 6%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 1px;
+  }
+}
+
+/* Input.rightElement 的静态单位后缀 */
+.suffix {
+  color: var(--text-tertiary);
+  font-family: $font-mono;
+  font-size: 12px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.suffixPill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 7px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.inlinePill {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* ---------- 响应式 ---------- */
+
+@include mobile {
+  .group {
+    padding: 14px;
+  }
+}
+
+@media (max-width: 380px) {
+  .group {
+    padding: 12px;
+  }
+
+  .toggleRow {
+    padding: 8px 10px;
+  }
+}
+
+/* ---------- 无障碍 ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .fieldsRoot :global(.input),
+  .toggleRow {
+    transition: none;
+  }
+
+  .fieldHighlightActive {
+    animation: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-primary) 32%, transparent);
+  }
+}
