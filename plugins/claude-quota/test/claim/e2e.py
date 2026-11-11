@@ -937,8 +937,12 @@ def s_multi_window_grant_siblings_expire():
         r.post_claim(u1)
         code, html = r.post_claim(u2)
         w = r.world()
+        offers = r.state()["offers"]
+        done = [i for i, o in offers.items() if o["state"] == "DONE"]
+        marked = [o.get("expired_by") for o in offers.values() if o["state"] == "EXPIRED"]
         return [("one grant, two windows -> two offers", len(r.offer_urls(w)) == 2, len(r.offer_urls(w))),
-                ("second window's offer expires after the first claim", len(w["claims"]) == 1 and sum(w["spent"].values()) == 1, (code, len(w["claims"]), w["spent"]))]
+                ("second window's offer expires after the first claim", len(w["claims"]) == 1 and sum(w["spent"].values()) == 1, (code, len(w["claims"]), w["spent"])),
+                ("the expired sibling names the claim that expired it", len(done) == 1 and marked == done, (done, marked))]
     finally:
         r.close()
 

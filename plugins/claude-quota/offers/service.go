@@ -213,17 +213,21 @@ func usedBy(st *State, acct gateway.Account, authFile string, c Candidate, r Rul
 	return pick
 }
 
-// expiredByClaim reports whether a claim expired o as a sibling, as finish does: a DONE offer of the same account,
-// on the same grant or clearing one of o's windows, that settled after o was made.
+// expiredByClaim reports whether a claim expired o as a sibling. finish marks such an offer with expired_by. An
+// older record has no mark: it counts when a DONE offer of the same account, on the same grant or clearing one of
+// o's windows, settled after o was made, or when either time is missing (when in doubt the alert counts as used).
 func expiredByClaim(st *State, o Offer) bool {
-	made, ok := parseTime(o["created_at"])
-	if !ok {
-		return false
+	if o.str("expired_by") != "" {
+		return true
 	}
+	made, okM := parseTime(o["created_at"])
 	for _, d := range st.Offers() {
+		if d.State() != "DONE" || !d.sameAccount(o) ||
+			d.GrantID() != o.GrantID() && !slices.ContainsFunc(d.Clears(), func(w string) bool { return slices.Contains(o.Clears(), w) }) {
+			continue
+		}
 		done, okD := parseTime(asObject(d["after"])["at"])
-		if d.State() == "DONE" && okD && !done.Before(made) && d.sameAccount(o) &&
-			(d.GrantID() == o.GrantID() || slices.ContainsFunc(d.Clears(), func(w string) bool { return slices.Contains(o.Clears(), w) })) {
+		if !okM || !okD || !done.Before(made) {
 			return true
 		}
 	}
@@ -299,6 +303,7 @@ func (s *Service) finish(ctx context.Context, oid, result string, after any, not
 				if id != oid && other.State() == "OFFERED" && other.sameAccount(cur) &&
 					(other.GrantID() == cur.GrantID() || slices.ContainsFunc(other.Clears(), func(w string) bool { return slices.Contains(cleared, w) })) {
 					other["state"] = "EXPIRED"
+					other["expired_by"] = oid // the claim used this offer's alert; usedBy reads it without comparing clocks
 				}
 			}
 		} else {
