@@ -1,161 +1,210 @@
 CLIProxyAPI Version: dev, Commit: none, BuiltAt: unknown
-[2026-11-11 10:26:28] [--------] [info ] [host_callbacks.go:533] claude-quota: engine 4f4a17/1 running (mode shadow)
-[2026-11-11 10:26:28] [--------] [info ] [host.go:409] pluginhost: plugin loaded plugin_id=claude-quota path=/work/tmp/go-tmp-plugin/TestGatewayE2E3256388666/001/plugins/claude-quota.so
-[2026-11-11 10:26:28] [--------] [info ] [host.go:432] pluginhost: plugin registered plugin_id=claude-quota plugin_name=claude-quota version=0.1.0 path=/work/tmp/go-tmp-plugin/TestGatewayE2E3256388666/001/plugins/claude-quota.so
-[2026-11-11 10:26:28] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
-[2026-11-11 10:26:28] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
-[2026-11-11 10:26:28] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
-[2026-11-11 10:26:28] [--------] [info ] [host_callbacks.go:533] claude-quota: cooldown check skipped: GET /v8/management/credentials: HTTP 502
-[2026-11-11 10:26:28] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 1 (start): 3 accounts planned, 3 read, 0 left out
-[2026-11-11 10:26:28] [--------] [info ] [main.go:643] CLIProxyAPI Version: dev, Commit: none, BuiltAt: unknown
-[2026-11-11 10:26:28] [--------] [info ] [main.go:755] Local model mode: using embedded catalogs unless an explicit catalog source is configured
-[2026-11-11 10:26:28] [--------] [info ] [antigravity_version.go:72] periodic antigravity version refresh started (interval=3h0m0s)
-[2026-11-11 10:26:28] [--------] [info ] [service_lifecycle.go:106] core auth auto-refresh started (interval=15m0s)
-[2026-11-11 10:26:28] [--------] [info ] [server_management.go:22] management routes registered after secret key configuration
-[2026-11-11 10:26:28] [--------] [info ] [gin_logger.go:113] 200 |          48ms |       127.0.0.1 | GET     "/v0/management/plugins/claude-quota/health"
-[2026-11-11 10:26:28] [--------] [info ] [antigravity_version.go:97] fetched latest antigravity version version=2.31.1
-API server started successfully on: 127.0.0.1:37263
-[2026-11-11 10:26:28] [--------] [info ] [gin_logger.go:113] 200 |          47ms |       127.0.0.1 | GET     "/v0/management/plugins/claude-quota/health"
+[2026-11-11 11:33:50] [--------] [info ] [host.go:409] pluginhost: plugin loaded plugin_id=claude-quota path=/work/tmp/go-tmp-offers/TestGatewayE2E1603803712/001/plugins/claude-quota.so
+[2026-11-11 11:33:50] [--------] [info ] [host.go:432] pluginhost: plugin registered plugin_id=claude-quota plugin_name=claude-quota version=0.1.0 path=/work/tmp/go-tmp-offers/TestGatewayE2E1603803712/001/plugins/claude-quota.so
+[2026-11-11 11:33:50] [--------] [info ] [host_callbacks.go:533] claude-quota: engine f9b291/1 running (mode shadow)
+[2026-11-11 11:33:50] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow offers: state.json is read only in this build; offer changes are not saved
+[2026-11-11 11:33:50] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow offers: Bark push not sent: Claude Fable weekly limit 100% used
+[2026-11-11 11:33:50] [--------] [info ] [host_callbacks.go:533] claude-quota: fable-out@example.com: bark failed for launch-2610-fable; retry next cycle
+[2026-11-11 11:33:50] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow offers: Bark push not sent: Claude weekly limit 100% used
+[2026-11-11 11:33:50] [--------] [info ] [host_callbacks.go:533] claude-quota: weekly-out@example.com: bark failed for full-reset-2611; retry next cycle
+[2026-11-11 11:33:50] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
+[2026-11-11 11:33:50] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
+[2026-11-11 11:33:50] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
+[2026-11-11 11:33:50] [--------] [info ] [host_callbacks.go:533] claude-quota: cooldown check skipped: GET /v8/management/credentials: HTTP 502
+[2026-11-11 11:33:50] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 1 (start): 3 accounts planned, 3 read, 0 left out
+[2026-11-11 11:33:50] [--------] [info ] [main.go:643] CLIProxyAPI Version: dev, Commit: none, BuiltAt: unknown
+[2026-11-11 11:33:50] [--------] [info ] [main.go:755] Local model mode: using embedded catalogs unless an explicit catalog source is configured
+[2026-11-11 11:33:50] [--------] [info ] [antigravity_version.go:72] periodic antigravity version refresh started (interval=3h0m0s)
+[2026-11-11 11:33:50] [--------] [info ] [service_lifecycle.go:106] core auth auto-refresh started (interval=15m0s)
+[2026-11-11 11:33:50] [--------] [info ] [server_management.go:22] management routes registered after secret key configuration
+[2026-11-11 11:33:50] [--------] [info ] [gin_logger.go:113] 200 |          47ms |       127.0.0.1 | GET     "/v0/management/plugins/claude-quota/health"
+[2026-11-11 11:33:50] [--------] [info ] [antigravity_version.go:97] fetched latest antigravity version version=2.31.1
+API server started successfully on: 127.0.0.1:34311
 server clients and configuration updated: 3 clients (3 auth entries + 0 Gemini API keys + 0 Interactions API keys + 0 Claude API keys + 0 Codex keys + 0 xAI keys + 0 Meta API keys + 0 Vertex-compat + 0 OpenAI-compat)
-[2026-11-11 10:26:28] [--------] [info ] [clients.go:224] full client load complete - 3 clients (3 auth files + 0 Gemini API keys + 0 Vertex API keys + 0 Claude API keys + 0 Codex keys + 0 xAI keys + 0 Meta API keys + 0 OpenAI-compat)
-[2026-11-11 10:26:28] [--------] [info ] [service_lifecycle.go:230] file watcher started for config and auth directory changes
-[2026-11-11 10:26:28] [--------] [warn ] [service_executors.go:480] model registration for auth claude-fable-out.json was superseded during computation; discarded the stale publication instead of overwriting the latest auth state provider=claude auth_id="claude-fable-out.json"
-[2026-11-11 10:26:28] [--------] [info ] [xai_version.go:108] updated Grok CLI client version from npm version=1.0.77
-[2026-11-11 10:26:28] [--------] [info ] [xai_version.go:79] periodic Grok CLI version refresh started (interval=3h0m0s)
-[2026-11-11 10:26:31] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
-[2026-11-11 10:26:31] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
-[2026-11-11 10:26:31] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
-[2026-11-11 10:26:31] [--------] [info ] [gin_logger.go:113] 200 |          48ms |       127.0.0.1 | GET     "/v8/management/credentials"
-[2026-11-11 10:26:31] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 2 (poll): 3 accounts planned, 3 read, 0 left out
-[2026-11-11 10:26:34] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
-[2026-11-11 10:26:34] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
-[2026-11-11 10:26:34] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
-[2026-11-11 10:26:34] [--------] [info ] [gin_logger.go:113] 200 |          47ms |       127.0.0.1 | GET     "/v8/management/credentials"
-[2026-11-11 10:26:34] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 3 (poll): 3 accounts planned, 3 read, 0 left out
-[2026-11-11 10:26:34] [--------] [info ] [config_reload.go:80] config file changed, reloading: /work/tmp/go-tmp-plugin/TestGatewayE2E3256388666/001/config.yaml
-[2026-11-11 10:26:34] [--------] [info ] [config_reload.go:146] config changes detected:
-[2026-11-11 10:26:34] [--------] [info ] [config_reload.go:148]   codex.live-media-relay.ice-servers: updated (0 -> 0 entries, credentials redacted)
-[2026-11-11 10:26:34] [--------] [info ] [config_reload.go:148]   payload.default: updated (0 -> 0 rules)
-[2026-11-11 10:26:34] [--------] [info ] [config_reload.go:148]   payload.default-raw: updated (0 -> 0 rules)
-[2026-11-11 10:26:34] [--------] [info ] [config_reload.go:148]   payload.override: updated (0 -> 0 rules)
-[2026-11-11 10:26:34] [--------] [info ] [config_reload.go:148]   payload.override-raw: updated (0 -> 0 rules)
-[2026-11-11 10:26:34] [--------] [info ] [config_reload.go:148]   payload.filter: updated (0 -> 0 rules)
-[2026-11-11 10:26:34] [--------] [info ] [config_reload.go:148]   api-keys count: 1 -> 2
-[2026-11-11 10:26:34] [--------] [info ] [config_reload.go:148]   remote-management.secret-key: updated
-[2026-11-11 10:26:34] [--------] [info ] [config_reload.go:162] config successfully reloaded, triggering client reload
+[2026-11-11 11:33:50] [--------] [info ] [clients.go:224] full client load complete - 3 clients (3 auth files + 0 Gemini API keys + 0 Vertex API keys + 0 Claude API keys + 0 Codex keys + 0 xAI keys + 0 Meta API keys + 0 OpenAI-compat)
+[2026-11-11 11:33:50] [--------] [info ] [service_lifecycle.go:230] file watcher started for config and auth directory changes
+[2026-11-11 11:33:50] [--------] [warn ] [service_executors.go:480] model registration for auth claude-fable-left.json was superseded during computation; discarded the stale publication instead of overwriting the latest auth state provider=claude auth_id="claude-fable-left.json"
+[2026-11-11 11:33:50] [--------] [warn ] [service_executors.go:480] model registration for auth claude-weekly-out.json was superseded during computation; discarded the stale publication instead of overwriting the latest auth state provider=claude auth_id="claude-weekly-out.json"
+[2026-11-11 11:33:50] [--------] [info ] [gin_logger.go:113] 200 |          48ms |       127.0.0.1 | GET     "/v0/management/plugins/claude-quota/health"
+[2026-11-11 11:33:50] [--------] [info ] [xai_version.go:108] updated Grok CLI client version from npm version=1.0.77
+[2026-11-11 11:33:50] [--------] [info ] [xai_version.go:79] periodic Grok CLI version refresh started (interval=3h0m0s)
+[2026-11-11 11:33:53] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow offers: Bark push not sent: Claude Fable weekly limit 100% used
+[2026-11-11 11:33:53] [--------] [info ] [host_callbacks.go:533] claude-quota: fable-out@example.com: bark failed for launch-2610-fable; retry next cycle
+[2026-11-11 11:33:53] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow offers: Bark push not sent: Claude weekly limit 100% used
+[2026-11-11 11:33:53] [--------] [info ] [host_callbacks.go:533] claude-quota: weekly-out@example.com: bark failed for full-reset-2611; retry next cycle
+[2026-11-11 11:33:53] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
+[2026-11-11 11:33:53] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
+[2026-11-11 11:33:53] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
+[2026-11-11 11:33:53] [--------] [info ] [gin_logger.go:113] 200 |          46ms |       127.0.0.1 | GET     "/v8/management/credentials"
+[2026-11-11 11:33:53] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 2 (poll): 3 accounts planned, 3 read, 0 left out
+[2026-11-11 11:33:56] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow offers: Bark push not sent: Claude Fable weekly limit 100% used
+[2026-11-11 11:33:56] [--------] [info ] [host_callbacks.go:533] claude-quota: fable-out@example.com: bark failed for launch-2610-fable; retry next cycle
+[2026-11-11 11:33:56] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow offers: Bark push not sent: Claude weekly limit 100% used
+[2026-11-11 11:33:56] [--------] [info ] [host_callbacks.go:533] claude-quota: weekly-out@example.com: bark failed for full-reset-2611; retry next cycle
+[2026-11-11 11:33:56] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
+[2026-11-11 11:33:56] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
+[2026-11-11 11:33:56] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
+[2026-11-11 11:33:56] [--------] [info ] [gin_logger.go:113] 200 |          47ms |       127.0.0.1 | GET     "/v8/management/credentials"
+[2026-11-11 11:33:56] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 3 (poll): 3 accounts planned, 3 read, 0 left out
+[2026-11-11 11:33:56] [--------] [info ] [config_reload.go:80] config file changed, reloading: /work/tmp/go-tmp-offers/TestGatewayE2E1603803712/001/config.yaml
+[2026-11-11 11:33:56] [--------] [info ] [config_reload.go:146] config changes detected:
+[2026-11-11 11:33:56] [--------] [info ] [config_reload.go:148]   codex.live-media-relay.ice-servers: updated (0 -> 0 entries, credentials redacted)
+[2026-11-11 11:33:56] [--------] [info ] [config_reload.go:148]   payload.default: updated (0 -> 0 rules)
+[2026-11-11 11:33:56] [--------] [info ] [config_reload.go:148]   payload.default-raw: updated (0 -> 0 rules)
+[2026-11-11 11:33:56] [--------] [info ] [config_reload.go:148]   payload.override: updated (0 -> 0 rules)
+[2026-11-11 11:33:56] [--------] [info ] [config_reload.go:148]   payload.override-raw: updated (0 -> 0 rules)
+[2026-11-11 11:33:56] [--------] [info ] [config_reload.go:148]   payload.filter: updated (0 -> 0 rules)
+[2026-11-11 11:33:56] [--------] [info ] [config_reload.go:148]   api-keys count: 1 -> 2
+[2026-11-11 11:33:56] [--------] [info ] [config_reload.go:148]   remote-management.secret-key: updated
+[2026-11-11 11:33:56] [--------] [info ] [config_reload.go:162] config successfully reloaded, triggering client reload
 server clients and configuration updated: 3 clients (3 auth entries + 0 Gemini API keys + 0 Interactions API keys + 0 Claude API keys + 0 Codex keys + 0 xAI keys + 0 Meta API keys + 0 Vertex-compat + 0 OpenAI-compat)
-[2026-11-11 10:26:34] [--------] [info ] [clients.go:224] full client load complete - 3 clients (3 auth files + 0 Gemini API keys + 0 Vertex API keys + 0 Claude API keys + 0 Codex keys + 0 xAI keys + 0 Meta API keys + 0 OpenAI-compat)
-[2026-11-11 10:26:34] [--------] [info ] [config_reload.go:80] config file changed, reloading: /work/tmp/go-tmp-plugin/TestGatewayE2E3256388666/001/config.yaml
-[2026-11-11 10:26:34] [--------] [info ] [config_reload.go:146] config changes detected:
-[2026-11-11 10:26:34] [--------] [info ] [config_reload.go:148]   codex.live-media-relay.ice-servers: updated (0 -> 0 entries, credentials redacted)
-[2026-11-11 10:26:34] [--------] [info ] [config_reload.go:148]   payload.default: updated (0 -> 0 rules)
-[2026-11-11 10:26:34] [--------] [info ] [config_reload.go:148]   payload.default-raw: updated (0 -> 0 rules)
-[2026-11-11 10:26:34] [--------] [info ] [config_reload.go:148]   payload.override: updated (0 -> 0 rules)
-[2026-11-11 10:26:34] [--------] [info ] [config_reload.go:148]   payload.override-raw: updated (0 -> 0 rules)
-[2026-11-11 10:26:34] [--------] [info ] [config_reload.go:148]   payload.filter: updated (0 -> 0 rules)
-[2026-11-11 10:26:34] [--------] [info ] [config_reload.go:162] config successfully reloaded, triggering client reload
+[2026-11-11 11:33:56] [--------] [info ] [clients.go:224] full client load complete - 3 clients (3 auth files + 0 Gemini API keys + 0 Vertex API keys + 0 Claude API keys + 0 Codex keys + 0 xAI keys + 0 Meta API keys + 0 OpenAI-compat)
+[2026-11-11 11:33:56] [--------] [info ] [config_reload.go:80] config file changed, reloading: /work/tmp/go-tmp-offers/TestGatewayE2E1603803712/001/config.yaml
+[2026-11-11 11:33:56] [--------] [info ] [config_reload.go:146] config changes detected:
+[2026-11-11 11:33:56] [--------] [info ] [config_reload.go:148]   codex.live-media-relay.ice-servers: updated (0 -> 0 entries, credentials redacted)
+[2026-11-11 11:33:56] [--------] [info ] [config_reload.go:148]   payload.default: updated (0 -> 0 rules)
+[2026-11-11 11:33:56] [--------] [info ] [config_reload.go:148]   payload.default-raw: updated (0 -> 0 rules)
+[2026-11-11 11:33:56] [--------] [info ] [config_reload.go:148]   payload.override: updated (0 -> 0 rules)
+[2026-11-11 11:33:56] [--------] [info ] [config_reload.go:148]   payload.override-raw: updated (0 -> 0 rules)
+[2026-11-11 11:33:56] [--------] [info ] [config_reload.go:148]   payload.filter: updated (0 -> 0 rules)
+[2026-11-11 11:33:56] [--------] [info ] [config_reload.go:162] config successfully reloaded, triggering client reload
 server clients and configuration updated: 3 clients (3 auth entries + 0 Gemini API keys + 0 Interactions API keys + 0 Claude API keys + 0 Codex keys + 0 xAI keys + 0 Meta API keys + 0 Vertex-compat + 0 OpenAI-compat)
-[2026-11-11 10:26:34] [--------] [info ] [clients.go:224] full client load complete - 3 clients (3 auth files + 0 Gemini API keys + 0 Vertex API keys + 0 Claude API keys + 0 Codex keys + 0 xAI keys + 0 Meta API keys + 0 OpenAI-compat)
-[2026-11-11 10:26:37] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
-[2026-11-11 10:26:37] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
-[2026-11-11 10:26:37] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
-[2026-11-11 10:26:37] [--------] [info ] [gin_logger.go:113] 200 |          47ms |       127.0.0.1 | GET     "/v8/management/credentials"
-[2026-11-11 10:26:37] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 4 (poll): 3 accounts planned, 3 read, 0 left out
-[2026-11-11 10:26:39] [--------] [info ] [config_reload.go:80] config file changed, reloading: /work/tmp/go-tmp-plugin/TestGatewayE2E3256388666/001/config.yaml
-[2026-11-11 10:26:40] [--------] [info ] [config_reload.go:146] config changes detected:
-[2026-11-11 10:26:40] [--------] [info ] [config_reload.go:148]   codex.live-media-relay.ice-servers: updated (0 -> 0 entries, credentials redacted)
-[2026-11-11 10:26:40] [--------] [info ] [config_reload.go:148]   payload.default: updated (0 -> 0 rules)
-[2026-11-11 10:26:40] [--------] [info ] [config_reload.go:148]   payload.default-raw: updated (0 -> 0 rules)
-[2026-11-11 10:26:40] [--------] [info ] [config_reload.go:148]   payload.override: updated (0 -> 0 rules)
-[2026-11-11 10:26:40] [--------] [info ] [config_reload.go:148]   payload.override-raw: updated (0 -> 0 rules)
-[2026-11-11 10:26:40] [--------] [info ] [config_reload.go:148]   payload.filter: updated (0 -> 0 rules)
-[2026-11-11 10:26:40] [--------] [info ] [config_reload.go:148]   api-keys: values updated (count unchanged, redacted)
-[2026-11-11 10:26:40] [--------] [info ] [config_reload.go:148]   remote-management.secret-key: updated
-[2026-11-11 10:26:40] [--------] [info ] [config_reload.go:162] config successfully reloaded, triggering client reload
+[2026-11-11 11:33:56] [--------] [info ] [clients.go:224] full client load complete - 3 clients (3 auth files + 0 Gemini API keys + 0 Vertex API keys + 0 Claude API keys + 0 Codex keys + 0 xAI keys + 0 Meta API keys + 0 OpenAI-compat)
+[2026-11-11 11:33:59] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow offers: Bark push not sent: Claude Fable weekly limit 100% used
+[2026-11-11 11:33:59] [--------] [info ] [host_callbacks.go:533] claude-quota: fable-out@example.com: bark failed for launch-2610-fable; retry next cycle
+[2026-11-11 11:33:59] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow offers: Bark push not sent: Claude weekly limit 100% used
+[2026-11-11 11:33:59] [--------] [info ] [host_callbacks.go:533] claude-quota: weekly-out@example.com: bark failed for full-reset-2611; retry next cycle
+[2026-11-11 11:33:59] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
+[2026-11-11 11:33:59] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
+[2026-11-11 11:33:59] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
+[2026-11-11 11:33:59] [--------] [info ] [gin_logger.go:113] 200 |          47ms |       127.0.0.1 | GET     "/v8/management/credentials"
+[2026-11-11 11:33:59] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 4 (poll): 3 accounts planned, 3 read, 0 left out
+[2026-11-11 11:34:01] [--------] [info ] [config_reload.go:80] config file changed, reloading: /work/tmp/go-tmp-offers/TestGatewayE2E1603803712/001/config.yaml
+[2026-11-11 11:34:01] [--------] [info ] [config_reload.go:146] config changes detected:
+[2026-11-11 11:34:01] [--------] [info ] [config_reload.go:148]   codex.live-media-relay.ice-servers: updated (0 -> 0 entries, credentials redacted)
+[2026-11-11 11:34:01] [--------] [info ] [config_reload.go:148]   payload.default: updated (0 -> 0 rules)
+[2026-11-11 11:34:01] [--------] [info ] [config_reload.go:148]   payload.default-raw: updated (0 -> 0 rules)
+[2026-11-11 11:34:01] [--------] [info ] [config_reload.go:148]   payload.override: updated (0 -> 0 rules)
+[2026-11-11 11:34:01] [--------] [info ] [config_reload.go:148]   payload.override-raw: updated (0 -> 0 rules)
+[2026-11-11 11:34:01] [--------] [info ] [config_reload.go:148]   payload.filter: updated (0 -> 0 rules)
+[2026-11-11 11:34:01] [--------] [info ] [config_reload.go:148]   api-keys: values updated (count unchanged, redacted)
+[2026-11-11 11:34:01] [--------] [info ] [config_reload.go:148]   remote-management.secret-key: updated
+[2026-11-11 11:34:01] [--------] [info ] [config_reload.go:162] config successfully reloaded, triggering client reload
 server clients and configuration updated: 3 clients (3 auth entries + 0 Gemini API keys + 0 Interactions API keys + 0 Claude API keys + 0 Codex keys + 0 xAI keys + 0 Meta API keys + 0 Vertex-compat + 0 OpenAI-compat)
-[2026-11-11 10:26:40] [--------] [info ] [host_callbacks.go:533] claude-quota: fail-open: engine stopping; releasing every Opus/Sonnet reservation
-[2026-11-11 10:26:40] [--------] [info ] [host_callbacks.go:533] claude-quota: engine 4f4a17/1 stopped
-[2026-11-11 10:26:40] [--------] [info ] [host.go:409] pluginhost: plugin loaded plugin_id=claude-quota version=0.1.1 path=/work/tmp/go-tmp-plugin/TestGatewayE2E3256388666/001/plugins/claude-quota-v0.1.1.so
-[2026-11-11 10:26:40] [--------] [info ] [host.go:432] pluginhost: plugin registered plugin_id=claude-quota plugin_name=claude-quota version=0.1.0 path=/work/tmp/go-tmp-plugin/TestGatewayE2E3256388666/001/plugins/claude-quota-v0.1.1.so
-[2026-11-11 10:26:40] [--------] [info ] [host.go:466] pluginhost: plugin hot reloaded plugin_id=claude-quota active_version=0.1.1 retired_version=0.1.0 active_path=/work/tmp/go-tmp-plugin/TestGatewayE2E3256388666/001/plugins/claude-quota-v0.1.1.so retired_path=/work/tmp/go-tmp-plugin/TestGatewayE2E3256388666/001/plugins/claude-quota.so
-[2026-11-11 10:26:40] [--------] [info ] [host_callbacks.go:533] claude-quota: engine c180e4/1 running (mode shadow)
-[2026-11-11 10:26:40] [--------] [info ] [clients.go:224] full client load complete - 3 clients (3 auth files + 0 Gemini API keys + 0 Vertex API keys + 0 Claude API keys + 0 Codex keys + 0 xAI keys + 0 Meta API keys + 0 OpenAI-compat)
-[2026-11-11 10:26:40] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
-[2026-11-11 10:26:40] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
-[2026-11-11 10:26:40] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
-[2026-11-11 10:26:40] [--------] [info ] [gin_logger.go:113] 200 |          47ms |       127.0.0.1 | GET     "/v8/management/credentials"
-[2026-11-11 10:26:40] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 1 (start): 3 accounts planned, 3 read, 0 left out
-[2026-11-11 10:26:40] [--------] [info ] [config_reload.go:80] config file changed, reloading: /work/tmp/go-tmp-plugin/TestGatewayE2E3256388666/001/config.yaml
-[2026-11-11 10:26:40] [--------] [info ] [config_reload.go:146] config changes detected:
-[2026-11-11 10:26:40] [--------] [info ] [config_reload.go:148]   codex.live-media-relay.ice-servers: updated (0 -> 0 entries, credentials redacted)
-[2026-11-11 10:26:40] [--------] [info ] [config_reload.go:148]   payload.default: updated (0 -> 0 rules)
-[2026-11-11 10:26:40] [--------] [info ] [config_reload.go:148]   payload.default-raw: updated (0 -> 0 rules)
-[2026-11-11 10:26:40] [--------] [info ] [config_reload.go:148]   payload.override: updated (0 -> 0 rules)
-[2026-11-11 10:26:40] [--------] [info ] [config_reload.go:148]   payload.override-raw: updated (0 -> 0 rules)
-[2026-11-11 10:26:40] [--------] [info ] [config_reload.go:148]   payload.filter: updated (0 -> 0 rules)
-[2026-11-11 10:26:40] [--------] [info ] [config_reload.go:162] config successfully reloaded, triggering client reload
+[2026-11-11 11:34:01] [--------] [info ] [host_callbacks.go:533] claude-quota: fail-open: engine stopping; releasing every Opus/Sonnet reservation
+[2026-11-11 11:34:01] [--------] [info ] [host_callbacks.go:533] claude-quota: engine f9b291/1 stopped
+[2026-11-11 11:34:02] [--------] [info ] [host.go:409] pluginhost: plugin loaded plugin_id=claude-quota version=0.1.1 path=/work/tmp/go-tmp-offers/TestGatewayE2E1603803712/001/plugins/claude-quota-v0.1.1.so
+[2026-11-11 11:34:02] [--------] [info ] [host.go:432] pluginhost: plugin registered plugin_id=claude-quota plugin_name=claude-quota version=0.1.0 path=/work/tmp/go-tmp-offers/TestGatewayE2E1603803712/001/plugins/claude-quota-v0.1.1.so
+[2026-11-11 11:34:02] [--------] [info ] [host.go:466] pluginhost: plugin hot reloaded plugin_id=claude-quota active_version=0.1.1 retired_version=0.1.0 active_path=/work/tmp/go-tmp-offers/TestGatewayE2E1603803712/001/plugins/claude-quota-v0.1.1.so retired_path=/work/tmp/go-tmp-offers/TestGatewayE2E1603803712/001/plugins/claude-quota.so
+[2026-11-11 11:34:02] [--------] [info ] [host_callbacks.go:533] claude-quota: engine 22fa19/1 running (mode shadow)
+[2026-11-11 11:34:02] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow offers: state.json is read only in this build; offer changes are not saved
+[2026-11-11 11:34:02] [--------] [info ] [clients.go:224] full client load complete - 3 clients (3 auth files + 0 Gemini API keys + 0 Vertex API keys + 0 Claude API keys + 0 Codex keys + 0 xAI keys + 0 Meta API keys + 0 OpenAI-compat)
+[2026-11-11 11:34:02] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow offers: Bark push not sent: Claude Fable weekly limit 100% used
+[2026-11-11 11:34:02] [--------] [info ] [host_callbacks.go:533] claude-quota: fable-out@example.com: bark failed for launch-2610-fable; retry next cycle
+[2026-11-11 11:34:02] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow offers: Bark push not sent: Claude weekly limit 100% used
+[2026-11-11 11:34:02] [--------] [info ] [host_callbacks.go:533] claude-quota: weekly-out@example.com: bark failed for full-reset-2611; retry next cycle
+[2026-11-11 11:34:02] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
+[2026-11-11 11:34:02] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
+[2026-11-11 11:34:02] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
+[2026-11-11 11:34:02] [--------] [info ] [gin_logger.go:113] 200 |          48ms |       127.0.0.1 | GET     "/v8/management/credentials"
+[2026-11-11 11:34:02] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 1 (start): 3 accounts planned, 3 read, 0 left out
+[2026-11-11 11:34:02] [--------] [info ] [config_reload.go:80] config file changed, reloading: /work/tmp/go-tmp-offers/TestGatewayE2E1603803712/001/config.yaml
+[2026-11-11 11:34:02] [--------] [info ] [config_reload.go:146] config changes detected:
+[2026-11-11 11:34:02] [--------] [info ] [config_reload.go:148]   codex.live-media-relay.ice-servers: updated (0 -> 0 entries, credentials redacted)
+[2026-11-11 11:34:02] [--------] [info ] [config_reload.go:148]   payload.default: updated (0 -> 0 rules)
+[2026-11-11 11:34:02] [--------] [info ] [config_reload.go:148]   payload.default-raw: updated (0 -> 0 rules)
+[2026-11-11 11:34:02] [--------] [info ] [config_reload.go:148]   payload.override: updated (0 -> 0 rules)
+[2026-11-11 11:34:02] [--------] [info ] [config_reload.go:148]   payload.override-raw: updated (0 -> 0 rules)
+[2026-11-11 11:34:02] [--------] [info ] [config_reload.go:148]   payload.filter: updated (0 -> 0 rules)
+[2026-11-11 11:34:02] [--------] [info ] [config_reload.go:162] config successfully reloaded, triggering client reload
 server clients and configuration updated: 3 clients (3 auth entries + 0 Gemini API keys + 0 Interactions API keys + 0 Claude API keys + 0 Codex keys + 0 xAI keys + 0 Meta API keys + 0 Vertex-compat + 0 OpenAI-compat)
-[2026-11-11 10:26:40] [--------] [info ] [clients.go:224] full client load complete - 3 clients (3 auth files + 0 Gemini API keys + 0 Vertex API keys + 0 Claude API keys + 0 Codex keys + 0 xAI keys + 0 Meta API keys + 0 OpenAI-compat)
-[2026-11-11 10:26:43] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
-[2026-11-11 10:26:43] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
-[2026-11-11 10:26:43] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
-[2026-11-11 10:26:43] [--------] [info ] [gin_logger.go:113] 200 |          48ms |       127.0.0.1 | GET     "/v8/management/credentials"
-[2026-11-11 10:26:43] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 2 (poll): 3 accounts planned, 3 read, 0 left out
-[2026-11-11 10:26:46] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
-[2026-11-11 10:26:46] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
-[2026-11-11 10:26:46] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
-[2026-11-11 10:26:46] [--------] [info ] [gin_logger.go:113] 200 |          47ms |       127.0.0.1 | GET     "/v8/management/credentials"
-[2026-11-11 10:26:46] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 3 (poll): 3 accounts planned, 3 read, 0 left out
-[2026-11-11 10:26:49] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
-[2026-11-11 10:26:49] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
-[2026-11-11 10:26:49] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
-[2026-11-11 10:26:49] [--------] [info ] [gin_logger.go:113] 200 |          46ms |       127.0.0.1 | GET     "/v8/management/credentials"
-[2026-11-11 10:26:49] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 4 (poll): 3 accounts planned, 3 read, 0 left out
-[2026-11-11 10:26:50] [--------] [info ] [gin_logger.go:113] 200 |          46ms |       127.0.0.1 | GET     "/v0/management/plugins/claude-quota/health"
-[2026-11-11 10:26:52] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
-[2026-11-11 10:26:52] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
-[2026-11-11 10:26:52] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
-[2026-11-11 10:26:52] [--------] [info ] [gin_logger.go:113] 200 |          48ms |       127.0.0.1 | GET     "/v8/management/credentials"
-[2026-11-11 10:26:52] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 5 (poll): 3 accounts planned, 3 read, 0 left out
-[2026-11-11 10:26:55] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
-[2026-11-11 10:26:55] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
-[2026-11-11 10:26:55] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
-[2026-11-11 10:26:55] [--------] [info ] [gin_logger.go:113] 200 |          46ms |       127.0.0.1 | GET     "/v8/management/credentials"
-[2026-11-11 10:26:55] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 6 (poll): 3 accounts planned, 3 read, 0 left out
-[2026-11-11 10:26:56] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
-[2026-11-11 10:26:56] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
-[2026-11-11 10:26:56] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
-[2026-11-11 10:26:56] [--------] [info ] [gin_logger.go:113] 200 |          46ms |       127.0.0.1 | GET     "/v8/management/credentials"
-[2026-11-11 10:26:56] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 7 (window reset or quota 429): 3 accounts planned, 1 read, 0 left out
-[2026-11-11 10:26:58] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
-[2026-11-11 10:26:58] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
-[2026-11-11 10:26:58] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
-[2026-11-11 10:26:58] [--------] [info ] [gin_logger.go:113] 200 |          46ms |       127.0.0.1 | GET     "/v8/management/credentials"
-[2026-11-11 10:26:58] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 8 (poll): 3 accounts planned, 3 read, 0 left out
-[2026-11-11 10:26:58] [--------] [info ] [events.go:192] auth file changed (WRITE): claude-fable-left.json, processing incrementally
-[2026-11-11 10:26:58] [--------] [info ] [events.go:192] auth file changed (WRITE): claude-fable-out.json, processing incrementally
-[2026-11-11 10:27:01] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
-[2026-11-11 10:27:01] [--------] [info ] [gin_logger.go:113] 200 |          48ms |       127.0.0.1 | GET     "/v8/management/credentials"
-[2026-11-11 10:27:01] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 9 (poll): 3 accounts planned, 3 read, 0 left out
-[2026-11-11 10:27:04] [--------] [info ] [host_callbacks.go:533] claude-quota: fable-left@example.com: usage read failed: dial tcp 127.0.0.1:37737: connect: connection refused
-[2026-11-11 10:27:04] [--------] [info ] [host_callbacks.go:533] claude-quota: fable-out@example.com: usage read failed: dial tcp 127.0.0.1:37737: connect: connection refused
-[2026-11-11 10:27:04] [--------] [info ] [host_callbacks.go:533] claude-quota: weekly-out@example.com: usage read failed: dial tcp 127.0.0.1:37737: connect: connection refused
-[2026-11-11 10:27:04] [--------] [info ] [gin_logger.go:113] 200 |          46ms |       127.0.0.1 | GET     "/v8/management/credentials"
-[2026-11-11 10:27:04] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 10 (poll): 0 accounts planned, 0 read, 3 left out
-[2026-11-11 10:27:07] [--------] [info ] [host_callbacks.go:533] claude-quota: fable-left@example.com: usage read failed: dial tcp 127.0.0.1:37737: connect: connection refused
-[2026-11-11 10:27:07] [--------] [info ] [host_callbacks.go:533] claude-quota: fable-out@example.com: usage read failed: dial tcp 127.0.0.1:37737: connect: connection refused
-[2026-11-11 10:27:07] [--------] [info ] [host_callbacks.go:533] claude-quota: weekly-out@example.com: usage read failed: dial tcp 127.0.0.1:37737: connect: connection refused
-[2026-11-11 10:27:07] [--------] [info ] [gin_logger.go:113] 200 |          48ms |       127.0.0.1 | GET     "/v8/management/credentials"
-[2026-11-11 10:27:07] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 11 (poll): 0 accounts planned, 0 read, 3 left out
-[2026-11-11 10:27:10] [--------] [info ] [host_callbacks.go:533] claude-quota: fable-left@example.com: usage read failed: dial tcp 127.0.0.1:37737: connect: connection refused
-[2026-11-11 10:27:10] [--------] [info ] [host_callbacks.go:533] claude-quota: fable-out@example.com: usage read failed: dial tcp 127.0.0.1:37737: connect: connection refused
-[2026-11-11 10:27:10] [--------] [info ] [host_callbacks.go:533] claude-quota: weekly-out@example.com: usage read failed: dial tcp 127.0.0.1:37737: connect: connection refused
-[2026-11-11 10:27:10] [--------] [info ] [host_callbacks.go:533] claude-quota: fail-open: fable-left@example.com has no usage read newer than 8s; releasing its Opus/Sonnet reservation
-[2026-11-11 10:27:10] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-left@example.com excluded_models ["claude-opus-*","claude-sonnet-*"] -> null
-[2026-11-11 10:27:10] [--------] [info ] [gin_logger.go:113] 200 |          49ms |       127.0.0.1 | GET     "/v8/management/credentials"
+[2026-11-11 11:34:02] [--------] [info ] [clients.go:224] full client load complete - 3 clients (3 auth files + 0 Gemini API keys + 0 Vertex API keys + 0 Claude API keys + 0 Codex keys + 0 xAI keys + 0 Meta API keys + 0 OpenAI-compat)
+[2026-11-11 11:34:05] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow offers: Bark push not sent: Claude Fable weekly limit 100% used
+[2026-11-11 11:34:05] [--------] [info ] [host_callbacks.go:533] claude-quota: fable-out@example.com: bark failed for launch-2610-fable; retry next cycle
+[2026-11-11 11:34:05] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow offers: Bark push not sent: Claude weekly limit 100% used
+[2026-11-11 11:34:05] [--------] [info ] [host_callbacks.go:533] claude-quota: weekly-out@example.com: bark failed for full-reset-2611; retry next cycle
+[2026-11-11 11:34:05] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
+[2026-11-11 11:34:05] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
+[2026-11-11 11:34:05] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
+[2026-11-11 11:34:05] [--------] [info ] [gin_logger.go:113] 200 |          46ms |       127.0.0.1 | GET     "/v8/management/credentials"
+[2026-11-11 11:34:05] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 2 (poll): 3 accounts planned, 3 read, 0 left out
+[2026-11-11 11:34:08] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow offers: Bark push not sent: Claude Fable weekly limit 100% used
+[2026-11-11 11:34:08] [--------] [info ] [host_callbacks.go:533] claude-quota: fable-out@example.com: bark failed for launch-2610-fable; retry next cycle
+[2026-11-11 11:34:08] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow offers: Bark push not sent: Claude weekly limit 100% used
+[2026-11-11 11:34:08] [--------] [info ] [host_callbacks.go:533] claude-quota: weekly-out@example.com: bark failed for full-reset-2611; retry next cycle
+[2026-11-11 11:34:08] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
+[2026-11-11 11:34:08] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
+[2026-11-11 11:34:08] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
+[2026-11-11 11:34:08] [--------] [info ] [gin_logger.go:113] 200 |          47ms |       127.0.0.1 | GET     "/v8/management/credentials"
+[2026-11-11 11:34:08] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 3 (poll): 3 accounts planned, 3 read, 0 left out
+[2026-11-11 11:34:11] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow offers: Bark push not sent: Claude Fable weekly limit 100% used
+[2026-11-11 11:34:11] [--------] [info ] [host_callbacks.go:533] claude-quota: fable-out@example.com: bark failed for launch-2610-fable; retry next cycle
+[2026-11-11 11:34:11] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow offers: Bark push not sent: Claude weekly limit 100% used
+[2026-11-11 11:34:11] [--------] [info ] [host_callbacks.go:533] claude-quota: weekly-out@example.com: bark failed for full-reset-2611; retry next cycle
+[2026-11-11 11:34:11] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
+[2026-11-11 11:34:11] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
+[2026-11-11 11:34:11] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
+[2026-11-11 11:34:11] [--------] [info ] [gin_logger.go:113] 200 |          48ms |       127.0.0.1 | GET     "/v8/management/credentials"
+[2026-11-11 11:34:11] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 4 (poll): 3 accounts planned, 3 read, 0 left out
+[2026-11-11 11:34:12] [--------] [info ] [gin_logger.go:113] 200 |          48ms |       127.0.0.1 | GET     "/v0/management/plugins/claude-quota/health"
+[2026-11-11 11:34:14] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow offers: Bark push not sent: Claude weekly limit 100% used
+[2026-11-11 11:34:14] [--------] [info ] [host_callbacks.go:533] claude-quota: weekly-out@example.com: bark failed for full-reset-2611; retry next cycle
+[2026-11-11 11:34:14] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
+[2026-11-11 11:34:14] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
+[2026-11-11 11:34:14] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
+[2026-11-11 11:34:14] [--------] [info ] [gin_logger.go:113] 200 |          47ms |       127.0.0.1 | GET     "/v8/management/credentials"
+[2026-11-11 11:34:14] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 5 (poll): 3 accounts planned, 3 read, 0 left out
+[2026-11-11 11:34:17] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow offers: Bark push not sent: Claude weekly limit 100% used
+[2026-11-11 11:34:17] [--------] [info ] [host_callbacks.go:533] claude-quota: weekly-out@example.com: bark failed for full-reset-2611; retry next cycle
+[2026-11-11 11:34:17] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
+[2026-11-11 11:34:17] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
+[2026-11-11 11:34:17] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
+[2026-11-11 11:34:17] [--------] [info ] [gin_logger.go:113] 200 |          46ms |       127.0.0.1 | GET     "/v8/management/credentials"
+[2026-11-11 11:34:17] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 6 (poll): 3 accounts planned, 3 read, 0 left out
+[2026-11-11 11:34:18] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow offers: Bark push not sent: Claude Fable weekly limit 100% used
+[2026-11-11 11:34:18] [--------] [info ] [host_callbacks.go:533] claude-quota: fable-out@example.com: bark failed for launch-2610-fable; retry next cycle
+[2026-11-11 11:34:18] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
+[2026-11-11 11:34:18] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
+[2026-11-11 11:34:18] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
+[2026-11-11 11:34:18] [--------] [info ] [gin_logger.go:113] 200 |          47ms |       127.0.0.1 | GET     "/v8/management/credentials"
+[2026-11-11 11:34:18] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 7 (window reset or quota 429): 3 accounts planned, 1 read, 0 left out
+[2026-11-11 11:34:20] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow offers: Bark push not sent: Claude Fable weekly limit 100% used
+[2026-11-11 11:34:20] [--------] [info ] [host_callbacks.go:533] claude-quota: fable-out@example.com: bark failed for launch-2610-fable; retry next cycle
+[2026-11-11 11:34:20] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow offers: Bark push not sent: Claude weekly limit 100% used
+[2026-11-11 11:34:20] [--------] [info ] [host_callbacks.go:533] claude-quota: weekly-out@example.com: bark failed for full-reset-2611; retry next cycle
+[2026-11-11 11:34:20] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-out@example.com excluded_models null -> ["claude-fable-*"]
+[2026-11-11 11:34:20] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
+[2026-11-11 11:34:20] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-left@example.com excluded_models null -> ["claude-opus-*","claude-sonnet-*"]
+[2026-11-11 11:34:20] [--------] [info ] [gin_logger.go:113] 200 |          46ms |       127.0.0.1 | GET     "/v8/management/credentials"
+[2026-11-11 11:34:20] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 8 (poll): 3 accounts planned, 3 read, 0 left out
+[2026-11-11 11:34:20] [--------] [info ] [events.go:192] auth file changed (WRITE): claude-fable-left.json, processing incrementally
+[2026-11-11 11:34:20] [--------] [info ] [events.go:192] auth file changed (WRITE): claude-fable-out.json, processing incrementally
+[2026-11-11 11:34:23] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow offers: Bark push not sent: Claude Fable weekly limit 100% used
+[2026-11-11 11:34:23] [--------] [info ] [host_callbacks.go:533] claude-quota: fable-out@example.com: bark failed for launch-2610-fable; retry next cycle
+[2026-11-11 11:34:23] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow offers: Bark push not sent: Claude weekly limit 100% used
+[2026-11-11 11:34:23] [--------] [info ] [host_callbacks.go:533] claude-quota: weekly-out@example.com: bark failed for full-reset-2611; retry next cycle
+[2026-11-11 11:34:23] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: weekly-out@example.com excluded_models null -> ["claude-fable-*"]
+[2026-11-11 11:34:23] [--------] [info ] [gin_logger.go:113] 200 |          46ms |       127.0.0.1 | GET     "/v8/management/credentials"
+[2026-11-11 11:34:23] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 9 (poll): 3 accounts planned, 3 read, 0 left out
+[2026-11-11 11:34:26] [--------] [info ] [host_callbacks.go:533] claude-quota: fable-left@example.com: usage read failed: dial tcp 127.0.0.1:41215: connect: connection refused
+[2026-11-11 11:34:26] [--------] [info ] [host_callbacks.go:533] claude-quota: fable-out@example.com: usage read failed: dial tcp 127.0.0.1:41215: connect: connection refused
+[2026-11-11 11:34:26] [--------] [info ] [host_callbacks.go:533] claude-quota: weekly-out@example.com: usage read failed: dial tcp 127.0.0.1:41215: connect: connection refused
+[2026-11-11 11:34:26] [--------] [info ] [gin_logger.go:113] 200 |          47ms |       127.0.0.1 | GET     "/v8/management/credentials"
+[2026-11-11 11:34:26] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 10 (poll): 0 accounts planned, 0 read, 3 left out
+[2026-11-11 11:34:29] [--------] [info ] [host_callbacks.go:533] claude-quota: fable-left@example.com: usage read failed: dial tcp 127.0.0.1:41215: connect: connection refused
+[2026-11-11 11:34:29] [--------] [info ] [host_callbacks.go:533] claude-quota: fable-out@example.com: usage read failed: dial tcp 127.0.0.1:41215: connect: connection refused
+[2026-11-11 11:34:29] [--------] [info ] [host_callbacks.go:533] claude-quota: weekly-out@example.com: usage read failed: dial tcp 127.0.0.1:41215: connect: connection refused
+[2026-11-11 11:34:29] [--------] [info ] [gin_logger.go:113] 200 |          47ms |       127.0.0.1 | GET     "/v8/management/credentials"
+[2026-11-11 11:34:29] [--------] [info ] [host_callbacks.go:533] claude-quota: plan 11 (poll): 0 accounts planned, 0 read, 3 left out
+[2026-11-11 11:34:32] [--------] [info ] [host_callbacks.go:533] claude-quota: fable-left@example.com: usage read failed: dial tcp 127.0.0.1:41215: connect: connection refused
+[2026-11-11 11:34:32] [--------] [info ] [host_callbacks.go:533] claude-quota: fable-out@example.com: usage read failed: dial tcp 127.0.0.1:41215: connect: connection refused
+[2026-11-11 11:34:32] [--------] [info ] [host_callbacks.go:533] claude-quota: weekly-out@example.com: usage read failed: dial tcp 127.0.0.1:41215: connect: connection refused
+[2026-11-11 11:34:32] [--------] [info ] [host_callbacks.go:533] claude-quota: fail-open: fable-left@example.com has no usage read newer than 8s; releasing its Opus/Sonnet reservation
+[2026-11-11 11:34:32] [--------] [info ] [host_callbacks.go:533] claude-quota: shadow: fable-left@example.com excluded_models ["claude-opus-*","claude-sonnet-*"] -> null
+claude-quota: cooldown check skipped: GET /v8/management/credentials: context canceled
 claude-quota: plan 12 (poll): 0 accounts planned, 0 read, 3 left out
 claude-quota: fail-open: engine stopping; releasing every Opus/Sonnet reservation
 claude-quota: shadow: fable-left@example.com excluded_models ["claude-opus-*","claude-sonnet-*"] -> null
-claude-quota: engine c180e4/1 stopped
-[2026-11-11 10:27:10] [--------] [info ] [host.go:783] pluginhost: plugin unloaded plugin_id=claude-quota plugin_name=claude-quota version=0.1.1 path=/work/tmp/go-tmp-plugin/TestGatewayE2E3256388666/001/plugins/claude-quota-v0.1.1.so
-[2026-11-11 10:27:10] [--------] [info ] [host.go:783] pluginhost: plugin unloaded plugin_id=claude-quota plugin_name=claude-quota version=0.1.0 path=/work/tmp/go-tmp-plugin/TestGatewayE2E3256388666/001/plugins/claude-quota.so
+claude-quota: engine 22fa19/1 stopped
+[2026-11-11 11:34:32] [--------] [info ] [host.go:783] pluginhost: plugin unloaded plugin_id=claude-quota plugin_name=claude-quota version=0.1.1 path=/work/tmp/go-tmp-offers/TestGatewayE2E1603803712/001/plugins/claude-quota-v0.1.1.so
+[2026-11-11 11:34:32] [--------] [info ] [host.go:783] pluginhost: plugin unloaded plugin_id=claude-quota plugin_name=claude-quota version=0.1.0 path=/work/tmp/go-tmp-offers/TestGatewayE2E1603803712/001/plugins/claude-quota.so
