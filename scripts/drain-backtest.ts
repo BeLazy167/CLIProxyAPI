@@ -6,7 +6,8 @@
  * For every 7-day account window and every hour where the account was being
  * read, forecast from the readings up to that hour with each method and burn
  * window, then compare with what was recorded 6 h and 24 h later. The earlier
- * half of the history picks the default; the later half checks it.
+ * half of the history picks the default; the later half checks it. A forecast
+ * counts toward the early half only when its outcome also lies before the split.
  */
 
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -38,19 +39,15 @@ interface RawReading extends Reading {
 interface Method {
   name: string;
   options: ForecastOptions;
-  activeOnly: boolean;
 }
 
 const METHODS: Method[] = [
-  { name: 'average of window', options: { usage: 'average', burnHours: 3 }, activeOnly: false },
-  { name: 'since last refill', options: { usage: 'refill', burnHours: 3 }, activeOnly: false },
-  ...[1, 3, 6].flatMap((burnHours) =>
-    [false, true].map((activeOnly) => ({
-      name: `same as now, ${burnHours}h${activeOnly ? ', active polls only' : ''}`,
-      options: { usage: 'same' as const, burnHours },
-      activeOnly,
-    }))
-  ),
+  { name: 'average of window', options: { usage: 'average', burnHours: 3 } },
+  { name: 'since last refill', options: { usage: 'refill', burnHours: 3 } },
+  ...[1, 3, 6].map((burnHours) => ({
+    name: `same as now, ${burnHours}h`,
+    options: { usage: 'same' as const, burnHours },
+  })),
 ];
 
 /** `r` is dropped from a line when it is 0 (the writer omits zero values); `x` marks the line as a real reading. */
@@ -127,23 +124,21 @@ for (const [key, readings] of series) {
     const actuals = HORIZONS.map((h) => nearest(readings, t + h * HOUR_MS));
     if (actuals.every((actual) => actual === null)) continue;
 
-    const active = known.filter((reading) => !reading.passive);
-    const rates = METHODS.map((method) =>
-      accountRate(live, method.activeOnly && active.length > 0 ? active : known, t, method.options)
-    );
+    const rates = METHODS.map((method) => accountRate(live, known, t, method.options));
     if (rates.some((rate) => rate === null)) continue;
     METHODS.forEach((method, m) => {
       const rate = rates[m] as NonNullable<(typeof rates)[number]>;
       const projection = projectAccount({ ...live, perHour: rate.perHour }, t, t + 25 * HOUR_MS);
       HORIZONS.forEach((h, i) => {
         const actual = actuals[i];
-        if (!actual) return;
+        const late = t >= SPLIT_MS;
+        if (!actual || (!late && actual.atMs >= SPLIT_MS)) return;
         const predicted = valueAt(projection.points, actual.atMs, 'after');
         samples.push({
           provider: label,
           method: method.name,
           horizon: h,
-          late: t >= SPLIT_MS,
+          late,
           moving: Math.abs(actual.remaining - latest.remaining) >= 2,
           error: Math.abs(predicted - actual.remaining),
           basis: rate.basis,
@@ -183,13 +178,14 @@ lines.push(
 lines.push(
   'Each sample is one account at one past hour where it had a reading in the previous 30 minutes and every method could forecast, so all methods score the same moments. ' +
     'The forecast uses only readings up to that hour, the live remaining figure and reset instant from the latest reading, and a 168 h period. ' +
+    'Segments are cut at refills seen in any reading, passive ones included; drain inside a segment comes from active polls only, so an account with no active poll in its current segment has no rate. ' +
     'It is compared with the reading recorded nearest 6 h or 24 h later (within 20 minutes). ' +
     'A line with `x` and no `r` counts as 0% left. ' +
     'Error is the absolute difference in percentage points.',
   ''
 );
 lines.push(
-  `Early split: before ${new Date(SPLIT_MS).toISOString().slice(0, 10)} (picks the default). Late split: from that date on (checks it). ` +
+  `Early split: forecast and outcome both before ${new Date(SPLIT_MS).toISOString().slice(0, 10)} (picks the default). Late split: forecast from that date on (checks it). A forecast before the split whose outcome falls after it is in neither. ` +
     '"Moving" keeps only samples where the account changed by 2 points or more over the horizon; the rest are accounts parked at 0 or 100, which every method gets right.',
   ''
 );
@@ -226,9 +222,7 @@ for (const late of [false, true]) {
   }
 }
 
-const requested = METHODS.filter((m) => m.options.usage === 'same' && m.activeOnly).map(
-  (m) => m.name
-);
+const requested = METHODS.filter((m) => m.options.usage === 'same').map((m) => m.name);
 const median6 = (name: string, late: boolean, moving: boolean) =>
   median(
     errors((s) => s.late === late && (!moving || s.moving) && s.method === name && s.horizon === 6)
