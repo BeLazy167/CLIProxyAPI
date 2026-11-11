@@ -1,4 +1,4 @@
-claude-quota claim e2e run 2026-11-11T18:31:30.054646+00:00
+claude-quota claim e2e run 2026-11-11T18:52:40.379877+00:00
 gateway built from /work/tmp/cpa-offers, plugin built with -tags claude_quota_e2e, caddy/reset.caddy on Caddy
 
 # moved from fleet services/claude-reset
@@ -185,6 +185,7 @@ gateway built from /work/tmp/cpa-offers, plugin built with -tags claude_quota_e2
 ## s_multi_window_grant_siblings_expire
   PASS  one grant, two windows -> two offers
   PASS  second window's offer expires after the first claim
+  PASS  the expired sibling names the claim that expired it
 ## s_malformed_fields_fail_closed
   PASS  service still running
   PASS  only the good account gets an offer
@@ -277,9 +278,9 @@ gateway built from /work/tmp/cpa-offers, plugin built with -tags claude_quota_e2
   PASS  one claim, on the narrower grant
   PASS  the wide offer expires as the claim's sibling and a later tap on it is refused
 ## s_same_email_other_org_claims_from_panel
-  PASS  org-a gets the alert; org-b, same email and same dedupe key, gets none (the Python sent-map dedupe)
-  PASS  the panel claims g1 on org-b: org-a's alert is not org-b's
-  PASS  org-a's page tap still claims its own offer
+  PASS  one organization gets the alert; the other, same email and same dedupe key, gets none (the Python sent-map dedupe)
+  PASS  the panel claims g1 on the other organization: one org's alert is not the other's
+  PASS  the alerted organization's page tap still claims its own offer
   PASS  one spend per organization
 
-215 of 215 checks passed
+216 of 216 checks passed
