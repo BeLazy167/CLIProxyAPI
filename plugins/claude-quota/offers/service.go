@@ -193,15 +193,15 @@ func alerted(st *State, acct gateway.Account, authFile string, c Candidate, r Ru
 }
 
 // usedBy names the account's offer that used candidate c's alert, the most recently settled one first, or ""
-// when none did. An offer uses its alert once a claim was sent for it (SENDING, UNKNOWN, DONE, CLOSED) or it
-// expired; an OFFERED offer sent nothing and uses nothing. An expiry reminder is also used by a claim on its grant
+// when none did. An offer uses its alert once a claim was sent for it (SENDING, UNKNOWN, DONE, CLOSED), or when a
+// claim expired it as a sibling; an OFFERED offer, or one that expired on its own, sent nothing and uses nothing. An expiry reminder is also used by a claim on its grant
 // that went through after the reminder's threshold began. Offers of other accounts never count.
 func usedBy(st *State, acct gateway.Account, authFile string, c Candidate, r Rules) string {
 	a := alertOfKey(c.Key)
 	pick, at := "", time.Time{}
 	for _, id := range slices.Sorted(maps.Keys(st.Offers())) {
 		o := st.Offers()[id]
-		if !o.isFor(acct, authFile) || o.State() == "OFFERED" {
+		if !o.isFor(acct, authFile) || o.State() == "OFFERED" || o.State() == "EXPIRED" && !expiredByClaim(st, o) {
 			continue
 		}
 		done, _ := parseTime(asObject(o["after"])["at"])
@@ -211,6 +211,23 @@ func usedBy(st *State, acct gateway.Account, authFile string, c Candidate, r Rul
 		}
 	}
 	return pick
+}
+
+// expiredByClaim reports whether a claim expired o as a sibling, as finish does: a DONE offer of the same account,
+// on the same grant or clearing one of o's windows, that settled after o was made.
+func expiredByClaim(st *State, o Offer) bool {
+	made, ok := parseTime(o["created_at"])
+	if !ok {
+		return false
+	}
+	for _, d := range st.Offers() {
+		done, okD := parseTime(asObject(d["after"])["at"])
+		if d.State() == "DONE" && okD && !done.Before(made) && d.sameAccount(o) &&
+			(d.GrantID() == o.GrantID() || slices.ContainsFunc(d.Clears(), func(w string) bool { return slices.Contains(o.Clears(), w) })) {
+			return true
+		}
+	}
+	return false
 }
 
 // alert is one alert apart from the email its dedupe key starts with: what it is about ("near|<window>" or

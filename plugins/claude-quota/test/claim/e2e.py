@@ -1801,13 +1801,17 @@ def s_same_email_other_org_claims_from_panel():
         url = claimed_offer(r)
         polled = r.wait_line(lambda ln: "(poll)" in ln and ln.startswith("plan "), 10)
         alerts = r.offer_urls()
-        panel = r.panel_claim("b", "g1")
+        offers = list(r.state()["offers"].values())
+        # Both accounts share the dedupe key, so whichever is planned first gets the one alert.
+        alerted = offers[0]["org"] if len(offers) == 1 else None
+        other = "b" if alerted == "org-a" else "a"
+        panel = r.panel_claim(other, "g1")
         page = r.post_claim(url)
         w = r.world()
-        return [("org-a gets the alert; org-b, same email and same dedupe key, gets none (the Python sent-map dedupe)",
-                 polled and len(alerts) == 1 and list(r.state()["offers"].values())[0]["org"] == "org-a", (polled, alerts)),
-                ("the panel claims g1 on org-b: org-a's alert is not org-b's", panel[0] == 200 and "Reset claimed" in panel[1].get("message", ""), panel),
-                ("org-a's page tap still claims its own offer", page[0] == 200 and "Reset claimed" in page[1], page[0]),
+        return [("one organization gets the alert; the other, same email and same dedupe key, gets none (the Python sent-map dedupe)",
+                 polled and len(alerts) == 1 and alerted in ("org-a", "org-b"), (polled, alerts, alerted)),
+                ("the panel claims g1 on the other organization: one org's alert is not the other's", panel[0] == 200 and "Reset claimed" in panel[1].get("message", ""), panel),
+                ("the alerted organization's page tap still claims its own offer", page[0] == 200 and "Reset claimed" in page[1], page[0]),
                 ("one spend per organization", w["spent"] == {"org-a|g1": 1, "org-b|g1": 1}, w["spent"])]
     finally:
         r.close()
