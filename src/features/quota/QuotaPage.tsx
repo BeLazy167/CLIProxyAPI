@@ -32,7 +32,7 @@ import { QuotaCard } from './components/QuotaCard';
 import { QuotaLedger } from './components/QuotaLedger';
 import { QuotaPools } from './components/QuotaPools';
 import { QuotaTimeline } from './components/QuotaTimeline';
-import { QuotaForecast } from './components/QuotaForecast';
+import { QuotaDrain } from './components/QuotaDrain';
 import {
   CARD_ENTRANCE_BUDGET_MS,
   QUOTA_PAGE_SIZE,
@@ -250,12 +250,9 @@ export function QuotaPage() {
     [filteredEntries, getQuota, clock]
   );
 
-  const claudeWeekly = useMemo(
-    () =>
-      pools
-        .find((pool) => pool.provider === 'claude')
-        ?.windows.find((window) => window.key === 'claude:seven-day' && window.reportedCount > 0),
-    [pools]
+  const drainNameOf = useCallback(
+    (entry: QuotaFileEntry) => displayNameFor(getQuotaDisplayName(entry.file)),
+    [displayNameFor]
   );
 
   const { loadedCount, attentionCount } = useMemo(() => {
@@ -438,8 +435,13 @@ export function QuotaPage() {
           />
         )}
 
-        {!loading && claudeWeekly && (tab === 'all' || tab === 'claude') && (
-          <QuotaForecast window={claudeWeekly} now={clock} />
+        {!loading && !isEmpty && (
+          <QuotaDrain
+            pools={pools}
+            now={clock}
+            resolvedTheme={resolvedTheme}
+            nameOf={drainNameOf}
+          />
         )}
 
         {loading ? (
