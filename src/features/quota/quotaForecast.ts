@@ -21,6 +21,8 @@ import {
 
 const HOUR_MS = 3_600_000;
 const CAP = 100;
+/** Float error on `value / perHour` can leave a hair above 0 at the reset; that is empty. */
+const EMPTY_EPSILON = 1e-9;
 
 export const BURN_WINDOW_HOURS = [1, 3, 6] as const;
 export type BurnWindowHours = (typeof BURN_WINDOW_HOURS)[number];
@@ -101,15 +103,14 @@ export function projectAccount(
 
   for (let t = fromMs; t < toMs;) {
     const until = Math.min(resetMs ?? Infinity, toMs);
-    if (value > 0 && perHour > 0) {
-      const hitMs = t + (value / perHour) * HOUR_MS;
-      if (hitMs < until) {
-        points.push({ atMs: hitMs, remaining: 0 });
-        emptyAtMs ??= hitMs;
-        value = 0;
-      } else {
-        value -= (perHour * (until - t)) / HOUR_MS;
-      }
+    const used = (perHour * (until - t)) / HOUR_MS;
+    if (value > 0 && used >= value - EMPTY_EPSILON) {
+      const hitMs = Math.min(until, t + (value / perHour) * HOUR_MS);
+      if (hitMs < until) points.push({ atMs: hitMs, remaining: 0 });
+      emptyAtMs ??= hitMs;
+      value = 0;
+    } else if (value > 0) {
+      value -= used;
     }
     t = until;
     points.push({ atMs: t, remaining: value });
@@ -161,7 +162,7 @@ export function sumProjections(
     const after = sum(atMs, 'after');
     points.push({ atMs, remaining: before });
     if (after !== before) points.push({ atMs, remaining: after });
-    if (emptyAtMs === null && Math.min(before, after) <= 1e-9) emptyAtMs = atMs;
+    if (emptyAtMs === null && Math.min(before, after) <= EMPTY_EPSILON) emptyAtMs = atMs;
   }
 
   const restoreAt = new Map<number, number>();

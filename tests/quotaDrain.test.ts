@@ -221,6 +221,21 @@ describe('projection', () => {
     }
   });
 
+  test('an account that reaches 0 exactly at its reset is empty there, as the pool says', () => {
+    for (const start of [
+      { remaining: 20, perHour: 2, resetAtMs: NOW + 10 * H, periodHours: 168 },
+      { remaining: 50, perHour: 50 / 84, resetAtMs: NOW + 84 * H, periodHours: 168 },
+    ]) {
+      const p = projectAccount(start, NOW, NOW + 200 * H);
+      expect(p.emptyAtMs).toBe(start.resetAtMs);
+      expect(valueAt(p.points, start.resetAtMs, 'before')).toBe(0);
+      expect(p.refills[0]).toEqual({ atMs: start.resetAtMs, restore: 100 });
+      expect(sumProjections([{ projection: p, perHour: start.perHour }]).emptyAtMs).toBe(
+        p.emptyAtMs
+      );
+    }
+  });
+
   test('a stale reset never refills, and an unknown period stops after the first reset', () => {
     const stale = projectAccount(
       { remaining: 30, perHour: 1, resetAtMs: NOW - H, periodHours: 168 },
