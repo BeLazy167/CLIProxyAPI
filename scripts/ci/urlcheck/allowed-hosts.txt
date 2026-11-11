@@ -1,0 +1,3 @@
+# Hosts that new Go code may name in https:// or wss:// literals, beyond the hosts the base tree already names.
+# Read by scripts/ci/urlcheck in the Fork CI workflow. One host per line, lower case; "#" starts a comment.
+# Add a host only after reading the code that calls it, with the date and the reason in a comment above it.
