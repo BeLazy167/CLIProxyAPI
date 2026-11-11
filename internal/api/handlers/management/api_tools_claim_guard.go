@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"path"
 	"strings"
+
+	"golang.org/x/net/idna"
 )
 
 // isClaudeResetClaim reports whether an api-call request targets Anthropic's reset-claim endpoint,
@@ -30,6 +32,12 @@ func isAnthropicHost(host string) bool {
 	host = strings.TrimSpace(host)
 	if h, _, err := net.SplitHostPort(host); err == nil {
 		host = h
+	}
+	// IDNA mapping folds full-width dots and letters (api．anthropic。com) the way the HTTP client does when it dials.
+	if ascii, err := idna.Lookup.ToASCII(host); err == nil {
+		host = ascii
+	} else if ascii, err = idna.Punycode.ToASCII(host); err == nil {
+		host = ascii
 	}
 	host = strings.TrimRight(strings.ToLower(host), ".")
 	for _, domain := range []string{"anthropic.com", "claude.ai", "claude.com"} {
