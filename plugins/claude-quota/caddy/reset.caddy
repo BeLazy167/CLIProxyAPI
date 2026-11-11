@@ -1,0 +1,28 @@
+# claude-quota offer page and claim on gw.blzy.app (tailnet only). Not installed by any build.
+# At cutover it replaces /etc/caddy/sites/gw.d/reset.caddy (the Python service's file).
+# Bark links keep the shape https://gw.blzy.app/reset/offer/<token>. Each of the two paths is rewritten to one
+# fixed plugin management route with the token in the query, and only these two get the management key.
+# Any other /reset/* path falls through to the site's plain reverse_proxy, which adds no key.
+@cq_offer_page {
+	method GET
+	path_regexp cq_page ^/reset/offer/([A-Za-z0-9_-]{20,100})$
+}
+handle @cq_offer_page {
+	rewrite * /v0/management/plugins/claude-quota/offer?token={re.cq_page.1}
+	reverse_proxy 127.0.0.1:8317 {
+		header_up Authorization "Bearer {file./etc/caddy/sites/cpa-mgmt.key}"
+		header_up -X-Management-Key
+	}
+}
+
+@cq_offer_claim {
+	method POST
+	path_regexp cq_claim ^/reset/offer/([A-Za-z0-9_-]{20,100})/claim$
+}
+handle @cq_offer_claim {
+	rewrite * /v0/management/plugins/claude-quota/offer/claim?token={re.cq_claim.1}
+	reverse_proxy 127.0.0.1:8317 {
+		header_up Authorization "Bearer {file./etc/caddy/sites/cpa-mgmt.key}"
+		header_up -X-Management-Key
+	}
+}
