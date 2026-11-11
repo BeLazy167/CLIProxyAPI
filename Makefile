@@ -4,7 +4,7 @@
 # Each part is its own target in RELEASE_PARTS.
 GO ?= go
 BUILD_DATE ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
-RELEASE_PARTS := release-gateway
+RELEASE_PARTS := release-gateway release-claude-quota
 
 .PHONY: release release-args $(RELEASE_PARTS)
 
@@ -20,3 +20,7 @@ release-gateway: release-args
 	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 $(GO) build -buildvcs=false -trimpath \
 		-ldflags "-s -w -X main.Version=$(VERSION) -X main.Commit=$(COMMIT) -X main.BuildDate=$(BUILD_DATE)" \
 		-o "$(OUT)/bin/cliproxyapi" ./cmd/server
+
+# The in-tree claude-quota plugin, built by its own script (which also refuses a write path in a shadow build).
+release-claude-quota: release-args
+	plugins/claude-quota/build.sh "$(OUT)/plugins/linux/amd64/claude-quota.so" >/dev/null
