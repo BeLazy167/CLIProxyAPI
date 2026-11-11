@@ -1,0 +1,84 @@
+name: Fork CI
+
+# CI for the fork, run by the mini PC runner (FORK.md). Forgejo reads pull_request workflows from the PR head, and the
+# head of an upstream release PR is pure upstream: it has no .forgejo/workflows, so Forgejo would run upstream's
+# .github/workflows instead. pull_request_target reads this file from main for every PR, upstream ones included.
+# The PR job tests the merged result (main at job time with the PR head merged in). The push job tests main after a
+# merge; forge-sync deploys main only when this check is green on it. There is no deploy job.
+# The PR job runs code that is not on main yet, upstream releases included. It gets no credentials: checkout keeps no token,
+# only the step that fetches the PR head sees one, and Go writes its caches inside this job, not into the runner's shared
+# caches that later jobs of every repo read.
+on:
+  pull_request_target:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    # pull_request_target hands the job a token for this repo, so only PRs from branches of this repo run.
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Merge the PR head into main
+        if: github.event_name == 'pull_request_target'
+        env:
+          PR: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          TOKEN: ${{ github.token }}
+        run: |
+          GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.extraheader \
+            GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$TOKEN" | base64 -w0)" \
+            git fetch -q origin "+refs/pull/$PR/head:refs/remotes/pr/head"
+          test "$(git rev-parse pr/head)" = "$HEAD_SHA"
+          git -c user.name=ci -c user.email=ci@localhost merge -q --no-ff --no-edit "$HEAD_SHA"
+          test "$(git rev-parse HEAD^2)" = "$HEAD_SHA"
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          # The runner mounts warm Go build and module caches; push jobs on main use them.
+          cache: false
+      - name: Go caches of this job only
+        if: github.event_name == 'pull_request_target'
+        run: |
+          mkdir -p "$RUNNER_TEMP/go/build" "$RUNNER_TEMP/go/mod"
+          echo "GOCACHE=$RUNNER_TEMP/go/build" >>"$GITHUB_ENV"
+          echo "GOMODCACHE=$RUNNER_TEMP/go/mod" >>"$GITHUB_ENV"
+      - name: No credentials left
+        run: |
+          ! git config --local --includes --get-regexp '^(http\..*extraheader|credential\.)'
+      # URLs are compared with main before the change (HEAD^1). Vet and tests are compared with the same tree, except
+      # when the change merges an upstream release (HEAD^2 is on the upstream branch): then with the release itself, so
+      # findings and failures that upstream already has do not count, and ones that the fork's changes cause still do.
+      - name: Base trees
+        run: |
+          git worktree add -q --detach "$RUNNER_TEMP/before" HEAD^1
+          baseline=HEAD^1
+          if git rev-parse -q --verify HEAD^2 >/dev/null && git rev-parse -q --verify origin/upstream >/dev/null &&
+            git merge-base --is-ancestor HEAD^2 origin/upstream; then
+            baseline=HEAD^2
+          fi
+          git worktree add -q --detach "$RUNNER_TEMP/baseline" "$baseline"
+          echo "vet and tests compared with $(git rev-parse --short=12 "$baseline")"
+      - name: Build
+        run: go build -o "$RUNNER_TEMP/cliproxyapi" ./cmd/server
+      - name: Vet against the base
+        run: scripts/ci/vet-baseline.sh "$RUNNER_TEMP/baseline" | tee -a "${GITHUB_STEP_SUMMARY:-/dev/null}"
+      - name: New outbound URL literals
+        run: |
+          go run ./scripts/ci/urlcheck -base "$RUNNER_TEMP/before" -allow scripts/ci/urlcheck/allowed-hosts.txt |
+            tee -a "${GITHUB_STEP_SUMMARY:-/dev/null}"
+      - name: Tests against the base
+        run: scripts/ci/test-baseline.sh "$RUNNER_TEMP/baseline" "$RUNNER_TEMP/tests" | tee -a "${GITHUB_STEP_SUMMARY:-/dev/null}"
