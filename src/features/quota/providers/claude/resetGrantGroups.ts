@@ -116,7 +116,9 @@ function readWindows(grant: AnthropicResetGrant, windows: readonly ClaudeQuotaWi
       label: quota
         ? { key: quota.labelKey, text: quota.label }
         : { key: target.labelKey, text: window },
-      usedPercent: quota?.usedPercent ?? grant.percentUsed[window] ?? null,
+      // The grant's own figure travels with the status, so a fresh status read
+      // brings fresh use even when the page's windows are minutes old.
+      usedPercent: grant.percentUsed[window] ?? quota?.usedPercent ?? null,
       resetAtMs: quota?.resetAtMs ?? null,
     };
   });
@@ -203,3 +205,16 @@ export function groupResetGrants(
   });
   return preferNarrowerReset(groups);
 }
+
+/**
+ * The check a claim repeats on the status it re-reads right before sending:
+ * the confirmed group must still be ready to spend the confirmed grant.
+ */
+export const confirmGuard =
+  (kind: ResetGrantKind, grantId: string, windows: readonly ClaudeQuotaWindow[]) =>
+  (status: AnthropicResetGrantStatus, now: number): boolean => {
+    const action = groupResetGrants(status, windows, now).find(
+      (group) => group.kind === kind
+    )?.action;
+    return action?.state === 'ready' && action.grantId === grantId;
+  };

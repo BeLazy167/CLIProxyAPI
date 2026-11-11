@@ -9,7 +9,7 @@ import { normalizeAuthIndex } from '@/utils/quota';
 import { formatCountdown } from '../../compactDuration';
 import { formatQuotaWindowLabel } from '../../quotaWindows';
 import { resetGrantOperations, RETRY_WINDOW_MS } from './resetGrantOperations';
-import { groupResetGrants, type ResetGrantGroup } from './resetGrantGroups';
+import { confirmGuard, groupResetGrants, type ResetGrantGroup } from './resetGrantGroups';
 
 /**
  * Grouped resets for one Claude credential, read from its loaded quota (the
@@ -84,7 +84,14 @@ export function useClaudeResetGrants(
         lock.current = true;
         setBusy(true);
         try {
-          const answer = await resetGrantOperations.run(key, authIndex, action.grantId);
+          const answer = await resetGrantOperations.run(
+            key,
+            authIndex,
+            action.grantId,
+            action.retry
+              ? undefined
+              : confirmGuard(group.kind, action.grantId, quota?.windows ?? [])
+          );
           if (!current()) return;
           showNotification(
             t(`claude_reset.${answer.unresolved ? 'unknown' : answer.code}`),

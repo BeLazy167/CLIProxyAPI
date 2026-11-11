@@ -5,6 +5,7 @@ import {
   claimClaudeResetGrant,
   readClaudeOrganization,
   readClaudeResetGrants,
+  type AnthropicResetGrantStatus,
   type AnthropicResetSettledCode,
 } from '@/services/api/claudeResetGrants';
 
@@ -54,7 +55,9 @@ export function createResetGrantOperations(deps = defaultDependencies) {
     async run(
       key: string,
       authIndex: string,
-      grantId: string
+      grantId: string,
+      /** Checked on the fresh status of a new claim; a retry keeps its request and skips it. */
+      guard?: (status: AnthropicResetGrantStatus, now: number) => boolean
     ): Promise<{ code: ResetGrantRunCode; unresolved: boolean }> {
       const session = syncSession();
       const assertSession = () => {
@@ -84,7 +87,8 @@ export function createResetGrantOperations(deps = defaultDependencies) {
             !grant ||
             (grant.startsAt && Date.parse(grant.startsAt) > now) ||
             (grant.endsAt && Date.parse(grant.endsAt) <= now) ||
-            (status.cooldownUntil && Date.parse(status.cooldownUntil) > now)
+            (status.cooldownUntil && Date.parse(status.cooldownUntil) > now) ||
+            (guard && !guard(status, now))
           ) {
             throw new Error('blocked');
           }

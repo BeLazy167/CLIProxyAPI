@@ -2,6 +2,7 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import type { TFunction } from 'i18next';
 import fixture from './fixtures/claudeUsageFableExhausted.json';
 import {
+  confirmGuard,
   groupResetGrants,
   type ResetGrantGroup,
 } from '../src/features/quota/providers/claude/resetGrantGroups';
@@ -371,6 +372,50 @@ describe('Claude quota fetch reads grants from the one usage call', () => {
       expect(state.resetGrants).toBeNull();
       expect(state.windows).toHaveLength(2);
     }
+  });
+});
+
+describe('the waste guard is checked again at confirm time', () => {
+  const organization = '11111111-2222-3333-4444-555555555555';
+  const run = async (freshPercent: number, at: number, resetInMs: number) => {
+    let claims = 0;
+    const deps: ResetGrantOperationDeps = {
+      revision: () => 1,
+      now: () => at,
+      requestId: () => 'request-1',
+      readStatus: async () =>
+        statusOf([grant('model', { percent_used: { seven_day_overage_included: freshPercent } })]),
+      readOrganization: async () => organization,
+      claim: async () => {
+        claims += 1;
+        return 'reset';
+      },
+      resetCooldown: async (authIndex: string) => ({
+        status: 'ok' as const,
+        auth_index: authIndex,
+        models: [],
+      }),
+    };
+    const windows = [window('seven-day-fable', 95, resetInMs)];
+    const guard = confirmGuard('model', 'model', windows);
+    const outcome = await createResetGrantOperations(deps)
+      .run('key', 'idx-1', 'model', guard)
+      .then(
+        () => 'sent',
+        (error: Error) => error.message
+      );
+    return { outcome, claims };
+  };
+
+  test('a window that crossed inside 24 h while the dialog was open blocks the claim', async () => {
+    const open = await run(95, NOW, 24 * HOUR + 60_000);
+    expect(open).toEqual({ outcome: 'sent', claims: 1 });
+    const late = await run(95, NOW + 2 * 60_000, 24 * HOUR + 60_000);
+    expect(late).toEqual({ outcome: 'blocked', claims: 0 });
+  });
+
+  test('fresh use under 90% blocks the claim even when the page still shows 95%', async () => {
+    expect(await run(40, NOW, 5 * 24 * HOUR)).toEqual({ outcome: 'blocked', claims: 0 });
   });
 });
 
