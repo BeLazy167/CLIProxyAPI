@@ -332,18 +332,31 @@ func (e *Engine) apply(ctx context.Context, why string, all, readNow []string) {
 		}
 	}
 	creds, credErr := e.gw.Credentials(ctx)
-	if credErr == nil {
-		e.idOf = map[string]string{}
-		for name, c := range creds {
-			if slices.Contains(all, name) {
-				e.idOf[name], e.idOf[c.ID], e.idOf[c.AuthIndex] = name, name, name
-			}
-		}
-		delete(e.idOf, "")
-	}
+	e.mapIDs(all, creds, credErr)
 	healCooldowns(ctx, e.w, e.logf, creds, credErr, planned, accounts, readNow, now)
 	e.publish(now, planned)
 	e.logf("plan %d (%s): %d accounts planned, %d read, %d left out", e.gen, why, len(planned), len(readNow), len(all)-len(planned))
+}
+
+// mapIDs maps the IDs a usage record names to auth file names. The gateway's auth ID for a file is its name;
+// the auth index comes from the newest credentials read, or the one before when this read failed.
+func (e *Engine) mapIDs(all []string, creds map[string]gateway.Credential, credErr error) {
+	ids := map[string]string{}
+	for id, name := range e.idOf {
+		if credErr != nil && slices.Contains(all, name) {
+			ids[id] = name
+		}
+	}
+	for name, c := range creds {
+		if slices.Contains(all, name) {
+			ids[c.ID], ids[c.AuthIndex] = name, name
+		}
+	}
+	for _, name := range all {
+		ids[name] = name
+	}
+	delete(ids, "")
+	e.idOf = ids
 }
 
 // releaseAll drops the Opus/Sonnet reservation from every enabled account. Fable exclusions stay.

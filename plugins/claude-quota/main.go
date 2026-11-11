@@ -60,6 +60,7 @@ import "C"
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"unsafe"
 
 	"github.com/router-for-me/CLIProxyAPI/v8/plugins/claude-quota/rpc"
@@ -117,14 +118,25 @@ func cliproxyPluginShutdown() {
 	plugin.Shutdown()
 }
 
+// hostLog logs through the host. Once the host has closed this copy's callbacks (during unload), it writes
+// to stderr, which is the gateway's own stderr, so shutdown lines are not lost.
 func hostLog(format string, args ...any) {
-	payload, _ := json.Marshal(map[string]string{"level": "info", "message": "claude-quota: " + fmt.Sprintf(format, args...)})
+	msg := "claude-quota: " + fmt.Sprintf(format, args...)
+	payload, _ := json.Marshal(map[string]string{"level": "info", "message": msg})
 	cMethod := C.CString("host.log")
 	defer C.free(unsafe.Pointer(cMethod))
 	req := C.CBytes(payload)
 	defer C.free(req)
 	var response C.cliproxy_buffer
-	if C.call_host_api(cMethod, (*C.uint8_t)(req), C.size_t(len(payload)), &response) == 0 && response.ptr != nil {
+	status := C.call_host_api(cMethod, (*C.uint8_t)(req), C.size_t(len(payload)), &response)
+	var reply struct {
+		OK bool `json:"ok"`
+	}
+	if response.ptr != nil {
+		_ = json.Unmarshal(C.GoBytes(response.ptr, C.int(response.len)), &reply)
 		C.free_host_buffer(response.ptr, response.len)
+	}
+	if status != 0 || !reply.OK {
+		fmt.Fprintln(os.Stderr, msg)
 	}
 }

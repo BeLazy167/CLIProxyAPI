@@ -29,10 +29,11 @@ type world struct {
 	usage    *httptest.Server
 	mgmt     *httptest.Server
 
-	mu     sync.Mutex
-	reads  map[string]int
-	writes []string
-	logs   []string
+	mu        sync.Mutex
+	reads     map[string]int
+	writes    []string
+	logs      []string
+	credsFail bool
 }
 
 func token(label string) string { return "sk-ant-oat-FAKE-" + label }
@@ -86,10 +87,15 @@ func newWorld(t *testing.T, accounts map[string]acctSpec) *world {
 			http.Error(rw, "no key", http.StatusUnauthorized)
 			return
 		}
+		w.mu.Lock()
+		credsFail := w.credsFail
 		if r.Method != http.MethodGet {
-			w.mu.Lock()
 			w.writes = append(w.writes, r.Method+" "+r.URL.Path)
-			w.mu.Unlock()
+		}
+		w.mu.Unlock()
+		if credsFail {
+			http.Error(rw, "gateway starting", http.StatusBadGateway)
+			return
 		}
 		_, _ = rw.Write(credsReply)
 	}))
@@ -410,4 +416,19 @@ func TestQuota429TriggersOneRead(t *testing.T) {
 	if a, b := w.readCount("fableout"), w.readCount("weeklyout"); a != 1 || b != 1 {
 		t.Fatalf("13: other accounts read again (%d, %d)", a, b)
 	}
+}
+
+func TestQuota429ByAuthIDWithoutCredentials(t *testing.T) {
+	w := newWorld(t, nov11)
+	w.credsFail = true
+	p := New(w.logf)
+	defer p.Shutdown()
+	register(t, p, w.config(""))
+	w.waitFor("plan", func() bool { return len(w.lines("plan 1 ")) == 1 })
+	if len(w.lines("cooldown check skipped")) != 1 {
+		t.Fatal("the credentials read should have failed")
+	}
+	call(t, p, "usage.handle", map[string]any{"AuthID": "claude-fableout.json", "AuthIndex": "idx-fableout",
+		"Failure": map[string]any{"StatusCode": http.StatusTooManyRequests}})
+	w.waitFor("12: a 429 maps by auth ID (the auth file name) before any credentials read", func() bool { return w.readCount("fableout") == 2 })
 }
