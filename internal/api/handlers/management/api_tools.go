@@ -124,7 +124,7 @@ func (h *Handler) APICall(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid url"})
 		return
 	}
-	if isClaudeResetClaim(parsedURL) {
+	if isClaudeResetClaim(parsedURL, body.Header) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Claude reset claims go through the claude-quota plugin"})
 		return
 	}
