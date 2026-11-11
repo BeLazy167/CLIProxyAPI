@@ -2,11 +2,13 @@
 //
 // Usage: testdiff BASE.json HEAD.json
 //
-// Each output line is "<package>\t<test>", sorted. An empty test means the package failed with no failing test in it,
-// for example because it no longer builds; a package with a failing test is explained by that test. A test counts as
-// failing on a side when any of its results there is a failure, so base runs repeated with -count, or appended to the
-// base file, absorb flaky tests. Exit status: 0 no new failures, 1 new failures, 2 bad input, including a file with no
-// package results, so a go command that died never reads as a pass.
+// Each output line is "<package>\t<test>", sorted. An empty test means the package failed for more than its failing
+// tests: it did not build, its test binary panicked outside a test or ended without its final PASS or FAIL line (a
+// TestMain panic, an os.Exit, a crash), or it failed with no failing test. Tests that already fail on base never excuse
+// such a package failure. A test or package counts as failing on a side when any of its runs there failed, so base runs
+// repeated with -count, or appended to the base file, absorb flaky tests. Exit status: 0 no new failures, 1 new
+// failures, 2 bad input: a file with no package results, or a package that started and never reported a result (the go
+// command died), so a run that did not finish never reads as a pass.
 package main
 
 import (
@@ -16,6 +18,7 @@ import (
 	"io"
 	"os"
 	"sort"
+	"strings"
 )
 
 type key struct {
@@ -24,9 +27,23 @@ type key struct {
 }
 
 type event struct {
-	Action  string
-	Package string
-	Test    string
+	Action      string
+	Package     string
+	Test        string
+	Output      string
+	FailedBuild string
+}
+
+// binaryRun is what one run of a package's test binary has shown so far.
+type binaryRun struct {
+	started    bool
+	failedTest bool
+	summary    bool // the testing package's final "PASS" or "FAIL" line
+	panicked   bool // a panic outside any test
+}
+
+func (r binaryRun) failedBeyondTests(e event) bool {
+	return e.FailedBuild != "" || !r.failedTest || !r.summary || r.panicked
 }
 
 type results struct {
@@ -53,15 +70,9 @@ func run(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "testdiff:", err)
 		return 2
 	}
-	failingTests := map[string]bool{}
-	for k := range head.failed {
-		if k.Test != "" {
-			failingTests[k.Package] = true
-		}
-	}
 	var regressions []key
 	for k := range head.failed {
-		if !base.failed[k] && (k.Test != "" || !failingTests[k.Package]) {
+		if !base.failed[k] {
 			regressions = append(regressions, k)
 		}
 	}
@@ -87,6 +98,7 @@ func load(path string) (results, error) {
 		return r, err
 	}
 	defer func() { _ = f.Close() }()
+	runs := map[string]binaryRun{}
 	sc := bufio.NewScanner(f)
 	sc.Buffer(make([]byte, 0, 1<<20), 64<<20)
 	for sc.Scan() {
@@ -94,19 +106,41 @@ func load(path string) (results, error) {
 		if json.Unmarshal(sc.Bytes(), &e) != nil || e.Package == "" {
 			continue
 		}
-		switch e.Action {
-		case "fail":
+		cur := runs[e.Package]
+		switch {
+		case e.Action == "start":
+			cur = binaryRun{started: true}
+		case e.Action == "output" && e.Test == "":
+			cur.summary = cur.summary || e.Output == "PASS\n" || e.Output == "FAIL\n"
+			cur.panicked = cur.panicked || strings.HasPrefix(e.Output, "panic: ")
+		case e.Action == "fail" && e.Test != "":
 			r.failed[key{e.Package, e.Test}] = true
-		case "pass", "skip":
-		default:
+			cur.failedTest = true
+		case e.Action == "fail":
+			if cur.failedBeyondTests(e) {
+				r.failed[key{e.Package, ""}] = true
+			}
+			fallthrough
+		case (e.Action == "pass" || e.Action == "skip") && e.Test == "":
+			r.packages++
+			delete(runs, e.Package)
 			continue
 		}
-		if e.Test == "" {
-			r.packages++
-		}
+		runs[e.Package] = cur
 	}
 	if err := sc.Err(); err != nil {
 		return r, fmt.Errorf("%s: %w", path, err)
+	}
+	var unfinished []string
+	for pkg, cur := range runs {
+		if cur.started {
+			unfinished = append(unfinished, pkg)
+		}
+	}
+	if len(unfinished) > 0 {
+		sort.Strings(unfinished)
+		return r, fmt.Errorf("%s: packages started and never reported a result, so the go command stopped early: %s",
+			path, strings.Join(unfinished, " "))
 	}
 	if r.packages == 0 {
 		return r, fmt.Errorf("%s: no package results; the go command did not run the tests", path)
