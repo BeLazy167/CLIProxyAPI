@@ -22,7 +22,11 @@ to the gateway. The mode is compiled in: the write calls exist only under the `c
   - It writes only on change.
   - It resets a gateway cooldown only when every future cooldown on that credential is a stale quota cooldown.
 - It also re-plans at each window's reported reset time, and after a quota 429 the gateway reports through the usage
-  hook. An account is read at most once per `min_read_gap` (5 min against Anthropic).
+  hook. An account is read at most once per `min_read_gap` (at least 5 min unless the usage server is on loopback).
+  A read the gap holds back runs once the gap passes. The last read attempt per account is kept in
+  `<state_dir>/claude-quota.last-try.json`, so the gap holds across a reconfigure and a handoff between loaded copies.
+- Before each plan it checks every cached account again: an account whose auth file is now unreadable, disabled, or
+  has a token that expires within a minute is left out, as in the Python service.
 - Fail open: once an account has no usage read newer than `stale_after` (45 min), or when the engine stops, it
   releases the Opus/Sonnet reservation. Fable exclusions stay.
 - One goroutine owns all engine state and handles every trigger in turn. Each plan has a generation number.
@@ -55,12 +59,15 @@ plugins:
       usage_base: https://api.anthropic.com
       user_agent: claude-cli/2.1.321 (external, cli)
       stale_after: 45m
-      min_read_gap: 5m                   # below 5m only against a test usage server
+      min_read_gap: 5m                   # below 5m only against a usage server on loopback
       reset_grace: 1m                    # read this long after a window's reset time
       lock_retry: 10s
 ```
 
 Every key except `enabled` has the default shown. Unknown keys are an error.
+
+For the shadow run, set `interval: 30m`. The Python service still polls every account every 15 minutes, and 30m
+halves the extra usage reads the plugin adds on top.
 
 ## Build
 
