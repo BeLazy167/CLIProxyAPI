@@ -1,4 +1,4 @@
-claude-quota claim e2e run 2026-11-11T17:33:33.685437+00:00
+claude-quota claim e2e run 2026-11-11T18:08:24.861531+00:00
 gateway built from /work/tmp/cpa-offers, plugin built with -tags claude_quota_e2e, caddy/reset.caddy on Caddy
 
 # moved from fleet services/claude-reset
@@ -242,5 +242,27 @@ gateway built from /work/tmp/cpa-offers, plugin built with -tags claude_quota_e2
   PASS  Caddy adds no key to other management paths
   PASS  Caddy adds no key to other /reset/offer/... paths
   PASS  none of these claimed or emailed
+## s_panel_after_page_claim_spends_once
+  PASS  the page claims the 24 h expiry offer
+  PASS  a panel tap queued behind it sends no second claim: one spend, one reset left
+  PASS  the panel answer names the page's DONE offer
+  PASS  no new offer or alert for the used reminder
+  PASS  reverse order: the panel claims the alert's offer
+  PASS  reverse order: the page tap is refused as done; one claim, one spend
+  PASS  the expiry reminder's push failed, so only the near-limit offer exists
+  PASS  the page claims the near-limit offer
+  PASS  a panel tap after it makes no offer from the unsent reminder of the same grant: one claim, one spend
+## s_email_change_keeps_the_claim_on_the_account
+  PASS  a page tap with a lost reply -> UNKNOWN
+  PASS  after the account's email changes, a tap on the new alert is refused while the first claim is unknown
+  PASS  the panel re-sends the first claim's request_id
+  PASS  the panel settles the first offer to DONE, one spend
+  PASS  the offer made under the new email expires as the claimed offer's sibling
+  PASS  a lost reply after the spend -> UNKNOWN
+  PASS  after the email change a status read still settles it to DONE; nothing is re-sent
+## s_credentials_read_again_after_boot
+  PASS  the start cycle's credentials read fails, as at gateway boot, and heals nothing
+  PASS  the credentials are read again within seconds and the stale cooldown is healed, without the 60 s poll
+  PASS  the retry reads no usage
 
-182 of 182 checks passed
+201 of 201 checks passed
