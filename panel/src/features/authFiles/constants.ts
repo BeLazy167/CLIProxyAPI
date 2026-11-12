@@ -137,12 +137,19 @@ export const hasAuthFileStatusWarning = (file: AuthFileItem): boolean => {
  * 是否为需要用户处理的问题凭证。
  * 主动停用是独立状态，不应进入“问题”筛选或“删除问题凭证”的批量操作。
  * The backend marks a quota-blocked credential unavailable with a 429 message; while
- * only quota timers run it recovers on its own, so it is cooling down, not a problem.
+ * only quota timers run and quota explains the message, it recovers on its own, so it
+ * is cooling down. The backend keeps quota timers on a credential whose token also
+ * failed, and waiting does not fix that, so any other message stays a problem.
  */
+const QUOTA_STATUS_MESSAGE = /rate[_ ]?limit|usage[_ ]?limit|quota|\b429\b|too many requests/i;
+
+const quotaExplainsStatus = (file: AuthFileItem): boolean =>
+  !hasAuthFileStatusWarning(file) || QUOTA_STATUS_MESSAGE.test(getAuthFileStatusMessage(file));
+
 export const isProblemAuthFile = (file: AuthFileItem, nowMs: number): boolean => {
   const status = typeof file.status === 'string' ? file.status.trim().toLowerCase() : '';
   if (file.disabled === true || status === 'disabled') return false;
-  if (isQuotaCoolingAuthFile(file, nowMs)) return false;
+  if (isQuotaCoolingAuthFile(file, nowMs) && quotaExplainsStatus(file)) return false;
   return file.unavailable === true || status === 'error' || hasAuthFileStatusWarning(file);
 };
 

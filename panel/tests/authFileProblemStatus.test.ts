@@ -89,6 +89,28 @@ describe('auth file status buckets with cooldowns', () => {
     expect(getAuthFileStatusKind(file, NOW)).toBe('problem');
   });
 
+  test('an auth failure stays a problem while a quota cooldown also runs', () => {
+    for (const statusMessage of [
+      'token expired',
+      'unauthorized (refresh token invalid)',
+      '401 Unauthorized',
+      '403 Forbidden',
+      'invalid_grant: refresh token revoked',
+    ]) {
+      for (const reason of ['credential_quota', 'quota']) {
+        expect(getAuthFileStatusKind(cooling(reason, 600, { statusMessage }), NOW)).toBe('problem');
+      }
+    }
+  });
+
+  test('a quota cooldown with an empty or quota message is cooling down', () => {
+    for (const statusMessage of ['', 'usage_limit_reached', '429 Too Many Requests']) {
+      expect(getAuthFileStatusKind(cooling('credential_quota', 600, { statusMessage }), NOW)).toBe(
+        'cooling'
+      );
+    }
+  });
+
   test('an error that outlives its quota cooldown is a problem again', () => {
     expect(getAuthFileStatusKind(cooling('credential_quota', 60), NOW + 61_000)).toBe('problem');
   });
