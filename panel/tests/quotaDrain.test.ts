@@ -469,3 +469,79 @@ describe('drain card', () => {
     expect(html).not.toContain('<svg');
   });
 });
+
+describe('drain card pool with an account that has no rate', () => {
+  const entryOf = (name: string): QuotaFileEntry => ({
+    file: { name, type: 'claude', authIndex: name },
+    type: 'claude',
+  });
+  const member = (name: string, remainingPercent: number, resetInHours: number) => ({
+    entry: entryOf(name),
+    status: 'reported' as const,
+    remainingPercent,
+    resetAtMs: NOW + resetInHours * H,
+  });
+  const poolOf = (members: ReturnType<typeof member>[]): PoolWindow => ({
+    key: 'claude:seven-day',
+    label: { text: 'seven-day' },
+    periodHours: 168,
+    members,
+    reportedCount: members.length,
+    unknownCount: 0,
+    absentCount: 0,
+    totalRemaining: members.reduce((sum, m) => sum + m.remainingPercent, 0),
+    capacity: 100 * members.length,
+    nextReset: null,
+    allResetAtMs: null,
+    staleCount: 0,
+  });
+  /** `drained` has a steady pace down to 0; `fresh` has one reading since its refill. */
+  const history: QuotaHistorySeries[] = [
+    {
+      auth_index: 'drained',
+      window: 'seven-day',
+      points: [-6, -4, -2, 0].map((h, i) => [(NOW + h * H) / 1000, 30 - i * 10, 0]),
+    },
+    { auth_index: 'fresh', window: 'seven-day', points: [[(NOW - H) / 1000, 97, 0]] },
+  ];
+  const card = (members: ReturnType<typeof member>[]) => {
+    const model = buildDrainCard({
+      provider: 'claude',
+      window: poolOf(members),
+      history: 'seven-day',
+      size: 'full',
+      authIndexOf: (entry) => entry.file.name,
+      rateSeries: history,
+      drawSeries: history,
+      nowMs: NOW,
+      fromMs: NOW - 24 * H,
+      toMs: NOW + 10 * 24 * H,
+      options: { usage: 'same', burnHours: 3 },
+    });
+    if (model?.kind !== 'forecast') throw new Error('expected a forecast card');
+    return model;
+  };
+
+  test('the pool is not empty while an account without a rate still holds quota', () => {
+    const model = card([member('drained', 0, 30), member('fresh', 97, 60)]);
+    expect(model.unrecordedCount).toBe(1);
+    expect(model.pool.points[0].remaining).toBe(97);
+    expect(model.pool.emptyAtMs).toBeNull();
+  });
+
+  test('that account holds its figure, refills at its reset, and adds no drain', () => {
+    const model = card([member('drained', 0, 30), member('fresh', 97, 60)]);
+    expect(valueAt(model.pool.points, NOW + 29 * H, 'after')).toBeCloseTo(97);
+    const refill =
+      valueAt(model.pool.points, NOW + 60 * H, 'after') -
+      valueAt(model.pool.points, NOW + 60 * H, 'before');
+    expect(refill).toBeCloseTo(3);
+    expect(model.pool.drainPerHour).toBe(0);
+    expect(model.burn.perHour).toBe(0);
+  });
+
+  test('the pool still reads empty now when every account is at 0', () => {
+    const model = card([member('drained', 0, 30), member('fresh', 0, 60)]);
+    expect(model.pool.emptyAtMs).toBe(NOW);
+  });
+});
