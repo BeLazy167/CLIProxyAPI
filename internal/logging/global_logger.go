@@ -23,7 +23,7 @@ var (
 	logWriter      *lumberjack.Logger
 	ginInfoWriter  *io.PipeWriter
 	ginErrorWriter *io.PipeWriter
-	stdoutWriter   io.Writer = os.Stdout
+	stdoutWriter   = func() io.Writer { return os.Stdout }
 )
 
 func init() {
@@ -214,9 +214,7 @@ func ConfigureLogOutput(cfg *config.Config) error {
 		if err := os.MkdirAll(logDir, 0o755); err != nil {
 			return fmt.Errorf("logging: failed to create log directory: %w", err)
 		}
-		if logWriter != nil {
-			_ = logWriter.Close()
-		}
+		previous := logWriter
 		protectedPath = filepath.Join(logDir, "main.log")
 		logWriter = &lumberjack.Logger{
 			Filename:   protectedPath,
@@ -225,13 +223,16 @@ func ConfigureLogOutput(cfg *config.Config) error {
 			MaxAge:     0,
 			Compress:   false,
 		}
-		log.SetOutput(io.MultiWriter(stdoutWriter, logWriter))
+		log.SetOutput(io.MultiWriter(stdoutWriter(), logWriter))
+		if previous != nil {
+			_ = previous.Close()
+		}
 	} else {
+		log.SetOutput(stdoutWriter())
 		if logWriter != nil {
 			_ = logWriter.Close()
 			logWriter = nil
 		}
-		log.SetOutput(stdoutWriter)
 	}
 
 	configureLogDirCleanerLocked(logDir, cfg.LogsMaxTotalSizeMB, protectedPath)

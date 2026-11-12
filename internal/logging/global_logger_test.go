@@ -2,6 +2,7 @@ package logging
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -18,7 +19,7 @@ func setStdoutForTest(w io.Writer) func() {
 	writerMu.Lock()
 	defer writerMu.Unlock()
 	prev := stdoutWriter
-	stdoutWriter = w
+	stdoutWriter = func() io.Writer { return w }
 	return func() {
 		writerMu.Lock()
 		defer writerMu.Unlock()
@@ -201,6 +202,42 @@ func TestConfigureLogOutput_FileLoggingKeepsStdout(t *testing.T) {
 	}
 	if strings.Contains(readFile(), "stdout-only") {
 		t.Fatalf("main.log still receives lines after file logging was turned off")
+	}
+}
+
+func TestConfigureLogOutput_FollowsRedirectedStdout(t *testing.T) {
+	t.Setenv("WRITABLE_PATH", t.TempDir())
+	origOut := log.StandardLogger().Out
+	origStdout := os.Stdout
+	t.Cleanup(func() {
+		os.Stdout = origStdout
+		closeLogOutputs()
+		log.SetOutput(origOut)
+	})
+	redirected, err := os.CreateTemp(t.TempDir(), "stdout")
+	if err != nil {
+		t.Fatalf("create redirected stdout: %v", err)
+	}
+	t.Cleanup(func() { _ = redirected.Close() })
+
+	for _, toFile := range []bool{true, false} {
+		os.Stdout = origStdout
+		if err := ConfigureLogOutput(&config.Config{LoggingToFile: toFile, AuthDir: t.TempDir()}); err != nil {
+			t.Fatalf("ConfigureLogOutput error = %v", err)
+		}
+		os.Stdout = redirected
+		if err := ConfigureLogOutput(&config.Config{LoggingToFile: toFile, AuthDir: t.TempDir()}); err != nil {
+			t.Fatalf("ConfigureLogOutput after redirect error = %v", err)
+		}
+		marker := fmt.Sprintf("redirected-line-file-%v", toFile)
+		log.Info(marker)
+		data, err := os.ReadFile(redirected.Name())
+		if err != nil {
+			t.Fatalf("read redirected stdout: %v", err)
+		}
+		if !strings.Contains(string(data), marker) {
+			t.Fatalf("log line %q did not follow the redirected os.Stdout", marker)
+		}
 	}
 }
 
