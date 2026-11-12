@@ -142,9 +142,14 @@ export const hasAuthFileStatusWarning = (file: AuthFileItem): boolean => {
  * failed, and waiting does not fix that, so any other message stays a problem.
  */
 const QUOTA_STATUS_MESSAGE = /rate[_ ]?limit|usage[_ ]?limit|quota|\b429\b|too many requests/i;
+const AUTH_STATUS_MESSAGE =
+  /\b40[13]\b|unauthori[sz]ed|forbidden|not authori[sz]ed|authenticat|invalid[_ ]?(?:grant|token)|(?:access|refresh)[_ ]?token|token[_ ]?(?:expired|invalid|revoked)|(?:expired|revoked)[_ ]?token/i;
 
-const quotaExplainsStatus = (file: AuthFileItem): boolean =>
-  !hasAuthFileStatusWarning(file) || QUOTA_STATUS_MESSAGE.test(getAuthFileStatusMessage(file));
+const quotaExplainsStatus = (file: AuthFileItem): boolean => {
+  if (!hasAuthFileStatusWarning(file)) return true;
+  const message = getAuthFileStatusMessage(file);
+  return QUOTA_STATUS_MESSAGE.test(message) && !AUTH_STATUS_MESSAGE.test(message);
+};
 
 export const isProblemAuthFile = (file: AuthFileItem, nowMs: number): boolean => {
   const status = typeof file.status === 'string' ? file.status.trim().toLowerCase() : '';

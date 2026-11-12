@@ -96,6 +96,10 @@ describe('auth file status buckets with cooldowns', () => {
       '401 Unauthorized',
       '403 Forbidden',
       'invalid_grant: refresh token revoked',
+      '401 Unauthorized: quota lookup failed because token expired',
+      '403 Forbidden: not authorized to access quota',
+      'invalid_grant: refresh token revoked while checking usage_limit',
+      'authentication failed: rate limit check rejected the token',
     ]) {
       for (const reason of ['credential_quota', 'quota']) {
         expect(getAuthFileStatusKind(cooling(reason, 600, { statusMessage }), NOW)).toBe('problem');
