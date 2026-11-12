@@ -3,6 +3,8 @@ package logging
 import (
 	"bytes"
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -12,15 +14,15 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func setMigrationConsoleOutputForTest(w io.Writer) func() {
-	consoleMu.Lock()
-	defer consoleMu.Unlock()
-	prev := consoleWriter
-	consoleWriter = w
+func setStdoutForTest(w io.Writer) func() {
+	writerMu.Lock()
+	defer writerMu.Unlock()
+	prev := stdoutWriter
+	stdoutWriter = w
 	return func() {
-		consoleMu.Lock()
-		defer consoleMu.Unlock()
-		consoleWriter = prev
+		writerMu.Lock()
+		defer writerMu.Unlock()
+		stdoutWriter = prev
 	}
 }
 
@@ -139,50 +141,66 @@ func TestLogFormatterOmitsGenericPathField(t *testing.T) {
 	}
 }
 
-func TestConfigureLogOutput_V8MigrationMirror(t *testing.T) {
-	tempDir := t.TempDir()
-	cfg := &config.Config{
-		LoggingToFile: true,
-		AuthDir:       tempDir,
-	}
+func TestConfigureLogOutput_FileLoggingKeepsStdout(t *testing.T) {
+	writable := t.TempDir()
+	t.Setenv("WRITABLE_PATH", writable)
+	mainLog := filepath.Join(writable, "logs", "main.log")
+	cfg := &config.Config{LoggingToFile: true, AuthDir: t.TempDir()}
 
+	var stdout bytes.Buffer
+	t.Cleanup(setStdoutForTest(&stdout))
 	origOut := log.StandardLogger().Out
 	t.Cleanup(func() {
 		closeLogOutputs()
 		log.SetOutput(origOut)
 	})
+	readFile := func() string {
+		data, err := os.ReadFile(mainLog)
+		if err != nil {
+			t.Fatalf("read main.log: %v", err)
+		}
+		return string(data)
+	}
 
 	if err := ConfigureLogOutput(cfg); err != nil {
 		t.Fatalf("ConfigureLogOutput(LoggingToFile=true) error = %v", err)
 	}
+	log.Info("first-line")
+	if got := strings.Count(stdout.String(), "first-line"); got != 1 {
+		t.Fatalf("stdout has first-line %d times, want 1: %q", got, stdout.String())
+	}
+	if got := strings.Count(readFile(), "first-line"); got != 1 {
+		t.Fatalf("main.log has first-line %d times, want 1", got)
+	}
 
-	var consoleBuf bytes.Buffer
-	restore := setMigrationConsoleOutputForTest(&consoleBuf)
-	t.Cleanup(restore)
+	if err := ConfigureLogOutput(cfg); err != nil {
+		t.Fatalf("second ConfigureLogOutput(LoggingToFile=true) error = %v", err)
+	}
+	log.Info("after-reload")
+	if got := strings.Count(stdout.String(), "after-reload"); got != 1 {
+		t.Fatalf("stdout has after-reload %d times after a reload, want 1", got)
+	}
+	if got := strings.Count(readFile(), "after-reload"); got != 1 {
+		t.Fatalf("main.log has after-reload %d times after a reload, want 1", got)
+	}
 
-	raw := []byte("some-unknown-section:\n  foo: bar\n")
-	if _, _, err := config.NormalizeConfigLayout(raw, true); err != nil {
+	if _, _, err := config.NormalizeConfigLayout([]byte("some-unknown-section:\n  foo: bar\n"), true); err != nil {
 		t.Fatalf("NormalizeConfigLayout() error = %v", err)
 	}
-
-	if !strings.Contains(consoleBuf.String(), "some-unknown-section") {
-		t.Fatalf("expected console mirror to capture migration warning under file logging, got: %s", consoleBuf.String())
+	if got := strings.Count(stdout.String(), "some-unknown-section"); got != 1 {
+		t.Fatalf("stdout has the migration warning %d times, want 1: %q", got, stdout.String())
 	}
 
-	// Switch back to stdout logging
 	cfg.LoggingToFile = false
-	consoleBuf.Reset()
 	if err := ConfigureLogOutput(cfg); err != nil {
 		t.Fatalf("ConfigureLogOutput(LoggingToFile=false) error = %v", err)
 	}
-
-	if _, _, err := config.NormalizeConfigLayout(raw, true); err != nil {
-		t.Fatalf("NormalizeConfigLayout() error = %v", err)
+	log.Info("stdout-only")
+	if !strings.Contains(stdout.String(), "stdout-only") {
+		t.Fatalf("stdout lost stdout-only after file logging was turned off")
 	}
-
-	// Under stdout logging, console mirror is false (it goes to stdout directly)
-	if consoleBuf.Len() != 0 {
-		t.Fatalf("expected console mirror to be disabled under stdout logging, got: %s", consoleBuf.String())
+	if strings.Contains(readFile(), "stdout-only") {
+		t.Fatalf("main.log still receives lines after file logging was turned off")
 	}
 }
 
@@ -203,9 +221,8 @@ func TestConfigureLogOutput_ConcurrentMigration(t *testing.T) {
 		log.SetOutput(origOut)
 	})
 
-	var consoleBuf bytes.Buffer
-	restore := setMigrationConsoleOutputForTest(&consoleBuf)
-	t.Cleanup(restore)
+	t.Setenv("WRITABLE_PATH", t.TempDir())
+	t.Cleanup(setStdoutForTest(io.Discard))
 
 	raw := []byte("some-unknown-section:\n  foo: bar\n")
 	var wg sync.WaitGroup
@@ -230,9 +247,6 @@ func TestConfigureLogOutput_ConcurrentMigration(t *testing.T) {
 		}(i)
 		go func() {
 			defer wg.Done()
-			var localBuf bytes.Buffer
-			r := setMigrationConsoleOutputForTest(&localBuf)
-			defer r()
 			_, _, err := config.NormalizeConfigLayout(raw, true)
 			recordErr(err)
 		}()

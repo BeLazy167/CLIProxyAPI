@@ -20,11 +20,10 @@ import (
 var (
 	setupOnce      sync.Once
 	writerMu       sync.RWMutex
-	consoleMu      sync.Mutex
 	logWriter      *lumberjack.Logger
 	ginInfoWriter  *io.PipeWriter
 	ginErrorWriter *io.PipeWriter
-	consoleWriter  io.Writer = os.Stderr
+	stdoutWriter   io.Writer = os.Stdout
 )
 
 func init() {
@@ -36,13 +35,6 @@ func logV8MigrationWarning(section, msg string) {
 	defer writerMu.RUnlock()
 
 	log.Warn(msg)
-	if logWriter != nil {
-		consoleMu.Lock()
-		if consoleWriter != nil {
-			_, _ = fmt.Fprintf(consoleWriter, "WARNING: %s\n", msg)
-		}
-		consoleMu.Unlock()
-	}
 }
 
 // LogFormatter defines a custom log format for logrus.
@@ -205,7 +197,8 @@ func ResolveLogDirectory(cfg *config.Config) string {
 	return logDir
 }
 
-// ConfigureLogOutput switches the global log destination between rotating files and stdout.
+// ConfigureLogOutput sends the global log to stdout, and also to rotating files when
+// LoggingToFile is set, so the service journal keeps every line the Logs page shows.
 // When logsMaxTotalSizeMB > 0, a background cleaner removes the oldest log files in the logs directory
 // until the total size is within the limit.
 func ConfigureLogOutput(cfg *config.Config) error {
@@ -232,13 +225,13 @@ func ConfigureLogOutput(cfg *config.Config) error {
 			MaxAge:     0,
 			Compress:   false,
 		}
-		log.SetOutput(logWriter)
+		log.SetOutput(io.MultiWriter(stdoutWriter, logWriter))
 	} else {
 		if logWriter != nil {
 			_ = logWriter.Close()
 			logWriter = nil
 		}
-		log.SetOutput(os.Stdout)
+		log.SetOutput(stdoutWriter)
 	}
 
 	configureLogDirCleanerLocked(logDir, cfg.LogsMaxTotalSizeMB, protectedPath)
