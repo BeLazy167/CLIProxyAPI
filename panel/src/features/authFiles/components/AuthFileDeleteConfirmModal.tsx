@@ -13,7 +13,6 @@ const PREVIEW_COUNT = 5;
 
 export type AuthFileDeleteConfirmModalProps = {
   files: AuthFileItem[] | null;
-  displayNameFor: (name: string) => string;
   onCancel: () => void;
   /** Rejects on failure; the error is shown inline and the dialog stays open. */
   onConfirm: () => Promise<void>;
@@ -21,7 +20,6 @@ export type AuthFileDeleteConfirmModalProps = {
 
 export function AuthFileDeleteConfirmModal({
   files,
-  displayNameFor,
   onCancel,
   onConfirm,
 }: AuthFileDeleteConfirmModalProps) {
@@ -92,7 +90,7 @@ export function AuthFileDeleteConfirmModal({
           const identity = deriveAuthFileIdentity(file);
           return (
             <li key={file.name} className={styles.item}>
-              {displayNameFor(identity.primary)}
+              {identity.primary}
             </li>
           );
         })}

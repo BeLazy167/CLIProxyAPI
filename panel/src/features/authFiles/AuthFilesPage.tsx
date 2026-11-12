@@ -16,8 +16,6 @@ import { getQuotaCacheKey } from '@/utils/quota/identity';
 import { QUOTA_ADAPTERS, type QuotaCardState } from '@/features/quota/providers';
 import { useQuotaBatchLoader } from '@/features/quota/hooks/useQuotaBatchLoader';
 import { useQuotaActions } from '@/features/quota/hooks/useQuotaActions';
-import { displayNameTransform } from '@/features/quota/maskIdentity';
-import { readShowEmailsPreference, writeShowEmailsPreference } from '@/features/quota/uiState';
 import {
   QUOTA_PROVIDER_TYPES,
   countAuthFileStatuses,
@@ -100,17 +98,7 @@ export function AuthFilesPage() {
   const [sortMode, setSortMode] = useState<AuthFilesSortMode>('default');
   const [routingRulesOpen, setRoutingRulesOpen] = useState(false);
   const [aliasViewMode, setAliasViewMode] = useState<'diagram' | 'list'>('list');
-  const [showEmails, setShowEmails] = useState(() => readShowEmailsPreference() ?? false);
   const [uiStateHydrated, setUiStateHydrated] = useState(false);
-
-  const displayNameFor = useMemo(() => displayNameTransform(showEmails), [showEmails]);
-  const handleToggleEmails = useCallback(() => {
-    setShowEmails((prev) => {
-      const next = !prev;
-      writeShowEmailsPreference(next);
-      return next;
-    });
-  }, []);
 
   const {
     modelsModalOpen,
@@ -627,7 +615,6 @@ export function AuthFilesPage() {
           groups={groups}
           now={now}
           resolvedTheme={resolvedTheme}
-          displayNameFor={displayNameFor}
           selectedFiles={selectedFiles}
           disableControls={disableControls}
           deleting={deleting}
@@ -665,7 +652,6 @@ export function AuthFilesPage() {
               cooldownResetting={cooldownResetting}
               quotaFilterType={activeQuotaFilter}
               statusBarCache={statusBarCache}
-              displayNameFor={displayNameFor}
               entranceDelayMs={cardEntranceDelay(index)}
               onShowModels={showModels}
               onDownload={handleDownload}
@@ -698,8 +684,6 @@ export function AuthFilesPage() {
         refreshing={refreshing}
         uploading={uploading}
         disableControls={disableControls}
-        showEmails={showEmails}
-        onToggleEmails={handleToggleEmails}
         onUpload={handleUploadClick}
         onRefresh={() => void handleHeaderRefresh()}
         refreshingCredentials={refreshingAllCredentials}
@@ -813,7 +797,6 @@ export function AuthFilesPage() {
 
       <AuthFileDeleteConfirmModal
         files={deleteRequest?.files ?? null}
-        displayNameFor={displayNameFor}
         onCancel={cancelDeleteRequest}
         onConfirm={confirmDeleteRequest}
       />

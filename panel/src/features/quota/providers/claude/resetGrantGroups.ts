@@ -52,7 +52,13 @@ export type ResetGroupBlock =
   'cooldown' | 'unavailable' | 'not_limited' | 'resets_soon' | 'use_model_reset';
 
 export type ResetGroupAction =
-  | { state: 'ready'; grantId: string; windows: ResetWindowReading[] }
+  | {
+      state: 'ready';
+      grantId: string;
+      /** End of the grant this spend would use. */
+      endsAtMs: number | null;
+      windows: ResetWindowReading[];
+    }
   | { state: 'blocked'; reason: ResetGroupBlock };
 
 export interface ResetGrantGroup {
@@ -139,7 +145,7 @@ function groupAction(
   const guard = wasteGuard(readings, now);
   return guard
     ? { state: 'blocked', reason: guard }
-    : { state: 'ready', grantId: grant.id, windows: readings };
+    : { state: 'ready', grantId: grant.id, endsAtMs: parseMs(grant.endsAt), windows: readings };
 }
 
 /**
@@ -180,4 +186,69 @@ export function groupResetGrants(
     ];
   });
   return preferNarrowerReset(groups);
+}
+
+export interface ResetCandidate<T> {
+  account: T;
+  /** Null until the account's quota, and with it its grant status, has loaded. */
+  groups: ResetGrantGroup[] | null;
+}
+
+export type ResetSuggestionReason =
+  'not_loaded' | 'no_grants' | 'cooldown' | 'unavailable' | 'resets_soon' | 'not_limited';
+
+export type ResetSuggestion<T> =
+  | ({ state: 'ready'; account: T; kind: ResetGrantKind } & Omit<ReadyAction, 'state'>)
+  | { state: 'none'; reason: ResetSuggestionReason };
+
+type ReadyAction = Extract<ResetGroupAction, { state: 'ready' }>;
+
+/** With nothing ready, the reason closest to a usable reset explains why. */
+const NONE_REASONS = [
+  'resets_soon',
+  'cooldown',
+  'unavailable',
+  'not_limited',
+] as const satisfies readonly ResetGroupBlock[];
+
+/** When the latest limited window refills on its own; never known counts as latest. */
+const latestRefill = (action: ReadyAction) =>
+  Math.max(...action.windows.filter(isLimited).map((reading) => reading.resetAtMs ?? Infinity));
+
+/**
+ * The one reset worth spending now across accounts: the ready grant that
+ * expires soonest, then the one whose limited window refills latest. Never
+ * claims; the caller sends the account's own confirm flow.
+ */
+export function suggestReset<T>(candidates: readonly ResetCandidate<T>[]): ResetSuggestion<T> {
+  const ready = candidates.flatMap(({ account, groups }) =>
+    (groups ?? []).flatMap((group) =>
+      group.action.state === 'ready' ? [{ account, kind: group.kind, action: group.action }] : []
+    )
+  );
+  ready.sort(
+    (a, b) =>
+      (a.action.endsAtMs ?? Infinity) - (b.action.endsAtMs ?? Infinity) ||
+      latestRefill(b.action) - latestRefill(a.action)
+  );
+  if (ready.length > 0) {
+    const [{ account, kind, action }] = ready;
+    return {
+      state: 'ready',
+      account,
+      kind,
+      grantId: action.grantId,
+      endsAtMs: action.endsAtMs,
+      windows: action.windows,
+    };
+  }
+  if (candidates.some((candidate) => candidate.groups === null))
+    return { state: 'none', reason: 'not_loaded' };
+  const reasons = new Set(
+    candidates.flatMap(({ groups }) =>
+      (groups ?? []).map((group) => (group.action.state === 'blocked' ? group.action.reason : null))
+    )
+  );
+  const reason = NONE_REASONS.find((candidate) => reasons.has(candidate));
+  return { state: 'none', reason: reason ?? 'no_grants' };
 }

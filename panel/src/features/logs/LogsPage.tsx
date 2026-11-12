@@ -215,6 +215,8 @@ export function LogsPage() {
   const refreshDisabled = disableControls || loading || clearingLogs || cpaNeedsFileLogging;
   const autoRefreshDisabled = disableControls || showFileLoggingRequired;
   const clearDisabled = disableControls || clearingLogs || showFileLoggingRequired;
+  // With file logging off there are no lines, so search and filters would act on nothing.
+  const filtersHidden = showFileLoggingRequired && logBuffer.buffer.length === 0;
 
   const liveState: LiveState =
     autoRefreshDisabled || !autoRefresh
@@ -379,8 +381,8 @@ export function LogsPage() {
     };
   }, [requests]);
 
+  // Loaded with the page, not only on the tab, so the tab's count is right before it opens.
   useEffect(() => {
-    if (activeTab !== 'errors') return;
     if (connectionStatus !== 'connected') return;
     void loadErrorLogs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -851,131 +853,141 @@ export function LogsPage() {
               .join(' ')}
           >
             <div className={styles.toolbar}>
-              <div className={styles.searchGroup}>
-                <SearchField
-                  ref={searchRef}
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                  placeholder={t('logs.search_placeholder')}
-                  ariaLabel={t('logs.search_placeholder')}
-                  clearLabel={t('logs.clear_search')}
-                  className={styles.search}
-                />
-                {isSearching && (
-                  <span className={styles.matchCount}>
-                    {t('logs.search_matches', { count: parsedSearchLines.length })}
-                  </span>
-                )}
-              </div>
+              {!filtersHidden && (
+                <>
+                  <div className={styles.searchGroup}>
+                    <SearchField
+                      ref={searchRef}
+                      value={searchQuery}
+                      onChange={setSearchQuery}
+                      placeholder={t('logs.search_placeholder')}
+                      ariaLabel={t('logs.search_placeholder')}
+                      clearLabel={t('logs.clear_search')}
+                      className={styles.search}
+                    />
+                    {isSearching && (
+                      <span className={styles.matchCount}>
+                        {t('logs.search_matches', { count: parsedSearchLines.length })}
+                      </span>
+                    )}
+                  </div>
 
-              <div className={styles.segment} role="group" aria-label={t('logs.filter_status')}>
-                {QUICK_FILTERS.map((filter) => {
-                  const active = quickFilter === filter;
-                  return (
-                    <button
-                      key={filter}
-                      type="button"
-                      className={[styles.segmentItem, active ? styles.segmentActive : '']
-                        .filter(Boolean)
-                        .join(' ')}
-                      aria-pressed={active}
-                      onClick={() => setQuickFilter(filter)}
-                    >
-                      {t(QUICK_FILTER_LABEL_KEYS[filter])}
-                      {filter !== 'all' && (
-                        <span className={styles.segmentCount}>{quickCounts[filter]}</span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <ToolbarPopover
-                label={t('logs.filter_panel_title')}
-                icon={<IconSlidersHorizontal size={14} aria-hidden="true" />}
-                badge={
-                  structuredFilterCount > 0 ? (
-                    <span className={styles.popoverBadge}>{structuredFilterCount}</span>
-                  ) : undefined
-                }
-              >
-                <div className={styles.filterGroup}>
-                  <span className={styles.filterLabel}>{t('logs.level_filter')}</span>
-                  <Select
-                    size="sm"
-                    fullWidth={false}
-                    value={levelFilter}
-                    onChange={setLevelFilter}
-                    ariaLabel={t('logs.level_filter')}
-                    options={[
-                      { value: '', label: t('logs.all_levels') },
-                      ...LOG_LEVELS.map((level) => ({ value: level, label: level.toUpperCase() })),
-                    ]}
-                  />
-                </div>
-                <div className={styles.filterGroup}>
-                  <span className={styles.filterLabel}>{t('logs.filter_method')}</span>
-                  <div className={styles.filterChipList}>
-                    {HTTP_METHODS.map((method) => {
-                      const active = filters.methodFilters.includes(method);
-                      const count = filters.methodCounts[method] ?? 0;
+                  <div className={styles.segment} role="group" aria-label={t('logs.filter_status')}>
+                    {QUICK_FILTERS.map((filter) => {
+                      const active = quickFilter === filter;
                       return (
                         <button
-                          key={method}
+                          key={filter}
                           type="button"
-                          className={[styles.filterChip, active ? styles.filterChipActive : '']
+                          className={[styles.segmentItem, active ? styles.segmentActive : '']
                             .filter(Boolean)
                             .join(' ')}
-                          onClick={() => filters.toggleMethodFilter(method)}
-                          disabled={count === 0 && !active}
                           aria-pressed={active}
+                          onClick={() => setQuickFilter(filter)}
                         >
-                          {method} <span className={styles.filterChipCount}>{count}</span>
+                          {t(QUICK_FILTER_LABEL_KEYS[filter])}
+                          {filter !== 'all' && (
+                            <span className={styles.segmentCount}>{quickCounts[filter]}</span>
+                          )}
                         </button>
                       );
                     })}
                   </div>
-                </div>
-                <div className={styles.filterGroup}>
-                  <span className={styles.filterLabel}>{t('logs.filter_path')}</span>
-                  <div className={styles.filterChipList}>
-                    {filters.pathOptions.length === 0 ? (
-                      <span className={styles.filterHint}>{t('logs.filter_path_empty')}</span>
-                    ) : (
-                      filters.pathOptions.map(({ path, count }) => {
-                        const active = filters.pathFilters.includes(path);
-                        return (
-                          <button
-                            key={path}
-                            type="button"
-                            className={[styles.filterChip, active ? styles.filterChipActive : '']
-                              .filter(Boolean)
-                              .join(' ')}
-                            onClick={() => filters.togglePathFilter(path)}
-                            aria-pressed={active}
-                            title={path}
-                          >
-                            <span className={styles.filterChipPath}>{path}</span>{' '}
-                            <span className={styles.filterChipCount}>{count}</span>
-                          </button>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="xs"
-                  shape="pill"
-                  onClick={() => {
-                    filters.clearStructuredFilters();
-                    setLevelFilter('');
-                  }}
-                  disabled={structuredFilterCount === 0}
-                >
-                  {t('logs.clear_filters')}
-                </Button>
-              </ToolbarPopover>
+
+                  <ToolbarPopover
+                    label={t('logs.filter_panel_title')}
+                    icon={<IconSlidersHorizontal size={14} aria-hidden="true" />}
+                    badge={
+                      structuredFilterCount > 0 ? (
+                        <span className={styles.popoverBadge}>{structuredFilterCount}</span>
+                      ) : undefined
+                    }
+                  >
+                    <div className={styles.filterGroup}>
+                      <span className={styles.filterLabel}>{t('logs.level_filter')}</span>
+                      <Select
+                        size="sm"
+                        fullWidth={false}
+                        value={levelFilter}
+                        onChange={setLevelFilter}
+                        ariaLabel={t('logs.level_filter')}
+                        options={[
+                          { value: '', label: t('logs.all_levels') },
+                          ...LOG_LEVELS.map((level) => ({
+                            value: level,
+                            label: level.toUpperCase(),
+                          })),
+                        ]}
+                      />
+                    </div>
+                    <div className={styles.filterGroup}>
+                      <span className={styles.filterLabel}>{t('logs.filter_method')}</span>
+                      <div className={styles.filterChipList}>
+                        {HTTP_METHODS.map((method) => {
+                          const active = filters.methodFilters.includes(method);
+                          const count = filters.methodCounts[method] ?? 0;
+                          return (
+                            <button
+                              key={method}
+                              type="button"
+                              className={[styles.filterChip, active ? styles.filterChipActive : '']
+                                .filter(Boolean)
+                                .join(' ')}
+                              onClick={() => filters.toggleMethodFilter(method)}
+                              disabled={count === 0 && !active}
+                              aria-pressed={active}
+                            >
+                              {method} <span className={styles.filterChipCount}>{count}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div className={styles.filterGroup}>
+                      <span className={styles.filterLabel}>{t('logs.filter_path')}</span>
+                      <div className={styles.filterChipList}>
+                        {filters.pathOptions.length === 0 ? (
+                          <span className={styles.filterHint}>{t('logs.filter_path_empty')}</span>
+                        ) : (
+                          filters.pathOptions.map(({ path, count }) => {
+                            const active = filters.pathFilters.includes(path);
+                            return (
+                              <button
+                                key={path}
+                                type="button"
+                                className={[
+                                  styles.filterChip,
+                                  active ? styles.filterChipActive : '',
+                                ]
+                                  .filter(Boolean)
+                                  .join(' ')}
+                                onClick={() => filters.togglePathFilter(path)}
+                                aria-pressed={active}
+                                title={path}
+                              >
+                                <span className={styles.filterChipPath}>{path}</span>{' '}
+                                <span className={styles.filterChipCount}>{count}</span>
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      shape="pill"
+                      onClick={() => {
+                        filters.clearStructuredFilters();
+                        setLevelFilter('');
+                      }}
+                      disabled={structuredFilterCount === 0}
+                    >
+                      {t('logs.clear_filters')}
+                    </Button>
+                  </ToolbarPopover>
+                </>
+              )}
 
               <ToolbarPopover
                 label={t('logs.view_menu_title')}
@@ -1102,7 +1114,7 @@ export function LogsPage() {
               </Button>
             </div>
 
-            {chips.length > 0 && (
+            {!filtersHidden && chips.length > 0 && (
               <div className={styles.chipRow} aria-label={t('logs.active_filters')}>
                 {chips.map((chip) => (
                   <span key={chip.key} className={styles.chip}>

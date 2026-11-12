@@ -13,8 +13,6 @@ export type VaultHeaderProps = {
   refreshing: boolean;
   uploading: boolean;
   disableControls: boolean;
-  showEmails: boolean;
-  onToggleEmails: () => void;
   onUpload: () => void;
   onRefresh: () => void;
   refreshingCredentials?: boolean;
@@ -23,7 +21,7 @@ export type VaultHeaderProps = {
 };
 
 /**
- * 凭证库头部：共享 PageHeader + 「显示邮箱」次按钮 + ghost 刷新/重载 + 墨色「上传」。
+ * 凭证库头部：共享 PageHeader + ghost 刷新/重载 + 墨色「上传」。
  */
 export function VaultHeader(props: VaultHeaderProps) {
   const {
@@ -34,8 +32,6 @@ export function VaultHeader(props: VaultHeaderProps) {
     refreshing,
     uploading,
     disableControls,
-    showEmails,
-    onToggleEmails,
     onUpload,
     onRefresh,
     refreshingCredentials = false,
@@ -68,15 +64,6 @@ export function VaultHeader(props: VaultHeaderProps) {
       meta={meta}
       actions={
         <>
-          <Button
-            variant="secondary"
-            shape="pill"
-            size="sm"
-            onClick={onToggleEmails}
-            aria-pressed={showEmails}
-          >
-            {showEmails ? t('quota_management.hide_emails') : t('quota_management.show_emails')}
-          </Button>
           {onRefreshCredentials && (
             <Button
               variant="ghost"
