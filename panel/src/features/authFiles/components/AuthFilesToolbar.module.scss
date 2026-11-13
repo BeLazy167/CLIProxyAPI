@@ -57,12 +57,12 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .segment:hover:not(.segmentActive) {
+  .segment:hover:not([data-checked]) {
     color: var(--text-primary);
   }
 }
 
-.segmentActive {
+.segment[data-checked] {
   color: var(--text-primary);
   font-weight: 650;
   background: var(--floating-surface, var(--bg-primary));
@@ -71,7 +71,7 @@
     0 1px 2px rgba(0, 0, 0, 0.08);
 }
 
-.segmentProblem.segmentActive {
+.segmentProblem[data-checked] {
   color: var(--danger-color);
   background: color-mix(
     in srgb,

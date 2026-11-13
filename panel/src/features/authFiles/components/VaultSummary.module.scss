@@ -64,7 +64,7 @@
   --chip-accent: var(--text-tertiary);
 }
 
-.chipActive {
+.chip[data-pressed] {
   color: var(--text-primary);
   border-color: color-mix(in srgb, var(--chip-accent) 55%, var(--border-color));
   background: color-mix(in srgb, var(--chip-accent) 10%, var(--bg-primary));

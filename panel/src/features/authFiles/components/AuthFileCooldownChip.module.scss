@@ -2,11 +2,6 @@
 
 /* 冷却芯片（琥珀）+ 详情浮层 */
 
-.root {
-  position: relative;
-  display: inline-flex;
-}
-
 .chip {
   display: inline-flex;
   align-items: center;
@@ -36,10 +31,6 @@
 }
 
 .popover {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  z-index: $z-dropdown;
   width: min(360px, calc(100vw - 32px));
   padding: 4px 12px 0;
   border-radius: 12px;

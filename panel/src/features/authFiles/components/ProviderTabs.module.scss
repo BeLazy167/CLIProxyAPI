@@ -65,7 +65,7 @@
   }
 }
 
-.tabActive {
+.tab[data-selected] {
   color: var(--text-primary);
   font-weight: 650;
 
@@ -78,7 +78,7 @@
   flex-shrink: 0;
   color: var(--text-tertiary);
 
-  .tabActive & {
+  [data-selected] > & {
     color: var(--text-primary);
   }
 }
@@ -121,7 +121,7 @@
   border-radius: $radius-full;
   background: color-mix(in srgb, var(--text-primary) 6%, transparent);
 
-  .tabActive & {
+  [data-selected] > & {
     color: var(--text-primary);
     background: color-mix(in srgb, var(--text-primary) 10%, transparent);
   }
@@ -136,4 +136,8 @@
   .tab:active {
     transform: none;
   }
+}
+
+.tabsWrap {
+  min-width: 0;
 }

@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { SearchField } from '@/components/ui/SearchField';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Select } from '@/components/ui/Select';
 import type {
   AuthFilesSortMode,
@@ -58,29 +59,18 @@ export function AuthFilesToolbar(props: AuthFilesToolbarProps) {
         className={styles.search}
       />
 
-      <div
+      <SegmentedControl
         className={styles.segmented}
-        role="group"
-        aria-label={t('auth_files.problem_filter_label')}
-      >
-        {statusFilterOptions.map((option) => {
-          const isActive = statusFilterMode === option.value;
-          const isProblem = option.value === 'problem';
-          return (
-            <button
-              key={option.value}
-              type="button"
-              className={`${styles.segment} ${isActive ? styles.segmentActive : ''} ${
-                isProblem ? styles.segmentProblem : ''
-              }`}
-              aria-pressed={isActive}
-              onClick={() => onStatusFilterChange(option.value)}
-            >
-              {option.label}
-            </button>
-          );
-        })}
-      </div>
+        itemClassName={styles.segment}
+        ariaLabel={t('auth_files.problem_filter_label')}
+        value={statusFilterMode}
+        onChange={onStatusFilterChange}
+        options={statusFilterOptions.map((option) => ({
+          value: option.value,
+          label: option.label,
+          className: option.value === 'problem' ? styles.segmentProblem : undefined,
+        }))}
+      />
 
       <Select
         value={sortMode}
@@ -94,22 +84,14 @@ export function AuthFilesToolbar(props: AuthFilesToolbarProps) {
       />
 
       <div className={styles.trailing}>
-        <div className={styles.segmented} role="group" aria-label={t('auth_files.view_label')}>
-          {viewOptions.map((option) => {
-            const isActive = viewMode === option.value;
-            return (
-              <button
-                key={option.value}
-                type="button"
-                className={`${styles.segment} ${isActive ? styles.segmentActive : ''}`}
-                aria-pressed={isActive}
-                onClick={() => onViewModeChange(option.value)}
-              >
-                {option.label}
-              </button>
-            );
-          })}
-        </div>
+        <SegmentedControl
+          className={styles.segmented}
+          itemClassName={styles.segment}
+          ariaLabel={t('auth_files.view_label')}
+          value={viewMode}
+          onChange={onViewModeChange}
+          options={viewOptions}
+        />
         <OverflowMenu items={menuItems} label={t('auth_files.more_actions')} />
       </div>
     </div>

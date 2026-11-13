@@ -69,7 +69,8 @@ const TONE_CLASS = {
 } as const;
 
 /** Elements inside a row that own their own click; a click there must not open Details. */
-const ROW_CONTROL_SELECTOR = 'button, input, label, a, [role="menu"], [role="dialog"]';
+// Popups render inside the row, so presses in an open one are not row clicks either.
+const ROW_CONTROL_SELECTOR = 'button, input, label, a, [data-slot$="-content"]';
 
 export function AuthFilesLedgerSkeleton({ rows = 6 }: { rows?: number }) {
   return (
