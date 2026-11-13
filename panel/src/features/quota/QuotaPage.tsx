@@ -389,28 +389,6 @@ export function QuotaPage() {
             ariaLabel={t('quota_management.search_label')}
             clearLabel={t('quota_management.search_clear')}
           />
-          <div className={styles.controls}>
-            <div className={styles.sort}>
-              <Select
-                value={sortMode}
-                options={sortOptions}
-                onChange={handleSortModeChange}
-                ariaLabel={t('quota_management.sort_label')}
-                size="sm"
-                variant="quiet"
-              />
-            </div>
-            <div className={styles.viewSelect}>
-              <Select
-                value={view}
-                options={viewOptions}
-                onChange={handleViewChange}
-                ariaLabel={t('quota_management.view_label')}
-                size="sm"
-                variant="quiet"
-              />
-            </div>
-          </div>
         </div>
 
         {error && (
@@ -436,6 +414,30 @@ export function QuotaPage() {
             nameOf={drainNameOf}
           />
         )}
+
+        {/* Sort and view only reorder the account list, so they sit right above it. */}
+        <div className={styles.controls}>
+          <div className={styles.sort}>
+            <Select
+              value={sortMode}
+              options={sortOptions}
+              onChange={handleSortModeChange}
+              ariaLabel={t('quota_management.sort_label')}
+              size="sm"
+              variant="quiet"
+            />
+          </div>
+          <div className={styles.viewSelect}>
+            <Select
+              value={view}
+              options={viewOptions}
+              onChange={handleViewChange}
+              ariaLabel={t('quota_management.view_label')}
+              size="sm"
+              variant="quiet"
+            />
+          </div>
+        </div>
 
         {loading ? (
           <div className={styles.grid} aria-hidden="true">

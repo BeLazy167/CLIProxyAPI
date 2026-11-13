@@ -19,16 +19,16 @@ const iso = (ms: number) => new Date(ms).toISOString();
 const claudeQuota = {
   status: 'success',
   windows: [
-    { id: 'five_hour', resetAtMs: NOW + 3 * HOUR_MS },
-    { id: 'seven_day', resetAtMs: NOW + 4 * DAY_MS },
+    { id: 'five_hour', usedPercent: 40, resetAtMs: NOW + 3 * HOUR_MS },
+    { id: 'seven_day', usedPercent: 10, resetAtMs: NOW + 4 * DAY_MS },
   ],
 };
 
 const codexQuota = {
   status: 'success',
   windows: [
-    { id: 'primary', resetAtMs: NOW + 3 * HOUR_MS },
-    { id: 'secondary', resetAtMs: NOW + 6 * DAY_MS },
+    { id: 'primary', usedPercent: 50, resetAtMs: NOW + 3 * HOUR_MS },
+    { id: 'secondary', usedPercent: 20, resetAtMs: NOW + 6 * DAY_MS },
   ],
   rateLimitResetCredits: [
     { id: 'credit-a', status: 'available', expiresAt: iso(NOW + 11 * DAY_MS) },
@@ -69,7 +69,10 @@ describe('collectQuotaRowInstants', () => {
   });
 
   test('collects the xAI weekly window', () => {
-    const quota = { status: 'success', billing: { periodType: 'weekly', resetAtMs: NOW + DAY_MS } };
+    const quota = {
+      status: 'success',
+      billing: { periodType: 'weekly', usagePercent: 30, resetAtMs: NOW + DAY_MS },
+    };
     expect(collectQuotaRowInstants('xai', quota)).toEqual([
       { rowId: XAI_WEEKLY_ROW_ID, atMs: NOW + DAY_MS, kind: 'window' },
     ]);
@@ -87,15 +90,18 @@ describe('collectQuotaRowInstants', () => {
     const quota = {
       status: 'success',
       groups: [
-        { id: 'g1', buckets: [{ id: 'b1', resetAtMs: NOW + HOUR_MS }] },
-        { id: 'g2', buckets: [{ id: 'b2', resetAtMs: NOW + 2 * HOUR_MS }] },
+        { id: 'g1', buckets: [{ id: 'b1', remainingFraction: 0.5, resetAtMs: NOW + HOUR_MS }] },
+        { id: 'g2', buckets: [{ id: 'b2', remainingFraction: 0, resetAtMs: NOW + 2 * HOUR_MS }] },
       ],
     };
     expect(collectQuotaRowInstants('antigravity', quota).map((i) => i.rowId)).toEqual(['b1', 'b2']);
   });
 
   test('collects Kimi rows', () => {
-    const quota = { status: 'success', rows: [{ id: 'r1', resetAtMs: NOW + HOUR_MS }] };
+    const quota = {
+      status: 'success',
+      rows: [{ id: 'r1', used: 3, limit: 10, resetAtMs: NOW + HOUR_MS }],
+    };
     expect(collectQuotaRowInstants('kimi', quota).map((i) => i.rowId)).toEqual(['r1']);
   });
 
@@ -110,10 +116,10 @@ describe('collectQuotaRowInstants', () => {
     const quota = {
       status: 'success',
       windows: [
-        { id: 'ok', resetAtMs: NOW + HOUR_MS },
-        { id: 'missing' },
-        { id: 'null', resetAtMs: null },
-        { id: 'nan', resetAtMs: Number.NaN },
+        { id: 'ok', usedPercent: 50, resetAtMs: NOW + HOUR_MS },
+        { id: 'missing', usedPercent: 50 },
+        { id: 'null', usedPercent: 50, resetAtMs: null },
+        { id: 'nan', usedPercent: 50, resetAtMs: Number.NaN },
       ],
     };
     expect(collectQuotaRowInstants('claude', quota).map((i) => i.rowId)).toEqual(['ok']);
@@ -126,6 +132,69 @@ describe('collectQuotaRowInstants', () => {
       rateLimitResetCredits: [{ id: 'bad', status: 'available', expiresAt: 'not a date' }],
     };
     expect(collectQuotaRowInstants('codex', quota)).toEqual([]);
+  });
+});
+
+describe('a reset counts only when its window has used some quota', () => {
+  const at = NOW + HOUR_MS;
+
+  test('Claude and Codex skip windows at 0% used or with unknown usage', () => {
+    const windows = [
+      { id: 'unused', usedPercent: 0, resetAtMs: at },
+      { id: 'unknown', usedPercent: null, resetAtMs: at },
+      { id: 'used', usedPercent: 1, resetAtMs: at + HOUR_MS },
+    ];
+    for (const provider of ['claude', 'codex'] as const) {
+      expect(
+        collectQuotaRowInstants(provider, { status: 'success', windows }).map((i) => i.rowId)
+      ).toEqual(['used']);
+    }
+  });
+
+  test('Devin skips windows with 100% left or unknown remaining', () => {
+    const quota = {
+      status: 'success',
+      windows: [
+        { id: 'daily', remainingPercent: 100, resetAtMs: at },
+        { id: 'unknown', remainingPercent: null, resetAtMs: at },
+        { id: 'weekly', remainingPercent: 92, resetAtMs: at + DAY_MS },
+      ],
+    };
+    expect(collectQuotaRowInstants('devin', quota).map((i) => i.rowId)).toEqual(['weekly']);
+  });
+
+  test('Antigravity skips full buckets', () => {
+    const quota = {
+      status: 'success',
+      groups: [{ id: 'g', buckets: [{ id: 'full', remainingFraction: 1, resetAtMs: at }] }],
+    };
+    expect(collectQuotaRowInstants('antigravity', quota)).toEqual([]);
+  });
+
+  test('Kimi skips rows with nothing used', () => {
+    const quota = { status: 'success', rows: [{ id: 'r', used: 0, limit: 10, resetAtMs: at }] };
+    expect(collectQuotaRowInstants('kimi', quota)).toEqual([]);
+  });
+
+  test('xAI skips a weekly window at 0% or unknown usage', () => {
+    for (const usagePercent of [0, null]) {
+      const quota = {
+        status: 'success',
+        billing: { periodType: 'weekly', usagePercent, resetAtMs: at },
+      };
+      expect(collectQuotaRowInstants('xai', quota)).toEqual([]);
+    }
+  });
+
+  test('an account with nothing used has no recovery, so the soonest sort puts it last', () => {
+    const quota = {
+      status: 'success',
+      windows: [
+        { id: 'daily', remainingPercent: 100, resetAtMs: at },
+        { id: 'weekly', remainingPercent: 100, resetAtMs: at + DAY_MS },
+      ],
+    };
+    expect(nextRecoveryMs('devin', quota, NOW)).toBeNull();
   });
 });
 
@@ -219,8 +288,8 @@ describe('nextRecoveryMs', () => {
     const quota = {
       status: 'success',
       windows: [
-        { id: 'stale', resetAtMs: NOW - DAY_MS },
-        { id: 'live', resetAtMs: NOW + DAY_MS },
+        { id: 'stale', usedPercent: 50, resetAtMs: NOW - DAY_MS },
+        { id: 'live', usedPercent: 50, resetAtMs: NOW + DAY_MS },
       ],
     };
     expect(nextRecoveryMs('claude', quota, NOW)).toBe(NOW + DAY_MS);
