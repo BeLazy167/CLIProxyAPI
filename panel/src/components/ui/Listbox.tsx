@@ -10,12 +10,17 @@ export interface ListboxOption {
   className?: string;
 }
 
+export interface ListboxChange {
+  value: string;
+  selected: boolean;
+}
+
 interface ListboxProps {
   options: ReadonlyArray<ListboxOption>;
   /** The selected values among `options`. */
   value: readonly string[];
-  /** One option was pressed, or chosen with Space or Enter. */
-  onToggle: (value: string, selected: boolean) => void;
+  /** Every option whose state changed in one gesture: a press, Space, a Shift range or Ctrl+A. */
+  onChange: (changes: ListboxChange[]) => void;
   ariaLabel: string;
   disabled?: boolean;
   className?: string;
@@ -27,7 +32,7 @@ interface ListboxProps {
 export function Listbox({
   options,
   value,
-  onToggle,
+  onChange,
   ariaLabel,
   disabled = false,
   className,
@@ -45,10 +50,10 @@ export function Listbox({
       value={[...value]}
       onValueChange={(next) => {
         const selected = new Set(Array.isArray(next) ? next : []);
-        for (const option of options) {
-          const was = value.includes(option.value);
-          if (was !== selected.has(option.value)) onToggle(option.value, !was);
-        }
+        const changes = options
+          .filter((option) => value.includes(option.value) !== selected.has(option.value))
+          .map((option) => ({ value: option.value, selected: selected.has(option.value) }));
+        if (changes.length > 0) onChange(changes);
       }}
       onKeyDown={onKeyDown}
     >

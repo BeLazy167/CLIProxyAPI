@@ -1,7 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconCheck, IconSearch } from '@/components/ui/icons';
-import { Listbox } from '@/components/ui/Listbox';
+import { Listbox, type ListboxChange } from '@/components/ui/Listbox';
 import {
   getModelExclusionState,
   type ExclusionStats,
@@ -19,7 +19,8 @@ interface ExcludedModelsPanelProps {
   candidates: readonly ExcludedModelCandidate[];
   /** 由 Picker 算好传下来，避免在 footer 里把整个目录再扫一遍。 */
   stats: ExclusionStats;
-  onToggle: (modelId: string, excluded: boolean) => void;
+  /** Every model whose exclusion changed in one gesture, applied together. */
+  onToggle: (changes: ListboxChange[]) => void;
   onSelectAll: () => void;
   onClear: () => void;
   disabled: boolean;
@@ -63,12 +64,14 @@ export function ExcludedModelsPanel({
     inputRef.current?.focus({ preventScroll: true });
   }, [autoFocus]);
 
-  const toggle = (modelId: string, excluded: boolean) => {
+  const toggle = (changes: ListboxChange[]) => {
     if (disabled) return;
-    const current = getModelExclusionState(rules, modelId);
     // 纯通配符命中的行不可直接切换——它的排除权属于那条规则。行内副文本常驻解释原因。
-    if (current.state === 'excluded' && current.by === 'wildcard') return;
-    onToggle(modelId, excluded);
+    const allowed = changes.filter((change) => {
+      const current = getModelExclusionState(rules, change.value);
+      return !(current.state === 'excluded' && current.by === 'wildcard');
+    });
+    if (allowed.length > 0) onToggle(allowed);
   };
 
   // 外层 Sheet 在 document 上、OAuth 页在 window 上都听 Escape。
@@ -97,7 +100,9 @@ export function ExcludedModelsPanel({
       // Enter in the search toggles the first match, as it did before the list took focus.
       event.preventDefault();
       const first = visible[0];
-      toggle(first.id, getModelExclusionState(rules, first.id).state !== 'excluded');
+      toggle([
+        { value: first.id, selected: getModelExclusionState(rules, first.id).state !== 'excluded' },
+      ]);
       return;
     }
     handleEscape(event);
@@ -141,7 +146,7 @@ export function ExcludedModelsPanel({
             ariaLabel={t('excluded_models.list_aria')}
             disabled={disabled}
             value={excludedIds}
-            onToggle={toggle}
+            onChange={toggle}
             onKeyDown={handleEscape}
             options={visible.map((candidate) => {
               const state = getModelExclusionState(rules, candidate.id);
