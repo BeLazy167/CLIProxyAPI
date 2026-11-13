@@ -48,3 +48,34 @@
     outline-offset: 2px;
   }
 }
+
+// Status tag (direction 5): no fill, the status color as text and a 1px border in that color,
+// so the text keeps 4.5:1 on any panel or page fill.
+@mixin tag($color: var(--text-secondary)) {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 20px;
+  padding: 0 6px;
+  border: 1px solid $color;
+  border-radius: 0;
+  background: transparent;
+  color: $color;
+  font-size: var(--fs-meta);
+  line-height: var(--lh-meta);
+  white-space: nowrap;
+}
+
+// Count tag: a gray band fill with primary text.
+@mixin count-tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 0 6px;
+  border-radius: 0;
+  background: var(--bg-band);
+  color: var(--text-primary);
+  font-size: var(--fs-meta);
+  line-height: var(--lh-meta);
+  font-variant-numeric: tabular-nums;
+}

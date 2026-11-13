@@ -19,7 +19,7 @@ $quota-font-size: 11.5px;
   gap: 9px;
   padding: 10px 11px;
   font-size: $quota-font-size;
-  border-radius: 10px;
+  border-radius: 0;
   border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
   background: color-mix(in srgb, var(--bg-secondary) 55%, transparent);
 }
@@ -149,14 +149,14 @@ button.quotaMessageAction {
 
 .quotaBar {
   height: 6px;
-  border-radius: $radius-full;
+  border-radius: 0;
   background: color-mix(in srgb, var(--text-primary) 8%, transparent);
   overflow: hidden;
 }
 
 .quotaBarFill {
   height: 100%;
-  border-radius: $radius-full;
+  border-radius: 0;
   transition: width 360ms var(--ease-out-strong, ease);
 }
 
@@ -185,7 +185,7 @@ button.quotaMessageAction {
   align-items: baseline;
   gap: 5px;
   padding: 3px 8px;
-  border-radius: $radius-full;
+  border-radius: 0;
   border: 1px solid var(--border-color);
   background: color-mix(in srgb, var(--bg-primary) 70%, transparent);
 }
@@ -274,7 +274,7 @@ button.quotaMessageAction {
   flex-direction: column;
   gap: 4px;
   padding: 8px 9px;
-  border-radius: 8px;
+  border-radius: 0;
   border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
 }
 

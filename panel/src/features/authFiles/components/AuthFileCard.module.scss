@@ -1,7 +1,7 @@
 @use '../../../styles/mixins' as *;
 
 /* ============================================================
- * 凭证卡片 — statTile 配方（14px 圆角 / 1px 边框 / 82% 透感纸面）
+ * 凭证卡片 — 方形 1px 边框面板
  * 身份优先；停用时弱化内容，操作区保持清晰以便重新启用。
  * ============================================================ */
 
@@ -11,9 +11,9 @@
   flex-direction: column;
   gap: 12px;
   padding: 16px;
-  border-radius: 14px;
+  border-radius: 0;
   border: 1px solid var(--border-color);
-  background: color-mix(in srgb, var(--bg-primary) 82%, transparent);
+  background: var(--bg-primary);
   transition: border-color 160ms var(--ease-out-strong, ease-out);
 }
 
@@ -24,7 +24,7 @@
 }
 
 .cardDisabled {
-  background: color-mix(in srgb, var(--bg-primary) 55%, var(--bg-tertiary));
+  background: var(--bg-secondary);
 }
 
 .cardDisabled > :not(.actions) {
@@ -32,8 +32,8 @@
 }
 
 .cardSelected {
-  border-color: color-mix(in srgb, var(--primary-color) 55%, transparent);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary-color) 40%, transparent);
+  border-color: var(--primary-color);
+  box-shadow: inset 0 0 0 1px var(--primary-color);
 }
 
 /* 首次数据到达时的一次性级联入场；过滤/翻页/轮询不重播 */
@@ -79,7 +79,7 @@
   flex-shrink: 0;
   max-width: 100%;
   padding: 4px 10px;
-  border-radius: 12px;
+  border-radius: 0;
   font-size: 12px;
   font-weight: 600;
   line-height: 1.3;
@@ -136,11 +136,12 @@
   gap: 6px;
   font-size: 12px;
   line-height: 1.45;
-  color: var(--danger-text);
-  background: var(--danger-bg);
-  border: 1px solid var(--danger-border);
-  border-radius: 8px;
-  padding: 7px 9px;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-left: 3px solid var(--danger-border);
+  border-radius: 0;
+  padding: 8px 12px;
 
   span {
     min-width: 0;
@@ -273,7 +274,7 @@
   gap: 2px;
   min-width: 150px;
   padding: 8px 10px;
-  border-radius: 10px;
+  border-radius: 0;
   background: var(--floating-surface);
   border: 1px solid var(--border-color);
   box-shadow: var(--floating-shadow);
@@ -343,7 +344,7 @@
   gap: 4px;
   padding: 2px 6px;
   border: 1px solid transparent;
-  border-radius: $radius-full;
+  border-radius: 0;
   font-weight: 650;
   line-height: 1.35;
   white-space: nowrap;

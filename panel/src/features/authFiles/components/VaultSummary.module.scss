@@ -12,17 +12,22 @@
   --chip-accent: var(--text-secondary);
   display: inline-flex;
   align-items: baseline;
-  gap: 6px;
+  gap: 8px;
   height: 32px;
   padding: 0 12px;
-  border-radius: $radius-full;
-  border: 1px solid var(--border-color);
-  background: color-mix(in srgb, var(--bg-primary) 82%, transparent);
-  color: var(--text-secondary);
+  border-radius: 0;
+  border: 1px solid var(--border-primary);
+  background: var(--bg-primary);
+  color: var(--text-primary);
   font: inherit;
-  font-size: 12px;
-  font-weight: 550;
+  font-size: var(--fs-body);
+  font-weight: 400;
   line-height: 30px;
+
+  @include mobile {
+    height: 44px;
+    line-height: 42px;
+  }
   white-space: nowrap;
   cursor: pointer;
   transition:
@@ -38,8 +43,8 @@
 
 .chipCount {
   font-family: $font-mono;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: var(--fs-body);
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--chip-accent);
 }
@@ -66,8 +71,9 @@
 
 .chip[data-pressed] {
   color: var(--text-primary);
-  border-color: color-mix(in srgb, var(--chip-accent) 55%, var(--border-color));
-  background: color-mix(in srgb, var(--chip-accent) 10%, var(--bg-primary));
+  border-color: var(--text-primary);
+  background: var(--bg-selected);
+  font-weight: 600;
 }
 
 @media (hover: hover) and (pointer: fine) {

@@ -17,7 +17,7 @@
   gap: 8px;
   flex-wrap: wrap;
   padding: 8px 10px;
-  border-radius: 8px;
+  border-radius: 0;
   border: 1px solid transparent;
   cursor: pointer;
   transition:
@@ -63,7 +63,7 @@
   text-transform: uppercase;
   color: var(--text-tertiary);
   padding: 1px 6px;
-  border-radius: $radius-full;
+  border-radius: 0;
   border: 1px solid var(--border-color);
 }
 
@@ -74,7 +74,7 @@
   color: var(--failure-badge-text);
   background: var(--failure-badge-bg);
   border: 1px solid var(--failure-badge-border);
-  border-radius: $radius-full;
+  border-radius: 0;
   padding: 1px 7px;
   white-space: nowrap;
 }

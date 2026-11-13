@@ -7,7 +7,7 @@
 .ledger {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
   min-width: 0;
 }
 
@@ -15,14 +15,18 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
 }
 
 .groupHead {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 4px;
+  gap: 16px;
+  min-height: 48px;
+  padding: 0 16px 0 8px;
+  background: var(--bg-band);
 }
 
 .groupToggle {
@@ -30,25 +34,21 @@
   align-items: center;
   gap: 8px;
   min-width: 0;
-  padding: 4px 6px 4px 2px;
+  min-height: 40px;
+  padding: 0 8px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 0;
   background: none;
   color: var(--text-primary);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-title);
   font-weight: 600;
   cursor: pointer;
-
-  &:focus-visible {
-    outline: var(--focus-ring);
-    outline-offset: 1px;
-  }
 }
 
 @media (hover: hover) and (pointer: fine) {
   .groupToggle:hover {
-    background: var(--bg-tertiary);
+    background: var(--bg-hover);
   }
 }
 
@@ -67,10 +67,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--bg-tertiary) 60%, transparent);
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border-color);
+  border-radius: 0;
+  background: var(--bg-primary);
 }
 
 .glyphIcon {
@@ -91,23 +92,14 @@
 }
 
 .groupCount {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-tertiary);
-  font-variant-numeric: tabular-nums;
+  @include count-tag;
+  background: var(--bg-primary);
+  font-weight: 400;
 }
 
 .groupProblem {
-  display: inline-flex;
-  align-items: center;
-  height: 18px;
-  padding: 0 7px;
-  border-radius: $radius-full;
-  background: color-mix(in srgb, var(--danger-color) 12%, transparent);
-  color: var(--danger-color);
-  font-size: 11px;
-  font-weight: 600;
-  white-space: nowrap;
+  @include tag(var(--danger-text));
+  font-weight: 400;
 }
 
 .rows {
@@ -122,14 +114,11 @@
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) 150px auto auto;
   align-items: center;
-  gap: 6px 16px;
-  padding: 8px 4px;
-  border-bottom: 1px solid var(--border-color);
-  border-radius: 8px;
-
-  &:last-child {
-    border-bottom: 0;
-  }
+  gap: 8px 16px;
+  min-height: 56px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--border-color);
+  border-radius: 0;
 }
 
 .rowClickable {
@@ -138,12 +127,12 @@
 
 @media (hover: hover) and (pointer: fine) {
   .rowClickable:hover {
-    background: color-mix(in srgb, var(--bg-tertiary) 60%, transparent);
+    background: var(--bg-hover);
   }
 }
 
 .rowSelected {
-  background: color-mix(in srgb, var(--primary-color) 7%, transparent);
+  background: var(--bg-selected);
 }
 
 .rowDisabled > :not(.actions) {
@@ -173,7 +162,7 @@
 
 .primary {
   min-width: 0;
-  font-size: 13px;
+  font-size: var(--fs-body);
   font-weight: 600;
   color: var(--text-primary);
   @include text-ellipsis;
@@ -185,7 +174,7 @@
 
 .secondary,
 .problemMessage {
-  font-size: 11.5px;
+  font-size: var(--fs-meta);
   color: var(--text-tertiary);
   @include text-ellipsis;
 }
@@ -199,27 +188,15 @@
 }
 
 .chip {
-  display: inline-flex;
-  align-items: center;
-  height: 20px;
-  padding: 0 8px;
-  border-radius: $radius-full;
-  border: 1px solid var(--border-color);
-  background: var(--bg-tertiary);
-  color: var(--text-secondary);
-  font-size: 11px;
-  font-weight: 600;
-  white-space: nowrap;
+  @include count-tag;
 }
 
 .chipMuted {
-  color: var(--text-tertiary);
+  @include tag(var(--text-secondary));
 }
 
 .chipDanger {
-  border-color: color-mix(in srgb, var(--danger-color) 35%, transparent);
-  background: color-mix(in srgb, var(--danger-color) 12%, transparent);
-  color: var(--danger-color);
+  @include tag(var(--danger-text));
 }
 
 /* ---------- 额度格 ---------- */
@@ -273,9 +250,9 @@
 .track {
   display: block;
   width: 100%;
-  height: 4px;
-  border-radius: $radius-full;
-  background: color-mix(in srgb, var(--text-primary) 10%, transparent);
+  height: 6px;
+  border-radius: 0;
+  background: var(--track-color);
   overflow: hidden;
 }
 
@@ -292,7 +269,7 @@
 .fill {
   display: block;
   height: 100%;
-  border-radius: inherit;
+  border-radius: 0;
   transition: width 360ms var(--ease-out-strong, ease);
 }
 
@@ -309,13 +286,14 @@
 }
 
 .quotaAction {
-  padding: 3px 8px;
-  border: 1px dashed var(--border-color);
-  border-radius: 6px;
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px dashed var(--border-primary);
+  border-radius: 0;
   background: none;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   font: inherit;
-  font-size: 12px;
+  font-size: var(--fs-meta);
   white-space: nowrap;
   cursor: pointer;
 
@@ -339,8 +317,8 @@
 
 .quotaError {
   border-style: solid;
-  border-color: color-mix(in srgb, var(--danger-color) 35%, transparent);
-  color: var(--danger-color);
+  border-color: var(--danger-border);
+  color: var(--danger-text);
 }
 
 /* ---------- 计数 ---------- */
@@ -349,7 +327,7 @@
   display: flex;
   gap: 8px;
   font-family: $font-mono;
-  font-size: 11.5px;
+  font-size: var(--fs-meta);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -359,7 +337,7 @@
 }
 
 .countFail {
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 
 .countFailLive {

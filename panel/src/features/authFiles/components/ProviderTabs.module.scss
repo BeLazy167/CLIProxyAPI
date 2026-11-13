@@ -99,7 +99,7 @@
   justify-content: center;
   width: 18px;
   height: 18px;
-  border-radius: 5px;
+  border-radius: 0;
 }
 
 .tabIcon {
@@ -120,20 +120,7 @@
 }
 
 .tabCount {
-  font-family: $font-mono;
-  font-size: 10.5px;
-  font-weight: 650;
-  font-variant-numeric: tabular-nums;
-  line-height: 1.6;
-  color: var(--text-tertiary);
-  padding: 0 6px;
-  border-radius: $radius-full;
-  background: color-mix(in srgb, var(--text-primary) 6%, transparent);
-
-  [data-selected] > & {
-    color: var(--text-primary);
-    background: color-mix(in srgb, var(--text-primary) 10%, transparent);
-  }
+  @include count-tag;
 }
 
 @media (prefers-reduced-motion: reduce) {

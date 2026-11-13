@@ -10,7 +10,7 @@
   flex-direction: column;
   gap: 14px;
   padding: clamp(16px, 2vw, 20px);
-  border-radius: 16px;
+  border-radius: 0;
   border: 1px solid var(--border-color);
   background: color-mix(in srgb, var(--bg-primary) 82%, transparent);
 }
@@ -71,7 +71,7 @@
   justify-content: space-between;
   gap: 10px;
   padding: 9px 12px;
-  border-radius: 10px;
+  border-radius: 0;
   border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
   background: color-mix(in srgb, var(--bg-secondary) 45%, transparent);
   transition:
