@@ -6,7 +6,6 @@
   align-items: center;
   justify-content: center;
   gap: $spacing-sm;
-  min-height: 40px;
   border: 1px solid transparent;
   border-radius: 0;
   padding: 0 16px;
@@ -91,13 +90,11 @@
   }
 
   &.btn-sm {
-    min-height: 32px;
     padding: 0 12px;
     font-size: var(--fs-body);
   }
 
   &.btn-xs {
-    min-height: 28px;
     padding: 0 8px;
     font-size: var(--fs-body);
     gap: 6px;
@@ -109,17 +106,8 @@
   }
 
   &.btn-icon {
-    min-width: 40px;
     padding: 0;
     aspect-ratio: 1;
-
-    &.btn-sm {
-      min-width: 32px;
-    }
-
-    &.btn-xs {
-      min-width: 28px;
-    }
   }
 
   &[aria-pressed='true'] {
@@ -131,29 +119,57 @@
     opacity: 0.55;
     cursor: not-allowed;
   }
+}
 
-  @media (max-width: $breakpoint-mobile) {
+// Button sizes at zero specificity, so a page's own size always wins: 40/32/28 px on a desktop,
+// 48/40/32 px on a phone.
+:where(.btn) {
+  min-height: 40px;
+}
+
+:where(.btn.btn-sm) {
+  min-height: 32px;
+}
+
+:where(.btn.btn-xs) {
+  min-height: 28px;
+}
+
+:where(.btn.btn-icon) {
+  min-width: 40px;
+}
+
+:where(.btn.btn-icon.btn-sm) {
+  min-width: 32px;
+}
+
+:where(.btn.btn-icon.btn-xs) {
+  min-width: 28px;
+}
+
+@media (max-width: $breakpoint-mobile) {
+  :where(.btn) {
     min-height: 48px;
+  }
 
-    &.btn-sm {
-      min-height: 40px;
-    }
+  :where(.btn.btn-sm) {
+    min-height: 40px;
+  }
 
-    &.btn-xs {
-      min-height: 32px;
-    }
+  :where(.btn.btn-xs) {
+    min-height: 32px;
+  }
 
-    &.btn-icon {
-      min-width: 48px;
+  :where(.btn.btn-icon) {
+    min-width: 48px;
+  }
 
-      &.btn-sm {
-        min-width: 40px;
-      }
+  :where(.btn.btn-icon.btn-sm) {
+    min-width: 40px;
+  }
 
-      &.btn-xs {
-        min-width: 32px;
-      }
-    }
+  :where(.btn.btn-icon.btn-xs) {
+    min-width: 32px;
   }
 }
 
