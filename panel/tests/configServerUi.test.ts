@@ -56,8 +56,10 @@ describe('server configuration UI', () => {
 
   test('discovery stays mounted in its own closed details even when disabled', () => {
     const markup = render(createElement(SectionDiscovery, props));
-    expect(markup.match(/<details\b/g)).toHaveLength(1);
-    expect(markup.match(/<details\b[^>]*>/)?.[0]).not.toContain('open=');
+    const groups = markup.match(/<div\b[^>]*data-slot="collapsible"[^>]*>/g) ?? [];
+    expect(groups).toHaveLength(1);
+    expect(groups[0]).toContain('data-closed=""');
+    expect(groups[0]).not.toContain('data-open');
     expect(markup).toContain(
       escapeText(translations.t('config_management.visual.serverExtras.discoveryTitle'))
     );
@@ -113,7 +115,10 @@ describe('server configuration UI', () => {
     const markup = render(
       createElement(SectionConnectivity, { ...props, values: populated, disabled: true })
     );
-    const controls = markup.match(/<(?:input|textarea|button)\b[^>]*>/g) ?? [];
+    // A group's disclosure trigger stays usable so read-only settings can still be read.
+    const controls = (markup.match(/<(?:input|textarea|button)\b[^>]*>/g) ?? []).filter(
+      (control) => !control.includes('data-slot="collapsible-trigger"')
+    );
     expect(controls.length).toBeGreaterThan(10);
     for (const control of controls) expect(control).toContain('disabled=""');
   });

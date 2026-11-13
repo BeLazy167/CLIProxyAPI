@@ -56,12 +56,20 @@ export function useFieldJump({ values, setActiveSection }: UseFieldJumpArgs) {
         return;
       }
 
-      // Expand the collapsed <details> group this field belongs to: an ancestor when the
-      // anchor sits inside the group (TLS / remote / advanced fields), or a descendant when
-      // the anchor wraps the whole group (payload rule groups).
-      const details = el.closest('details') ?? el.querySelector('details');
-      if (details && !details.open) details.open = true;
+      // Expand the collapsed group this field belongs to: an ancestor when the anchor sits
+      // inside the group (TLS / remote / advanced fields), or a descendant when the anchor
+      // wraps the whole group (payload rule groups). Reveal it once the panel has rendered.
+      const group =
+        el.closest('[data-slot="collapsible"]') ?? el.querySelector('[data-slot="collapsible"]');
+      if (group?.hasAttribute('data-closed')) {
+        group.querySelector<HTMLElement>('[data-slot="collapsible-trigger"]')?.click();
+        requestAnimationFrame(() => reveal(el));
+        return;
+      }
+      reveal(el);
+    };
 
+    const reveal = (el: HTMLElement) => {
       // Clear any in-flight highlight before starting a new one.
       if (highlightTimerRef.current !== null) {
         clearTimeout(highlightTimerRef.current);

@@ -5,15 +5,20 @@ import {
   type PropsWithChildren,
   type ReactNode,
 } from 'react';
+import {
+  Collapsible as SdkCollapsible,
+  CollapsiblePanel,
+  CollapsibleTrigger,
+} from '@ui-sdk/react/collapsible';
 import { IconChevronDown } from '../icons';
 import styles from './Collapsible.module.scss';
 
-interface CollapsibleProps extends HTMLAttributes<HTMLDetailsElement> {
+interface CollapsibleProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onToggle'> {
   label: ReactNode;
   hint?: ReactNode;
   defaultOpen?: boolean;
   open?: boolean;
-  onToggle?: (event: React.SyntheticEvent<HTMLDetailsElement>) => void;
+  onOpenChange?: (open: boolean) => void;
   flush?: boolean;
   /** 摘要行右侧的可选徽章槽（如「3 changed」）。 */
   badge?: ReactNode;
@@ -31,7 +36,7 @@ export function Collapsible({
   hint,
   defaultOpen = false,
   open,
-  onToggle,
+  onOpenChange,
   flush,
   badge,
   hasError = false,
@@ -42,26 +47,22 @@ export function Collapsible({
 }: PropsWithChildren<CollapsibleProps>) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen || forceOpen);
   const resolvedOpen = open ?? uncontrolledOpen;
-  const cls = [styles.root, className].filter(Boolean).join(' ');
-  const contentCls = flush ? styles.contentFlush : styles.content;
 
   useEffect(() => {
     if (forceOpen && open === undefined) setUncontrolledOpen(true);
   }, [forceOpen, open]);
 
   return (
-    <details
-      className={cls}
-      open={resolvedOpen}
-      onToggle={(event) => {
-        if (open === undefined) {
-          setUncontrolledOpen(event.currentTarget.open);
-        }
-        onToggle?.(event);
-      }}
+    <SdkCollapsible
       {...rest}
+      className={[styles.root, className].filter(Boolean).join(' ')}
+      open={resolvedOpen}
+      onOpenChange={(next) => {
+        if (open === undefined) setUncontrolledOpen(next);
+        onOpenChange?.(next);
+      }}
     >
-      <summary className={styles.summary}>
+      <CollapsibleTrigger className={styles.summary}>
         <span className={styles.summaryLabel}>
           <span>{label}</span>
           {hint ? <span className={styles.summaryHint}>{hint}</span> : null}
@@ -71,8 +72,10 @@ export function Collapsible({
         <span className={styles.chevron} aria-hidden="true">
           <IconChevronDown size={16} />
         </span>
-      </summary>
-      <div className={contentCls}>{children}</div>
-    </details>
+      </CollapsibleTrigger>
+      <CollapsiblePanel hiddenUntilFound className={flush ? styles.contentFlush : styles.content}>
+        {children}
+      </CollapsiblePanel>
+    </SdkCollapsible>
   );
 }

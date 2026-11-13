@@ -46,7 +46,7 @@ describe('OAuth behavior configuration UI', () => {
       expect(entry.yamlKeys?.join('.')).toMatch(/^(routing|multimedia|oauth|upstream|client)\./);
     }
     const oauth = render(createElement(SectionOAuthBehavior, props));
-    expect(oauth).toContain('<details');
+    expect(oauth).toContain('data-slot="collapsible"');
     expect(oauth).toContain(text('oauthTitle'));
     expect(oauth).toContain(text('oauthHint'));
     expect(oauth).not.toContain('cfg-field-claudeHeaderTimezone');
@@ -87,7 +87,10 @@ describe('OAuth behavior configuration UI', () => {
     const values = { ...DEFAULT_VISUAL_VALUES, codexLiveMediaRelayICEServers: [server] };
     for (const Section of [SectionOAuthBehavior, SectionNetwork, SectionAdvanced]) {
       const markup = render(createElement(Section, { ...props, values, disabled: true }));
-      const controls = markup.match(/<(?:input|textarea|button)\b[^>]*>/g) ?? [];
+      // A group's disclosure trigger stays usable so read-only settings can still be read.
+      const controls = (markup.match(/<(?:input|textarea|button)\b[^>]*>/g) ?? []).filter(
+        (control) => !control.includes('data-slot="collapsible-trigger"')
+      );
       expect(controls.length).toBeGreaterThan(0);
       for (const control of controls) expect(control).toContain('disabled=""');
     }
