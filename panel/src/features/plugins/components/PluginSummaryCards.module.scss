@@ -34,7 +34,7 @@
   }
 }
 
-.cardActive {
+.card[data-pressed] {
   border-color: color-mix(in srgb, var(--summary-accent) 55%, var(--border-color));
   background: color-mix(in srgb, var(--summary-accent) 10%, var(--bg-primary));
   color: var(--text-primary);

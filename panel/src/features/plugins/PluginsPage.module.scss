@@ -64,7 +64,7 @@
   }
 }
 
-.filterChipActive {
+.filterChip[data-checked] {
   background: var(--text-primary);
   border-color: var(--text-primary);
   color: var(--bg-primary);

@@ -1,3 +1,4 @@
+import { Toggle } from '@/components/ui/Toggle';
 import styles from './PluginSummaryCards.module.scss';
 
 export type PluginSummaryTone = 'ok' | 'muted' | 'warning' | 'danger' | 'accent';
@@ -19,7 +20,7 @@ const TONE_CLASS: Record<PluginSummaryTone, string> = {
   accent: styles.toneAccent,
 };
 
-/** Quota-style stat cards; cards with `onClick` double as filters (aria-pressed). */
+/** Quota-style stat cards; cards with `onClick` double as filters (pressed toggles). */
 export function PluginSummaryCards({
   cards,
   ariaLabel,
@@ -33,7 +34,6 @@ export function PluginSummaryCards({
         const className = [
           styles.card,
           card.tone ? TONE_CLASS[card.tone] : '',
-          card.active ? styles.cardActive : '',
           card.onClick ? styles.cardButton : '',
         ]
           .filter(Boolean)
@@ -45,15 +45,14 @@ export function PluginSummaryCards({
           </>
         );
         return card.onClick ? (
-          <button
+          <Toggle
             key={card.key}
-            type="button"
             className={className}
-            onClick={card.onClick}
-            aria-pressed={Boolean(card.active)}
+            pressed={Boolean(card.active)}
+            onPressedChange={card.onClick}
           >
             {body}
-          </button>
+          </Toggle>
         ) : (
           <div key={card.key} className={className}>
             {body}

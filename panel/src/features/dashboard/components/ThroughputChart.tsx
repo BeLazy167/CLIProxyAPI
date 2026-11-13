@@ -4,6 +4,7 @@ import { Collapsible } from '@/components/ui/Collapsible';
 import { formatPercent } from '@/utils/format';
 import { TRAFFIC_BUCKET_MINUTES, type TrafficWindow } from '../types';
 import { axisMax } from '../utils';
+import { Toggle } from '@/components/ui/Toggle';
 import styles from './ThroughputChart.module.scss';
 
 /** 纵轴刻度条数（含 0），即 TICK_COUNT - 1 个间隔 */
@@ -72,17 +73,12 @@ export function ThroughputChart({ traffic }: ThroughputChartProps) {
     column?.focus();
   };
 
-  const handleColumnKeyDown = (event: KeyboardEvent<HTMLDivElement>, index: number) => {
+  const handleColumnKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
     let next: number | null = null;
     if (event.key === 'ArrowLeft') next = Math.max(0, index - 1);
     else if (event.key === 'ArrowRight') next = Math.min(buckets.length - 1, index + 1);
     else if (event.key === 'Home') next = 0;
     else if (event.key === 'End') next = buckets.length - 1;
-    else if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      setActiveIndex((current) => (current === index ? null : index));
-      return;
-    }
     if (next === null) return;
     event.preventDefault();
     setActiveIndex(next);
@@ -162,13 +158,12 @@ export function ThroughputChart({ traffic }: ThroughputChartProps) {
                 buckets.length > 1 ? Math.round((index / (buckets.length - 1)) * 360) : 0;
 
               return (
-                <div
+                <Toggle
                   key={bucket.time ?? index}
-                  className={`${styles.column} ${activeIndex === index ? styles.columnActive : ''}`}
-                  role="button"
+                  className={styles.column}
                   tabIndex={index === focusIndex ? 0 : -1}
-                  aria-pressed={activeIndex === index}
-                  aria-label={t('dashboard.traffic_column_label', {
+                  pressed={activeIndex === index}
+                  ariaLabel={t('dashboard.traffic_column_label', {
                     time: bucketRangeLabel(bucket.time, index, buckets.length),
                     success: bucket.success,
                     failed: bucket.failed,
@@ -176,7 +171,7 @@ export function ThroughputChart({ traffic }: ThroughputChartProps) {
                   onMouseEnter={() => setActiveIndex(index)}
                   onFocus={() => setActiveIndex(index)}
                   onKeyDown={(event) => handleColumnKeyDown(event, index)}
-                  onClick={() => setActiveIndex((current) => (current === index ? null : index))}
+                  onPressedChange={(pressed) => setActiveIndex(pressed ? index : null)}
                 >
                   {/* 峰值直标放在 scaleY 容器之外，避免入场时被一起挤压 */}
                   {index === peakIndex && peakTotal > 0 && (
@@ -209,7 +204,7 @@ export function ThroughputChart({ traffic }: ThroughputChartProps) {
                     )}
                     {bucketTotal === 0 && <span className={styles.idleTick} />}
                   </div>
-                </div>
+                </Toggle>
               );
             })}
           </div>
