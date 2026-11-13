@@ -843,7 +843,7 @@ export function PluginsPage() {
         <div className={styles.list} aria-busy="true">
           {Array.from({ length: SKELETON_ROWS }, (_, index) => (
             <div key={index} className={styles.skeletonRow}>
-              <Skeleton width={40} height={40} rounded={10} />
+              <Skeleton width={40} height={40} />
               <div className={styles.skeletonText}>
                 <Skeleton width="38%" height={14} />
                 <Skeleton width="62%" height={10} />

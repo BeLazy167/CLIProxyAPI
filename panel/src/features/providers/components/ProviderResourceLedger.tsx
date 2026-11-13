@@ -81,7 +81,7 @@ export function ProviderResourceLedgerSkeleton({ rows = 5 }: { rows?: number }) 
   return (
     <div className={styles.ledger} aria-hidden="true">
       {Array.from({ length: rows }, (_, index) => (
-        <Skeleton key={index} height={52} rounded={8} />
+        <Skeleton key={index} height={52} />
       ))}
     </div>
   );

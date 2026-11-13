@@ -60,7 +60,7 @@ body.modal-open .content {
 
 ::-webkit-scrollbar-thumb {
   background: var(--border-color);
-  border-radius: $radius-full;
+  border-radius: 0;
 
   &:hover {
     background: var(--border-hover);

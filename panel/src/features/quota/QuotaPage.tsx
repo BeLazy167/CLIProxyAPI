@@ -472,7 +472,7 @@ export function QuotaPage() {
         {loading ? (
           <div className={styles.grid} aria-hidden="true">
             {Array.from({ length: SKELETON_CARD_COUNT }, (_, index) => (
-              <Skeleton key={index} height={168} rounded={14} />
+              <Skeleton key={index} height={168} />
             ))}
           </div>
         ) : isEmpty ? (

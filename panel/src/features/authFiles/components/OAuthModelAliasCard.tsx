@@ -89,7 +89,7 @@ export function OAuthModelAliasCard(props: OAuthModelAliasCardProps) {
         ) : modelAliasError === 'loading' ? (
           <div className={styles.list} aria-busy="true">
             {Array.from({ length: 3 }, (_, index) => (
-              <Skeleton key={index} height={48} rounded={10} />
+              <Skeleton key={index} height={48} />
             ))}
           </div>
         ) : viewMode === 'diagram' ? (

@@ -75,9 +75,9 @@ const ROW_CONTROL_SELECTOR = 'button, input, label, a, [data-slot$="-content"]';
 export function AuthFilesLedgerSkeleton({ rows = 6 }: { rows?: number }) {
   return (
     <div className={styles.ledger} aria-hidden="true">
-      <Skeleton width={160} height={16} rounded={6} />
+      <Skeleton width={160} height={16} />
       {Array.from({ length: rows }, (_, index) => (
-        <Skeleton key={index} height={44} rounded={8} />
+        <Skeleton key={index} height={44} />
       ))}
     </div>
   );

@@ -447,9 +447,9 @@ export function ConfigPage() {
     if (showSkeleton) {
       return (
         <div className={styles.skeletonStack} aria-busy="true">
-          <Skeleton height={44} rounded={12} />
-          <Skeleton height={220} rounded={14} />
-          <Skeleton height={160} rounded={14} />
+          <Skeleton height={44} />
+          <Skeleton height={220} />
+          <Skeleton height={160} />
         </div>
       );
     }
