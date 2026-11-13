@@ -601,19 +601,60 @@ textarea {
 
 .pagination {
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 14px;
-  flex-wrap: wrap;
+}
 
-  .pagination-info {
-    font-family: $font-mono;
-    font-size: 12px;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.02em;
-    color: var(--text-tertiary);
-    white-space: nowrap;
+.pagination-list {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+
+  > li {
+    display: flex;
   }
+
+  > li + li {
+    border-left: 1px solid var(--border-color);
+  }
+}
+
+.pagination-step {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-body);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--bg-hover);
+  }
+
+  &[data-disabled] {
+    color: var(--text-quaternary);
+    background: transparent;
+    cursor: not-allowed;
+  }
+
+  @media (max-width: $breakpoint-mobile) {
+    min-height: 48px;
+  }
+}
+
+.pagination-info {
+  align-items: center;
+  padding: 0 16px;
+  font-size: var(--fs-meta);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 .stack {

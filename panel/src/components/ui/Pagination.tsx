@@ -1,5 +1,11 @@
 import { useTranslation } from 'react-i18next';
-import { Button } from './Button';
+import {
+  Pagination as SdkPagination,
+  PaginationItem,
+  PaginationList,
+  PaginationNext,
+  PaginationPrevious,
+} from '@ui-sdk/react/pagination';
 
 export interface PaginationProps {
   page: number;
@@ -15,31 +21,26 @@ export function Pagination({ page, totalPages, totalItems, onChange, className }
   const { t } = useTranslation();
   if (totalPages <= 1) return null;
   return (
-    <nav
+    <SdkPagination
       className={['pagination', className].filter(Boolean).join(' ')}
       aria-label={t('common.pagination_label')}
+      page={page}
+      pageCount={totalPages}
+      onPageChange={(next) => onChange(next)}
     >
-      <Button
-        variant="secondary"
-        size="xs"
-        shape="pill"
-        onClick={() => onChange(Math.max(1, page - 1))}
-        disabled={page <= 1}
-      >
-        {t('common.pagination_prev')}
-      </Button>
-      <span className="pagination-info" aria-live="polite">
-        {t('common.pagination_info', { current: page, total: totalPages, count: totalItems })}
-      </span>
-      <Button
-        variant="secondary"
-        size="xs"
-        shape="pill"
-        onClick={() => onChange(Math.min(totalPages, page + 1))}
-        disabled={page >= totalPages}
-      >
-        {t('common.pagination_next')}
-      </Button>
-    </nav>
+      <PaginationList className="pagination-list">
+        <PaginationItem>
+          <PaginationPrevious className="pagination-step">
+            {t('common.pagination_prev')}
+          </PaginationPrevious>
+        </PaginationItem>
+        <PaginationItem className="pagination-info" aria-live="polite">
+          {t('common.pagination_info', { current: page, total: totalPages, count: totalItems })}
+        </PaginationItem>
+        <PaginationItem>
+          <PaginationNext className="pagination-step">{t('common.pagination_next')}</PaginationNext>
+        </PaginationItem>
+      </PaginationList>
+    </SdkPagination>
   );
 }
