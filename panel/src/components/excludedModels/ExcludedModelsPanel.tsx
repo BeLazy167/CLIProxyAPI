@@ -1,6 +1,7 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconCheck, IconSearch } from '@/components/ui/icons';
+import { Listbox } from '@/components/ui/Listbox';
 import {
   getModelExclusionState,
   type ExclusionStats,
@@ -47,7 +48,7 @@ export function ExcludedModelsPanel({
 }: ExcludedModelsPanelProps) {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
-  const [highlight, setHighlight] = useState(0);
+  const listRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const visible = useMemo(() => {
@@ -56,71 +57,55 @@ export function ExcludedModelsPanel({
     return candidates.filter((candidate) => matchesQuery(candidate, normalized));
   }, [candidates, query]);
 
-  // 高亮永远钳在可见范围内：过滤后列表变短，旧索引会指向不存在的行。
-  const activeIndex = visible.length === 0 ? -1 : Math.min(highlight, visible.length - 1);
-  const activeId = activeIndex >= 0 ? `${listboxId}-opt-${activeIndex}` : undefined;
-
   useLayoutEffect(() => {
     if (!autoFocus) return;
     // preventScroll：裸 focus() 会把外层 Sheet 的滚动猛拽过来，动画中途还会把面板顶出视野。
     inputRef.current?.focus({ preventScroll: true });
   }, [autoFocus]);
 
-  useEffect(() => {
-    if (!autoFocus || activeIndex < 0) return;
-    document
-      .getElementById(`${listboxId}-opt-${activeIndex}`)
-      ?.scrollIntoView({ block: 'nearest' });
-  }, [activeIndex, autoFocus, listboxId]);
-
-  const toggleAt = (index: number) => {
-    const candidate = visible[index];
-    if (!candidate || disabled) return;
-    const current = getModelExclusionState(rules, candidate.id);
+  const toggle = (modelId: string, excluded: boolean) => {
+    if (disabled) return;
+    const current = getModelExclusionState(rules, modelId);
     // 纯通配符命中的行不可直接切换——它的排除权属于那条规则。行内副文本常驻解释原因。
     if (current.state === 'excluded' && current.by === 'wildcard') return;
-    onToggle(candidate.id, current.state !== 'excluded');
+    onToggle(modelId, excluded);
   };
 
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    switch (event.key) {
-      case 'ArrowDown':
-        event.preventDefault();
-        setHighlight((prev) => Math.min(prev + 1, visible.length - 1));
-        return;
-      case 'ArrowUp':
-        event.preventDefault();
-        setHighlight((prev) => Math.max(prev - 1, 0));
-        return;
-      case 'Home':
-        if (visible.length === 0) return;
-        event.preventDefault();
-        setHighlight(0);
-        return;
-      case 'End':
-        if (visible.length === 0) return;
-        event.preventDefault();
-        setHighlight(visible.length - 1);
-        return;
-      case 'Enter':
-        event.preventDefault();
-        if (activeIndex >= 0) toggleAt(activeIndex);
-        return;
-      case 'Escape':
-        // 外层 Sheet 在 document 上、OAuth 页在 window 上都听 Escape。
-        // 不拦住就会「关面板 = 关 Sheet / 离开页面 + 触发未保存弹窗」。
-        event.preventDefault();
-        event.stopPropagation();
-        if (query) {
-          setQuery('');
-          setHighlight(0);
-          return;
-        }
-        onDismiss();
-        return;
-      default:
+  // 外层 Sheet 在 document 上、OAuth 页在 window 上都听 Escape。
+  // 不拦住就会「关面板 = 关 Sheet / 离开页面 + 触发未保存弹窗」。
+  const handleEscape = (event: React.KeyboardEvent) => {
+    if (event.key !== 'Escape') return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (query) {
+      setQuery('');
+      inputRef.current?.focus({ preventScroll: true });
+      return;
     }
+    onDismiss();
   };
+
+  const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'ArrowDown' && visible.length > 0) {
+      event.preventDefault();
+      listRef.current
+        ?.querySelector<HTMLElement>('[data-slot="listbox-item"][tabindex="0"]')
+        ?.focus();
+      return;
+    }
+    if (event.key === 'Enter' && visible.length > 0) {
+      // Enter in the search toggles the first match, as it did before the list took focus.
+      event.preventDefault();
+      const first = visible[0];
+      toggle(first.id, getModelExclusionState(rules, first.id).state !== 'excluded');
+      return;
+    }
+    handleEscape(event);
+  };
+
+  const excludedIds = visible
+    .filter((candidate) => getModelExclusionState(rules, candidate.id).state === 'excluded')
+    .map((candidate) => candidate.id);
 
   return (
     <div className={styles.panel}>
@@ -131,28 +116,18 @@ export function ExcludedModelsPanel({
           type="text"
           className={styles.search}
           value={query}
-          onChange={(event) => {
-            setQuery(event.target.value);
-            setHighlight(0);
-          }}
-          onKeyDown={handleKeyDown}
+          onChange={(event) => setQuery(event.target.value)}
+          onKeyDown={handleSearchKeyDown}
           placeholder={t('excluded_models.search_placeholder')}
           aria-label={t('excluded_models.search_aria')}
           aria-controls={listboxId}
-          aria-activedescendant={activeId}
           disabled={disabled}
           autoComplete="off"
           spellCheck={false}
         />
       </div>
 
-      <div
-        id={listboxId}
-        className={styles.list}
-        role="listbox"
-        aria-multiselectable="true"
-        aria-label={t('excluded_models.list_aria')}
-      >
+      <div ref={listRef}>
         {visible.length === 0 ? (
           <p className={styles.noResults}>
             {query.trim()
@@ -160,17 +135,32 @@ export function ExcludedModelsPanel({
               : t('excluded_models.catalog_empty')}
           </p>
         ) : (
-          visible.map((candidate, index) => (
-            <ExcludedModelRow
-              key={candidate.id.toLowerCase()}
-              id={`${listboxId}-opt-${index}`}
-              candidate={candidate}
-              state={getModelExclusionState(rules, candidate.id)}
-              highlighted={index === activeIndex}
-              onHover={() => setHighlight(index)}
-              onToggle={() => toggleAt(index)}
-            />
-          ))
+          <Listbox
+            id={listboxId}
+            className={styles.list}
+            ariaLabel={t('excluded_models.list_aria')}
+            disabled={disabled}
+            value={excludedIds}
+            onToggle={toggle}
+            onKeyDown={handleEscape}
+            options={visible.map((candidate) => {
+              const state = getModelExclusionState(rules, candidate.id);
+              const lockedByRule = state.state === 'excluded' && state.by === 'wildcard';
+              return {
+                value: candidate.id,
+                label: candidate.id,
+                disabled: lockedByRule,
+                className: [
+                  styles.row,
+                  state.state === 'excluded' ? styles.rowExcluded : '',
+                  lockedByRule ? styles.rowLocked : '',
+                ]
+                  .filter(Boolean)
+                  .join(' '),
+                content: <ExcludedModelRow candidate={candidate} state={state} />,
+              };
+            })}
+          />
         )}
       </div>
 
@@ -203,25 +193,13 @@ export function ExcludedModelsPanel({
 }
 
 interface ExcludedModelRowProps {
-  id: string;
   candidate: ExcludedModelCandidate;
   state: ModelExclusionState;
-  highlighted: boolean;
-  onHover: () => void;
-  onToggle: () => void;
 }
 
-function ExcludedModelRow({
-  id,
-  candidate,
-  state,
-  highlighted,
-  onHover,
-  onToggle,
-}: ExcludedModelRowProps) {
+function ExcludedModelRow({ candidate, state }: ExcludedModelRowProps) {
   const { t } = useTranslation();
   const excluded = state.state === 'excluded';
-  const lockedByRule = state.state === 'excluded' && state.by === 'wildcard';
   // 把「哪条规则、用哪句话解释」在一处收敛好，下面的 JSX 就不必再做类型收窄。
   const wildcardReason =
     state.state === 'excluded' && (state.by === 'wildcard' || state.by === 'both')
@@ -235,28 +213,8 @@ function ExcludedModelRow({
         }
       : null;
 
-  const rowClass = [
-    styles.row,
-    excluded ? styles.rowExcluded : '',
-    lockedByRule ? styles.rowLocked : '',
-    highlighted ? styles.rowHighlighted : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
-
   return (
-    <div
-      id={id}
-      role="option"
-      // 行永不进 tab 序：外层 Sheet 的焦点陷阱每次 Tab 都枚举全部可聚焦元素，
-      // 几十个可聚焦的行会把它拖垮。漫游全靠 aria-activedescendant。
-      tabIndex={-1}
-      aria-selected={excluded}
-      aria-disabled={lockedByRule || undefined}
-      className={rowClass}
-      onMouseEnter={onHover}
-      onClick={onToggle}
-    >
+    <>
       <span className={styles.checkbox} aria-hidden="true">
         {excluded ? <IconCheck size={12} /> : null}
       </span>
@@ -272,6 +230,6 @@ function ExcludedModelRow({
           {t('excluded_models.badge_wildcard')}
         </span>
       ) : null}
-    </div>
+    </>
   );
 }

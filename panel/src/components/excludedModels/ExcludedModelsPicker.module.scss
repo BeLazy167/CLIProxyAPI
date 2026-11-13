@@ -215,7 +215,7 @@
   }
 }
 
-.rowHighlighted {
+.row[data-highlighted] {
   background: var(--bg-tertiary);
 }
 
