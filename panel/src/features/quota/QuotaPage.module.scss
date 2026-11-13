@@ -127,11 +127,6 @@
     margin-left: 0;
   }
 
-  /* A phone always lists accounts as cards, so a View choice would only mislabel the layout. */
-  .viewControl {
-    display: none;
-  }
-
   .control {
     flex-direction: column;
     align-items: stretch;
@@ -140,5 +135,12 @@
     > :last-child {
       min-width: 0;
     }
+  }
+}
+
+/* Up to tablet width the ledger always draws accounts as cards, so a View choice would only mislabel the layout. */
+@media (max-width: #{$breakpoint-tablet}) {
+  .viewControl {
+    display: none;
   }
 }
