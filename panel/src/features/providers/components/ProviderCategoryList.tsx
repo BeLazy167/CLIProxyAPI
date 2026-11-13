@@ -91,7 +91,6 @@ export function ProviderCategoryList({
         const itemClass = [
           styles.item,
           active ? styles.active : '',
-          group.id === 'kimi' ? styles.itemKimi : '',
         ]
           .filter(Boolean)
           .join(' ');

@@ -191,9 +191,8 @@
   }
 
   &:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px var(--primary-10);
+    outline: 2px solid var(--focus-color);
+    outline-offset: -2px;
   }
 
   &:disabled {
@@ -222,7 +221,7 @@
   margin-top: 2px;
   width: 16px;
   height: 16px;
-  border-radius: 4px;
+  border-radius: 0;
   border: 1px solid var(--border-color);
   background: var(--bg-primary);
   display: inline-flex;
@@ -280,9 +279,10 @@
 }
 
 .errorBox {
-  border: 1px solid var(--destructive-30);
-  background: var(--destructive-10);
-  color: var(--destructive-color);
+  border: 1px solid var(--border-color);
+  border-left: 3px solid var(--danger-border);
+  background: var(--bg-primary);
+  color: var(--text-primary);
   padding: 10px 12px;
   border-radius: var(--radius-md);
   font-size: 12px;
@@ -507,7 +507,7 @@
 
 .sponsorUrlOption:has([data-slot='radio'][data-checked]) {
   border-color: var(--primary-color);
-  background: var(--primary-10);
+  background: var(--bg-selected);
 }
 
 .sponsorUrlOptionText {
@@ -582,18 +582,17 @@
   flex-direction: column;
   gap: 4px;
   padding: 8px 10px;
-  border: 1px solid color-mix(in srgb, var(--success-color) 34%, var(--border-color));
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--success-color) 8%, var(--bg-primary));
+  border: 1px solid var(--border-color);
+  border-left: 3px solid var(--success-border);
+  border-radius: 0;
+  background: var(--bg-primary);
   color: var(--text-primary);
   font-size: 11px;
   line-height: 1.4;
 }
 
 .sponsorUsageResultWarning {
-  color: var(--danger-text);
-  border-color: var(--danger-border);
-  background: var(--danger-bg);
+  border-left-color: var(--danger-border);
 }
 
 .sponsorUsageMain {
@@ -671,9 +670,10 @@
 }
 
 .connectivityError {
-  border: 1px solid var(--destructive-30);
-  background: var(--destructive-10);
-  color: var(--destructive-color);
+  border: 1px solid var(--border-color);
+  border-left: 3px solid var(--danger-border);
+  background: var(--bg-primary);
+  color: var(--text-primary);
   padding: 8px 10px;
   border-radius: var(--radius-md);
   font-size: 11px;
@@ -755,9 +755,8 @@
   }
 
   &:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px var(--primary-10);
+    outline: 2px solid var(--focus-color);
+    outline-offset: -2px;
   }
 }
 
@@ -1028,8 +1027,8 @@
 }
 
 .thinkingLevelOptionSelected {
-  border-color: color-mix(in srgb, var(--primary-color) 50%, var(--border-color));
-  background: color-mix(in srgb, var(--primary-color) 8%, var(--bg-primary));
+  border-color: var(--primary-color);
+  background: var(--bg-selected);
 
   .thinkingLevelLabel {
     color: var(--text-primary);
@@ -1059,7 +1058,7 @@
   display: inline-flex;
   align-items: center;
   padding: 1px 7px;
-  border-radius: 999px;
+  border-radius: 0;
   border: 1px solid var(--border-color);
   background: var(--bg-tertiary);
   color: var(--muted-foreground);
@@ -1102,7 +1101,7 @@
   font-size: 12px;
 
   &:hover {
-    background: var(--destructive-10);
+    background: var(--bg-hover);
   }
 
   &:disabled {
@@ -1210,7 +1209,7 @@
   padding: 8px 12px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-secondary);
-  border-radius: 8px;
+  border-radius: 0;
   font-size: 12px;
 }
 
@@ -1263,7 +1262,7 @@
   align-items: center;
   gap: 3px;
   padding: 2px 6px;
-  border-radius: 10px;
+  border-radius: 0;
   font-size: 10px;
   font-weight: 600;
 
@@ -1297,9 +1296,7 @@
   margin: 0;
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
+    color: var(--text-secondary);
 }
 
 .required {
@@ -1309,7 +1306,6 @@
 
 .inputInvalid {
   border-color: var(--destructive-color) !important;
-  box-shadow: 0 0 0 3px var(--destructive-10) !important;
 }
 
 .fieldError {
@@ -1324,9 +1320,7 @@
   padding: 0 2px;
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
+    color: var(--text-secondary);
 
   > :last-child {
     min-width: 64px;
