@@ -210,7 +210,7 @@
   transition: background-color var(--dur-press, 160ms) var(--ease-out-strong, ease-out);
 
   &:focus-visible {
-    outline: 2px solid var(--primary-color);
+    outline: var(--focus-ring);
     outline-offset: -2px;
   }
 }
@@ -338,7 +338,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--primary-color);
+    outline: var(--focus-ring);
     outline-offset: 1px;
   }
 

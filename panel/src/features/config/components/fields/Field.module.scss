@@ -101,7 +101,7 @@
 
   /* 键盘聚焦开关时整行描边（finding 20） */
   &:has(:focus-visible) {
-    outline: 2px solid var(--primary-color);
+    outline: var(--focus-ring);
     outline-offset: 1px;
   }
 }
@@ -276,7 +276,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--primary-color);
+    outline: var(--focus-ring);
     outline-offset: 1px;
   }
 }
@@ -438,7 +438,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--primary-color);
+    outline: var(--focus-ring);
     outline-offset: 1px;
   }
 }
