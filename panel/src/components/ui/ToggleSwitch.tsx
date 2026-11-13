@@ -35,6 +35,12 @@ export function ToggleSwitch({
         onCheckedChange={(next) => onChange(next)}
         disabled={disabled}
         aria-label={ariaLabel}
+        onKeyDown={(event) => {
+          // The switch pattern lets Enter toggle too, as the old pressed buttons did.
+          if (event.key !== 'Enter' || disabled) return;
+          event.preventDefault();
+          onChange(!checked);
+        }}
       >
         <SwitchThumb className={styles.thumb} />
       </Switch>
