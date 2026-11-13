@@ -53,6 +53,10 @@ interface WindowLike {
   resetAtMs?: number | null;
 }
 
+interface UsedPercentWindow extends WindowLike {
+  usedPercent?: number | null;
+}
+
 interface ResetCreditLike {
   id?: string;
   status?: string;
@@ -65,10 +69,22 @@ export const XAI_WEEKLY_ROW_ID = 'xai:weekly';
 const isUsableMs = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
 
-const collectRows = (rows: readonly WindowLike[], fallbackPrefix: string): QuotaRowInstant[] =>
+/**
+ * A reset returns capacity only when the window has used some. A window at 0%
+ * used, or with unknown usage, gives nothing back, so it must not sort an
+ * otherwise healthy credential ahead of one that is actually waiting.
+ */
+const hasUsedQuota = (usedPercent: number | null | undefined): boolean =>
+  isUsableMs(usedPercent) && usedPercent > 0;
+
+const collectRows = <Row extends WindowLike>(
+  rows: readonly Row[],
+  fallbackPrefix: string,
+  usedPercentOf: (row: Row) => number | null | undefined
+): QuotaRowInstant[] =>
   rows
     .map((row, index): QuotaRowInstant | null =>
-      isUsableMs(row.resetAtMs)
+      isUsableMs(row.resetAtMs) && hasUsedQuota(usedPercentOf(row))
         ? { rowId: row.id || `${fallbackPrefix}-${index}`, atMs: row.resetAtMs, kind: 'window' }
         : null
     )
@@ -77,7 +93,8 @@ const collectRows = (rows: readonly WindowLike[], fallbackPrefix: string): Quota
 /**
  * Every recovery instant on one credential, tagged with the row it belongs to.
  *
- * Only genuine capacity-return events are collected. The Codex subscription
+ * Only genuine capacity-return events are collected: a window counts only
+ * when it has used some quota (see `hasUsedQuota`). The Codex subscription
  * renewal date and xAI's monthly billing rollover are excluded: a spend cap
  * turning over is not a rate limit lifting, and ranking cards by it would
  * answer a different question than the one being asked. Both still render
@@ -90,8 +107,20 @@ export function collectQuotaRowInstants(
   const state = quota as { status?: string } | undefined;
   if (!state || state.status !== 'success') return [];
 
-  if (provider === 'claude' || provider === 'codex' || provider === 'devin') {
-    const windows = collectRows((quota as { windows?: WindowLike[] }).windows ?? [], 'window');
+  if (provider === 'devin') {
+    return collectRows(
+      (quota as { windows?: (WindowLike & { remainingPercent?: number | null })[] }).windows ?? [],
+      'window',
+      (row) => (isUsableMs(row.remainingPercent) ? 100 - row.remainingPercent : null)
+    );
+  }
+
+  if (provider === 'claude' || provider === 'codex') {
+    const windows = collectRows(
+      (quota as { windows?: UsedPercentWindow[] }).windows ?? [],
+      'window',
+      (row) => row.usedPercent
+    );
     if (provider !== 'codex') return windows;
 
     const credits = (
@@ -111,22 +140,42 @@ export function collectQuotaRowInstants(
 
   if (provider === 'xai') {
     const billing = (
-      quota as { billing?: { periodType?: string; resetAtMs?: number | null } | null }
+      quota as {
+        billing?: {
+          periodType?: string;
+          usagePercent?: number | null;
+          resetAtMs?: number | null;
+        } | null;
+      }
     ).billing;
-    if (!billing || billing.periodType !== 'weekly' || !isUsableMs(billing.resetAtMs)) return [];
+    if (
+      !billing ||
+      billing.periodType !== 'weekly' ||
+      !isUsableMs(billing.resetAtMs) ||
+      !hasUsedQuota(billing.usagePercent)
+    ) {
+      return [];
+    }
     return [{ rowId: XAI_WEEKLY_ROW_ID, atMs: billing.resetAtMs, kind: 'window' }];
   }
 
   if (provider === 'antigravity') {
     // Buckets live inside groups; the grouping is a display concern here.
-    const buckets = ((quota as { groups?: { buckets?: WindowLike[] }[] }).groups ?? []).flatMap(
-      (group) => group.buckets ?? []
+    const buckets = (
+      (quota as { groups?: { buckets?: (WindowLike & { remainingFraction?: number })[] }[] })
+        .groups ?? []
+    ).flatMap((group) => group.buckets ?? []);
+    return collectRows(buckets, 'bucket', (bucket) =>
+      isUsableMs(bucket.remainingFraction) ? (1 - bucket.remainingFraction) * 100 : null
     );
-    return collectRows(buckets, 'bucket');
   }
 
   if (provider === 'kimi') {
-    return collectRows((quota as { rows?: WindowLike[] }).rows ?? [], 'row');
+    return collectRows(
+      (quota as { rows?: (WindowLike & { used?: number })[] }).rows ?? [],
+      'row',
+      (row) => row.used
+    );
   }
 
   if (provider === 'meta') {
@@ -143,18 +192,8 @@ export function collectQuotaRowInstants(
         }
       ).data?.windows ?? [];
 
-    // A reset is a recovery event only when the current window has consumed
-    // capacity. In particular, 0% used must not make an otherwise healthy Meta
-    // credential sort ahead of credentials that are actually blocked. Unknown
-    // usage is not treated as 100% used either.
     return windows
-      .filter(
-        (window) =>
-          typeof window.usedPercent === 'number' &&
-          Number.isFinite(window.usedPercent) &&
-          window.usedPercent > 0 &&
-          isUsableMs(window.resetAt)
-      )
+      .filter((window) => hasUsedQuota(window.usedPercent) && isUsableMs(window.resetAt))
       .map((window) => ({
         rowId: window.id,
         atMs: (window.resetAt as number) * 1000,
