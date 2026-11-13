@@ -110,6 +110,15 @@
   background: var(--bg-primary);
 }
 
+/* One 40 px control height across the toolbar, like the search field. */
+.toolbar :global(.btn) {
+  min-height: 40px;
+}
+
+.toolbar :global(.btn-icon) {
+  min-width: 40px;
+}
+
 .toolbarSpacer {
   flex: 1 1 0;
 }
@@ -150,7 +159,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 30px;
+  height: 38px;
   padding: 0 12px;
   border-radius: 0;
   font-size: var(--fs-body);
@@ -293,7 +302,7 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  height: 32px;
+  height: 40px;
   padding: 0 12px 0 10px;
   border: 1px solid var(--border-primary);
   border-radius: 0;
