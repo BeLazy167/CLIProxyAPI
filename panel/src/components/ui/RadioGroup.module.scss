@@ -1,0 +1,40 @@
+.option {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  cursor: pointer;
+
+  &:has([data-disabled]) {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+}
+
+.radio {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 1px 0;
+  padding: 0;
+  border: 1px solid var(--text-primary);
+  border-radius: 50%;
+  background: var(--bg-primary);
+  cursor: inherit;
+
+  &:focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 1px var(--bg-primary),
+      0 0 0 3px var(--focus-color);
+  }
+}
+
+.indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-primary);
+}
