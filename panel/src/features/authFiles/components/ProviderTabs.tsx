@@ -35,7 +35,7 @@ export function ProviderTabs({
   const wrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const strip = wrapRef.current?.firstElementChild as HTMLElement | null | undefined;
+    const strip = wrapRef.current?.querySelector<HTMLElement>('[data-slot="tabs-list"]');
     if (!strip) return;
     const onWheel = (event: WheelEvent) => scrollProviderTabs(strip, event);
     // React delegates wheel events passively; use a local listener to prevent page scrolling.
