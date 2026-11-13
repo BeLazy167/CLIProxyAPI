@@ -1,13 +1,11 @@
 @use './variables.scss' as *;
 
 :root {
-  --header-height: 80px;
-  --shell-gutter: 24px;
+  --header-height: 48px;
   --sidebar-panel-width: 216px;
   --sidebar-collapsed-width: 60px;
   --sidebar-active-width: var(--sidebar-panel-width);
   --sidebar-gap: 0px;
-  --floating-control-size: 38px;
 }
 
 .app-shell {
@@ -34,49 +32,6 @@
     overflow: visible;
     overflow-y: auto;
   }
-
-  &.plugin-resource-shell {
-    .top-gradient-blur {
-      display: none;
-    }
-  }
-}
-
-.top-gradient-blur {
-  position: fixed;
-  top: 0;
-  right: 0;
-  left: var(--sidebar-active-width);
-  z-index: $z-dropdown - 2;
-  height: 141px;
-  pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--bg-secondary) 88%, #0d0c0a) 0%,
-    color-mix(in srgb, var(--bg-secondary) 54%, transparent) 36%,
-    color-mix(in srgb, var(--bg-secondary) 22%, transparent) 66%,
-    transparent 100%
-  );
-  --glass-blur: 22px;
-  backdrop-filter: var(--glass-backdrop-filter);
-  -webkit-backdrop-filter: var(--glass-backdrop-filter);
-  mask-image: linear-gradient(
-    to bottom,
-    #000 0%,
-    rgb(0 0 0 / 0.9) 24%,
-    rgb(0 0 0 / 0.58) 48%,
-    rgb(0 0 0 / 0.22) 72%,
-    transparent 100%
-  );
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    #000 0%,
-    rgb(0 0 0 / 0.9) 24%,
-    rgb(0 0 0 / 0.58) 48%,
-    rgb(0 0 0 / 0.22) 72%,
-    transparent 100%
-  );
-  transition: left $transition-normal;
 }
 
 .main-header {
@@ -85,10 +40,14 @@
   right: 0;
   left: 0;
   z-index: $z-dropdown + 1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
   height: var(--header-height);
-  pointer-events: none;
-  background: transparent;
-  border: 0;
+  padding: 0 0 0 16px;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
 
   .sidebar-toggle-floating {
     position: fixed;
@@ -141,46 +100,58 @@
     }
   }
 
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .header-brand-logo {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+
+  .header-brand-title {
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .header-brand-subtitle {
+    overflow: hidden;
+    color: var(--text-secondary);
+    font-size: var(--fs-meta);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   .mobile-sidebar-actions,
   .header-actions {
-    position: absolute;
-    top: var(--shell-gutter);
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 6px;
-    border: 1px solid color-mix(in srgb, var(--border-color) 68%, transparent);
-    border-radius: 16px;
-    background: color-mix(in srgb, var(--bg-primary) 68%, transparent);
-    color: var(--text-secondary);
-    box-shadow:
-      0 18px 44px rgb(0 0 0 / 0.17),
-      inset 0 1px 0 rgb(255 255 255 / 0.04);
-    --glass-blur: 16px;
-    backdrop-filter: var(--glass-backdrop-filter);
-    -webkit-backdrop-filter: var(--glass-backdrop-filter);
-    pointer-events: auto;
+    height: 100%;
   }
 
   .mobile-sidebar-actions {
-    left: var(--shell-gutter);
     display: none;
   }
 
   .header-actions {
-    right: var(--shell-gutter);
+    margin-left: auto;
   }
 
   .mobile-sidebar-actions .btn,
   .header-actions .btn {
-    width: var(--floating-control-size);
-    height: var(--floating-control-size);
-    min-width: var(--floating-control-size);
+    width: var(--header-height);
+    height: var(--header-height);
+    min-width: var(--header-height);
     padding: 0;
-    border-radius: 11px;
+    border: 0;
+    border-radius: 0;
     background: transparent;
-    color: var(--text-secondary);
-    border-color: transparent;
+    color: var(--text-primary);
 
     > span {
       display: inline-flex;
@@ -190,14 +161,13 @@
     }
 
     &:hover {
-      background: color-mix(in srgb, var(--text-primary) 8%, transparent);
+      background: var(--bg-hover);
       color: var(--text-primary);
-      border-color: transparent;
     }
 
     &:focus-visible {
-      outline: none;
-      box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 26%, transparent);
+      outline: var(--focus-ring);
+      outline-offset: -2px;
     }
   }
 
@@ -326,7 +296,7 @@
   z-index: $z-dropdown - 1;
   width: var(--sidebar-panel-width);
   height: 100vh;
-  padding: 14px 10px;
+  padding: calc(var(--header-height) + 8px) 10px 14px;
   display: flex;
   flex-direction: column;
   gap: $spacing-sm;
@@ -353,18 +323,7 @@
 
   &.collapsed {
     width: var(--sidebar-collapsed-width);
-    padding: 14px 8px;
-
-    .sidebar-header {
-      justify-content: center;
-      padding-right: 0;
-      padding-left: 0;
-    }
-
-    .sidebar-brand {
-      justify-content: center;
-      padding: 0;
-    }
+    padding: calc(var(--header-height) + 8px) 8px 14px;
 
     .nav-item {
       position: relative;
@@ -404,63 +363,6 @@
       padding-left: 0;
       border-left: 0;
     }
-  }
-
-  .sidebar-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 36px;
-    padding: 2px 2px 10px;
-    margin-bottom: 2px;
-    border-bottom: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
-    flex-shrink: 0;
-  }
-
-  .sidebar-brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-width: 0;
-    flex: 1;
-    padding: 0 6px;
-    color: var(--text-primary);
-  }
-
-  .sidebar-brand-logo {
-    width: 30px;
-    height: 30px;
-    object-fit: contain;
-    border-radius: 7px;
-    box-shadow: none;
-    flex-shrink: 0;
-  }
-
-  .sidebar-brand-text {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    line-height: 1.15;
-  }
-
-  .sidebar-brand-title {
-    min-width: 0;
-    overflow: hidden;
-    color: var(--text-primary);
-    font-size: 15px;
-    font-weight: 800;
-    letter-spacing: 0;
-    white-space: nowrap;
-  }
-
-  .sidebar-brand-subtitle {
-    margin-top: 1px;
-    overflow: hidden;
-    font-size: 10.5px;
-    font-weight: 500;
-    color: var(--text-secondary);
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   .nav-section {
@@ -736,7 +638,7 @@
 .main-content {
   flex: 1 0 auto;
   min-height: 100%;
-  padding: 70px clamp(20px, 3vw, 48px) 40px;
+  padding: calc(var(--header-height) + 24px) clamp(20px, 3vw, 48px) 40px;
   display: flex;
   flex-direction: column;
   gap: $spacing-lg;
@@ -745,14 +647,14 @@
   &.main-content-logs {
     flex: 1 1 auto;
     min-height: 0;
-    padding: 70px clamp(20px, 3vw, 48px) 24px;
+    padding: calc(var(--header-height) + 24px) clamp(20px, 3vw, 48px) 24px;
     overflow: hidden;
   }
 
   &.main-content-plugin-resource {
     flex: 1 1 auto;
     min-height: 0;
-    padding: 0;
+    padding: var(--header-height) 0 0;
     gap: 0;
     overflow: hidden;
     background: var(--bg-secondary);
@@ -768,14 +670,7 @@
 
 @media (max-width: $breakpoint-mobile) {
   :root {
-    --header-height: 74px;
-    --shell-gutter: 12px;
     --sidebar-panel-width: min(280px, calc(100vw - 24px));
-    --floating-control-size: 36px;
-  }
-
-  .top-gradient-blur {
-    height: 114px;
   }
 
   .nav-tooltip {
@@ -787,24 +682,12 @@
       display: none;
     }
 
-    .header-actions {
-      top: var(--shell-gutter);
-      right: var(--shell-gutter);
-      max-width: calc(
-        100vw - var(--shell-gutter) - var(--shell-gutter) - var(--floating-control-size) - 14px
-      );
-      padding: 5px;
-      gap: 2px;
-      border-radius: 14px;
+    .header-brand-subtitle {
+      display: none;
     }
 
     .mobile-sidebar-actions {
       display: inline-flex;
-      top: var(--shell-gutter);
-      left: var(--shell-gutter);
-      padding: 5px;
-      gap: 2px;
-      border-radius: 14px;
     }
 
     .mobile-menu-btn {
@@ -844,7 +727,7 @@
   .sidebar-backdrop {
     display: block;
     position: fixed;
-    inset: 0;
+    inset: var(--header-height) 0 0;
     z-index: $z-dropdown - 1;
     background: rgb(8 8 8 / 0.46);
 
@@ -856,12 +739,13 @@
 
   .sidebar {
     position: fixed;
-    top: 0;
+    top: var(--header-height);
     bottom: 0;
     left: 0;
     z-index: $z-dropdown;
     width: var(--sidebar-panel-width);
     height: auto;
+    padding-top: 8px;
     transform: translateX(calc(-100% - 24px));
     background: var(--bg-primary);
     border: 0;
@@ -875,9 +759,8 @@
 
     &.collapsed {
       width: var(--sidebar-panel-width);
-      padding: 14px 10px;
+      padding: 8px 10px 14px;
 
-      .sidebar-brand,
       .nav-item {
         justify-content: flex-start;
       }
@@ -925,7 +808,7 @@
 
     &.main-content-plugin-resource {
       min-height: 0;
-      padding: 0;
+      padding: var(--header-height) 0 0;
       overflow: hidden;
     }
 

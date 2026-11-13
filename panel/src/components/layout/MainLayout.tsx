@@ -897,8 +897,6 @@ export function MainLayout() {
         isPluginResourcePage ? 'plugin-resource-shell' : ''
       }`}
     >
-      <div className="top-gradient-blur" aria-hidden="true" />
-
       <header className="main-header" ref={headerRef}>
         <button
           type="button"
@@ -936,7 +934,13 @@ export function MainLayout() {
           </Button>
         </div>
 
-        <div className="header-actions floating-actions">
+        <div className="header-brand" title={fullBrandName}>
+          <img src={INLINE_LOGO_JPEG} alt="CPAMC logo" className="header-brand-logo" />
+          <span className="header-brand-title">{abbrBrandName}</span>
+          <span className="header-brand-subtitle">{t('sidebar.subtitle')}</span>
+        </div>
+
+        <div className="header-actions">
           <Button
             variant="ghost"
             size="sm"
@@ -1033,18 +1037,6 @@ export function MainLayout() {
         <aside
           className={`sidebar ${sidebarOpen ? 'open' : ''} ${sidebarCollapsed ? 'collapsed' : ''}`}
         >
-          <div className="sidebar-header">
-            <div className="sidebar-brand" title={fullBrandName}>
-              <img src={INLINE_LOGO_JPEG} alt="CPAMC logo" className="sidebar-brand-logo" />
-              {showSidebarLabels && (
-                <span className="sidebar-brand-text">
-                  <span className="sidebar-brand-title">{abbrBrandName}</span>
-                  <span className="sidebar-brand-subtitle">{t('sidebar.subtitle')}</span>
-                </span>
-              )}
-            </div>
-          </div>
-
           <div className="nav-section">
             {navGroups.map((group, idx) => (
               <div className="nav-group" key={group.id}>
