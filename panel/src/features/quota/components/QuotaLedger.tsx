@@ -8,7 +8,7 @@
  * add a Resets column with one spend button per reset group.
  */
 
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { IconAlertTriangle, IconRefreshCw, IconZap } from '@/components/ui/icons';
@@ -18,7 +18,6 @@ import { getQuotaCacheKey, getQuotaDisplayName } from '@/utils/quota/identity';
 import { getTypeLabel } from '@/features/authFiles/constants';
 import { MINUTE_MS } from '@/utils/time/durations';
 import { formatCountdown } from '../compactDuration';
-import { QUOTA_TAB_ORDER } from '../constants';
 import { isQuotaRefreshDisabled, type QuotaFileEntry } from '../logic';
 import { resolveQuotaPlanLabel } from '../planLabels';
 import { QUOTA_ADAPTERS, type QuotaCardState } from '../providers';
@@ -38,7 +37,6 @@ import styles from './QuotaLedger.module.scss';
 export interface QuotaLedgerProps {
   entries: QuotaFileEntry[];
   quotaFor: (entry: QuotaFileEntry) => QuotaCardState | undefined;
-  displayNameFor: (name: string) => string;
   resolvedTheme: ResolvedTheme;
   now: number;
   /** Provider pools; they order the columns and supply each group's summary. */
@@ -47,6 +45,8 @@ export interface QuotaLedgerProps {
   resettingKey: string | null;
   onRefresh: (entry: QuotaFileEntry) => void;
   onReset: (entry: QuotaFileEntry) => void;
+  /** Shown under the Claude group heading: the reset suggestion. */
+  claudeHint?: ReactNode;
 }
 
 type Column = { key: string; label: QuotaWindowLabel };
@@ -336,7 +336,6 @@ function PoolSummary({ pool }: { pool: ProviderPool | undefined }) {
 export function QuotaLedger({
   entries,
   quotaFor,
-  displayNameFor,
   resolvedTheme,
   now,
   pools,
@@ -344,12 +343,15 @@ export function QuotaLedger({
   resettingKey,
   onRefresh,
   onReset,
+  claudeHint,
 }: QuotaLedgerProps) {
   const { t } = useTranslation();
-  const groups = QUOTA_TAB_ORDER.map((provider) => ({
+  // Groups follow the sorted entries: a provider appears where its first row lands, so
+  // "Soonest recovery" orders the groups too, and the default sort keeps provider order.
+  const groups = [...new Set(entries.map((entry) => entry.type))].map((provider) => ({
     provider,
     entries: entries.filter((entry) => entry.type === provider),
-  })).filter((group) => group.entries.length > 0);
+  }));
 
   return (
     <div className={styles.ledger} aria-label={t('quota_management.ledger_label')} role="region">
@@ -390,6 +392,9 @@ export function QuotaLedger({
                 <span className={styles.groupCount}>{group.entries.length}</span>
               </h3>
               <PoolSummary pool={pool} />
+              {group.provider === 'claude' && claudeHint && (
+                <div className={styles.groupHint}>{claudeHint}</div>
+              )}
             </header>
             <div className={styles.columnHead} aria-hidden="true">
               <span>{t('quota_management.ledger_credential')}</span>
@@ -414,7 +419,7 @@ export function QuotaLedger({
                     entry={entry}
                     quota={quotaFor(entry)}
                     columns={columns}
-                    displayName={displayNameFor(getQuotaDisplayName(entry.file))}
+                    displayName={getQuotaDisplayName(entry.file)}
                     resolvedTheme={resolvedTheme}
                     now={now}
                     canRefresh={canRefresh(entry)}

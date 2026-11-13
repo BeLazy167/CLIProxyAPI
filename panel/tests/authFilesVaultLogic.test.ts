@@ -1,9 +1,8 @@
-import { afterAll, beforeEach, describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import { countAuthFileStatuses, getAuthFileStatusKind } from '../src/features/authFiles/constants';
 import { sortAuthFiles } from '../src/features/authFiles/logic';
 import { shouldIgnoreEditorEscape } from '../src/features/authFiles/oauthEditorState';
 import { normalizePersistedStatusFilterMode } from '../src/features/authFiles/uiState';
-import { readShowEmailsPreference, writeShowEmailsPreference } from '../src/features/quota/uiState';
 import type { AuthFileItem } from '../src/types';
 
 const NOW = Date.UTC(2026, 9, 7, 12);
@@ -35,7 +34,9 @@ describe('getAuthFileStatusKind', () => {
   test('puts every file in exactly one bucket, disabled > problem > cooling > active', () => {
     expect(getAuthFileStatusKind(authFile(), NOW)).toBe('active');
     expect(getAuthFileStatusKind(cooling(), NOW)).toBe('cooling');
-    expect(getAuthFileStatusKind(cooling({ unavailable: true }), NOW)).toBe('problem');
+    // A quota timer explains the unavailability: the file recovers on its own.
+    expect(getAuthFileStatusKind(cooling({ unavailable: true }), NOW)).toBe('cooling');
+    expect(getAuthFileStatusKind(authFile({ unavailable: true }), NOW)).toBe('problem');
     expect(getAuthFileStatusKind(cooling({ unavailable: true, disabled: true }), NOW)).toBe(
       'disabled'
     );
@@ -133,33 +134,5 @@ describe('shouldIgnoreEditorEscape', () => {
   test('lets Escape through from the page body', () => {
     expect(shouldIgnoreEditorEscape({ target: elementIn(null) })).toBe(false);
     expect(shouldIgnoreEditorEscape({ target: null })).toBe(false);
-  });
-});
-
-describe('shared show-emails preference', () => {
-  const originalWindow = (globalThis as { window?: unknown }).window;
-  const store = new Map<string, string>();
-
-  beforeEach(() => {
-    store.clear();
-    (globalThis as unknown as { window: unknown }).window = {
-      localStorage: {
-        getItem: (key: string) => store.get(key) ?? null,
-        setItem: (key: string, value: string) => void store.set(key, value),
-      },
-    };
-  });
-
-  afterAll(() => {
-    (globalThis as unknown as { window: unknown }).window = originalWindow;
-  });
-
-  test('defaults to null (callers mask) and round-trips a boolean under one key', () => {
-    expect(readShowEmailsPreference()).toBeNull();
-    writeShowEmailsPreference(true);
-    expect(store.get('credentials.showEmails')).toBe('true');
-    expect(readShowEmailsPreference()).toBe(true);
-    store.set('credentials.showEmails', '"nope"');
-    expect(readShowEmailsPreference()).toBeNull();
   });
 });

@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { useNow } from '@/hooks/useNow';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useNotificationStore } from '@/stores';
@@ -9,7 +10,32 @@ import type { AuthFileItem, ClaudeQuotaState } from '@/types';
 import { normalizeAuthIndex } from '@/utils/quota';
 import { formatCountdown } from '../../compactDuration';
 import { formatQuotaWindowLabel } from '../../quotaWindows';
-import { groupResetGrants, type ResetGrantGroup } from './resetGrantGroups';
+import {
+  groupResetGrants,
+  type ResetGrantGroup,
+  type ResetWindowReading,
+} from './resetGrantGroups';
+
+/** "7-day (100% used, refills in 4d 0h), 7-day Fable (100% used)": what a reset clears. */
+export function formatResetWindows(
+  t: TFunction,
+  windows: readonly ResetWindowReading[],
+  now: number
+): string {
+  return windows
+    .map((reading) => {
+      const label = formatQuotaWindowLabel(t, reading.label);
+      const percent = reading.usedPercent === null ? '--' : Math.round(reading.usedPercent);
+      return reading.resetAtMs !== null && reading.resetAtMs > now
+        ? t('claude_reset.window_use_reset', {
+            label,
+            percent,
+            time: formatCountdown(t, reading.resetAtMs - now),
+          })
+        : t('claude_reset.window_use', { label, percent });
+    })
+    .join(', ');
+}
 
 /**
  * Grouped resets for one Claude credential, read from its loaded quota (the
@@ -45,19 +71,7 @@ export function useClaudeResetGrants(
     const action = group.action;
     if (blocked || lock.current || action.state !== 'ready' || !authIndex) return;
     const current = () => session === apiClient.getConnectionRevision();
-    const windows = action.windows
-      .map((reading) => {
-        const label = formatQuotaWindowLabel(t, reading.label);
-        const percent = reading.usedPercent === null ? '--' : Math.round(reading.usedPercent);
-        return reading.resetAtMs !== null && reading.resetAtMs > now
-          ? t('claude_reset.window_use_reset', {
-              label,
-              percent,
-              time: formatCountdown(t, reading.resetAtMs - now),
-            })
-          : t('claude_reset.window_use', { label, percent });
-      })
-      .join(', ');
+    const windows = formatResetWindows(t, action.windows, now);
     showConfirmation({
       title: t('claude_reset.title'),
       message: t('claude_reset.confirm_text', {

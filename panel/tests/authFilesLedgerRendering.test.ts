@@ -6,7 +6,6 @@ import {
   AuthFilesLedger,
   AuthFilesLedgerSkeleton,
 } from '../src/features/authFiles/components/AuthFilesLedger';
-import { maskEmails } from '../src/features/quota/maskIdentity';
 import type { QuotaCardState } from '../src/features/quota/providers';
 import type { AuthFileItem } from '../src/types';
 
@@ -60,7 +59,7 @@ const quotaStates: Record<string, QuotaCardState> = {
   } as unknown as QuotaCardState,
 };
 
-const render = (showEmails: boolean) =>
+const render = () =>
   renderToStaticMarkup(
     createElement(AuthFilesLedger, {
       groups: [
@@ -69,7 +68,6 @@ const render = (showEmails: boolean) =>
       ],
       now: NOW,
       resolvedTheme: 'light',
-      displayNameFor: showEmails ? (name: string) => name : maskEmails,
       selectedFiles: new Set<string>(),
       disableControls: false,
       deleting: null,
@@ -102,21 +100,21 @@ describe('AuthFilesLedger', () => {
   });
 
   test('groups rows by provider with counts and a problem badge', () => {
-    const markup = render(false);
+    const markup = render();
     expect(markup).toContain('aria-expanded="true"');
     expect(markup).toContain('Load quota');
     // One problem in the claude group, none in codex.
     expect(markup.match(/1 problem/g)?.length).toBe(1);
   });
 
-  test('masks emails by default and reveals them on request', () => {
-    const masked = render(false);
-    expect(masked).not.toContain('theo@example.dev');
-    expect(render(true)).toContain('theo@example.dev');
+  test('shows full emails', () => {
+    const markup = render();
+    expect(markup).toContain('theo@example.dev');
+    expect(markup).not.toContain('•••');
   });
 
   test('renders a single cooldown chip and a quota meter', () => {
-    const markup = render(false);
+    const markup = render();
     expect(markup).toContain('Cooling 12m (429)');
     expect(markup).toContain('30%');
     expect(markup).toContain('aria-haspopup="menu"');

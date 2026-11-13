@@ -21,7 +21,6 @@ import {
   KIMI_CHINESE_AFFILIATE_URL,
   KIMI_INTERNATIONAL_AFFILIATE_URL,
 } from '@/features/providers/kimi';
-import { maskEmails } from '@/features/quota/maskIdentity';
 import type { AuthFileItem, PluginListEntry } from '@/types';
 import { createOAuthAttempts, type OAuthAttempt } from './oauthAttempts';
 import {
@@ -454,7 +453,7 @@ export function OAuthPage() {
     const files = await loadAuthFiles();
     if (!files || !attempt.isCurrent()) return;
     const created = findCreatedCredential(knownFiles, files, provider);
-    if (created) updateProviderState(provider, { createdName: maskEmails(created) });
+    if (created) updateProviderState(provider, { createdName: created });
   };
 
   const startPolling = (

@@ -5,7 +5,6 @@ import i18n from '../src/i18n/index';
 import { QuotaLedger } from '../src/features/quota/components/QuotaLedger';
 import { QuotaPools } from '../src/features/quota/components/QuotaPools';
 import type { QuotaFileEntry } from '../src/features/quota/logic';
-import { maskEmails } from '../src/features/quota/maskIdentity';
 import type { QuotaCardState } from '../src/features/quota/providers';
 import { buildProviderPools } from '../src/features/quota/quotaPool';
 
@@ -72,7 +71,6 @@ const renderLedger = () =>
     createElement(QuotaLedger, {
       entries,
       quotaFor,
-      displayNameFor: maskEmails,
       resolvedTheme: 'dark',
       now: NOW,
       pools: buildProviderPools(entries, quotaFor, NOW),
@@ -84,10 +82,10 @@ const renderLedger = () =>
   );
 
 describe('QuotaLedger rendering', () => {
-  test('groups rows by provider and masks emails in account names', () => {
+  test('groups rows by provider and shows each full account email', () => {
     const markup = renderLedger();
-    expect(markup).toContain('claude-t•••@e•••.dev.json');
-    expect(markup).not.toContain('claude-theo@');
+    expect(markup).toContain('claude-theo@example.dev.json');
+    expect(markup).not.toContain('•••');
     expect(markup.indexOf('quota-ledger-claude')).toBeLessThan(
       markup.indexOf('quota-ledger-codex')
     );
@@ -96,7 +94,7 @@ describe('QuotaLedger rendering', () => {
 
   test('aligns columns, marking a missing window as not reported rather than empty', () => {
     const markup = renderLedger();
-    const anaRow = markup.slice(markup.indexOf('claude-a•••'), markup.indexOf('claude-i•••'));
+    const anaRow = markup.slice(markup.indexOf('claude-ana@'), markup.indexOf('claude-idle@'));
     expect(anaRow).toContain('Not reported');
     // Unknown figure renders as --, never as 0%.
     expect(anaRow).toContain('>--<');
@@ -130,7 +128,6 @@ describe('QuotaLedger rendering', () => {
       createElement(QuotaLedger, {
         entries: [entries[0]],
         quotaFor: (item: QuotaFileEntry) => lowStates[item.file.name] as QuotaCardState | undefined,
-        displayNameFor: maskEmails,
         resolvedTheme: 'dark',
         now: NOW,
         pools: [],
@@ -153,7 +150,7 @@ describe('QuotaLedger rendering', () => {
     expect(markup).toContain('role="alert"');
     expect(markup).toContain('aria-valuenow="58"');
     expect(markup).toContain('No reset pending');
-    expect(markup).toContain('Refresh quota for claude-t•••@e•••.dev.json');
+    expect(markup).toContain('Refresh quota for claude-theo@example.dev.json');
   });
 });
 
@@ -165,7 +162,6 @@ describe('QuotaPools rendering', () => {
         pools,
         now: NOW,
         resolvedTheme: 'light',
-        displayNameFor: maskEmails,
       })
     );
     // Claude: the model window is reported by one account (58%); the shared

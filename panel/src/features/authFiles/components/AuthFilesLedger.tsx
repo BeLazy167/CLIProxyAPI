@@ -42,7 +42,6 @@ export type AuthFilesLedgerProps = {
   groups: AuthFilesLedgerGroup[];
   now: number;
   resolvedTheme: ResolvedTheme;
-  displayNameFor: (name: string) => string;
   selectedFiles: Set<string>;
   disableControls: boolean;
   deleting: string | null;
@@ -212,7 +211,6 @@ function LedgerRow(props: AuthFilesLedgerProps & { file: AuthFileItem }) {
   const {
     file,
     now,
-    displayNameFor,
     selectedFiles,
     disableControls,
     deleting,
@@ -240,9 +238,9 @@ function LedgerRow(props: AuthFilesLedgerProps & { file: AuthFileItem }) {
   const isStatusUpdating = statusUpdating[refreshKey] === true;
   const authIndexKey = typeof file.authIndex === 'string' ? file.authIndex : null;
   const identity = deriveAuthFileIdentity(file);
-  const displayName = displayNameFor(identity.primary);
+  const displayName = identity.primary;
   const isDisabled = file.disabled === true;
-  const isProblem = !isDisabled && isProblemAuthFile(file);
+  const isProblem = isProblemAuthFile(file, now);
   const statusMessage = getAuthFileStatusMessage(file);
   const selected = selectedFiles.has(file.name);
   const hasCooldown = Boolean(file.cooldownSnapshot?.records?.length);
@@ -270,8 +268,8 @@ function LedgerRow(props: AuthFilesLedgerProps & { file: AuthFileItem }) {
           <SelectionCheckbox
             checked={selected}
             onChange={() => onToggleSelect(file.name)}
-            ariaLabel={t('auth_files.card_select', { name: displayNameFor(file.name) })}
-            title={t('auth_files.card_select', { name: displayNameFor(file.name) })}
+            ariaLabel={t('auth_files.card_select', { name: file.name })}
+            title={t('auth_files.card_select', { name: file.name })}
           />
         )}
       </div>
@@ -305,8 +303,8 @@ function LedgerRow(props: AuthFilesLedgerProps & { file: AuthFileItem }) {
           )}
         </div>
         {identity.secondary && (
-          <span className={styles.secondary} title={displayNameFor(identity.fullName)}>
-            {displayNameFor(identity.secondary)}
+          <span className={styles.secondary} title={identity.fullName}>
+            {identity.secondary}
           </span>
         )}
         {isProblem && statusMessage && (
@@ -341,7 +339,7 @@ function LedgerRow(props: AuthFilesLedgerProps & { file: AuthFileItem }) {
       <div className={styles.actions}>
         {!isRuntimeOnly && (
           <ToggleSwitch
-            ariaLabel={t('auth_files.card_toggle', { name: displayNameFor(file.name) })}
+            ariaLabel={t('auth_files.card_toggle', { name: file.name })}
             checked={!isDisabled}
             disabled={disableControls || isStatusUpdating || isManualRefreshing}
             onChange={(value) => onToggleStatus(file, value)}
@@ -415,9 +413,7 @@ function LedgerGroup(props: AuthFilesLedgerProps & { group: AuthFilesLedgerGroup
   const [collapsed, setCollapsed] = useState(false);
   const listId = useId();
   const label = getTypeLabel(t, group.provider);
-  const problemCount = group.files.filter(
-    (file) => file.disabled !== true && isProblemAuthFile(file)
-  ).length;
+  const problemCount = group.files.filter((file) => isProblemAuthFile(file, props.now)).length;
   const quotaTargets = group.files.filter(
     (file) =>
       resolveQuotaProviderType(file) !== null &&

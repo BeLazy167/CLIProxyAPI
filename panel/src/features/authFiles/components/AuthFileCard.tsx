@@ -41,8 +41,6 @@ export type AuthFileCardProps = {
   cooldownResetting: Record<string, boolean>;
   quotaFilterType: AuthFileQuotaFilter;
   statusBarCache: Map<string, AuthFileStatusBarData>;
-  /** Email masking for the identity lines (display only; handlers keep the real name). */
-  displayNameFor: (name: string) => string;
   /** 首屏一次性级联入场的延迟；null/undefined 表示不做入场动画。 */
   entranceDelayMs?: number | null;
   onShowModels: (file: AuthFileItem) => void;
@@ -68,7 +66,6 @@ export function AuthFileCard(props: AuthFileCardProps) {
     cooldownResetting,
     quotaFilterType,
     statusBarCache,
-    displayNameFor,
     entranceDelayMs,
     onShowModels,
     onDownload,
@@ -106,14 +103,8 @@ export function AuthFileCard(props: AuthFileCardProps) {
   const priorityValue = Number.isSafeInteger(file.priority) ? file.priority : undefined;
   const weightValue = Number.isSafeInteger(file.weight) ? file.weight : undefined;
   const noteValue = typeof file.note === 'string' ? file.note.trim() : '';
-  // 主行显示账号（email/项目 ID），文件名降为满卡宽的 mono 副行；两者都按偏好做邮箱遮罩
-  const rawIdentity = deriveAuthFileIdentity(file);
-  const identity = {
-    kind: rawIdentity.kind,
-    primary: displayNameFor(rawIdentity.primary),
-    secondary: rawIdentity.secondary ? displayNameFor(rawIdentity.secondary) : null,
-    fullName: displayNameFor(rawIdentity.fullName),
-  };
+  // 主行显示账号（email/项目 ID），文件名降为满卡宽的 mono 副行
+  const identity = deriveAuthFileIdentity(file);
 
   // 挂载时捕获一次入场延迟：父级随后传 null 也不会中断已开始的动画
   const [mountEntranceDelayMs] = useState<number | null>(entranceDelayMs ?? null);

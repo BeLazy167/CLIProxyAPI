@@ -14,7 +14,6 @@ import {
   type PoolWindow,
 } from '../src/features/quota/quotaPool';
 import { normalizeQuotaWindows } from '../src/features/quota/quotaWindows';
-import { maskEmails } from '../src/features/quota/maskIdentity';
 
 const NOW = Date.UTC(2026, 9, 7, 12);
 const HOUR = 60 * 60 * 1000;
@@ -384,14 +383,5 @@ describe('ledgerColumns', () => {
         'claude:five-hour',
       ]).map((column) => column.key)
     ).toEqual(['claude:seven-day-fable', 'claude:five-hour', 'claude:seven-day']);
-  });
-});
-
-describe('maskEmails', () => {
-  test('masks email-bearing filenames while keeping the provider prefix and suffix', () => {
-    expect(maskEmails('claude-theo@example.dev.json')).toBe('claude-t•••@e•••.dev.json');
-    expect(maskEmails('codex-jane.doe@gmail.com-team.json')).toBe('codex-j•••@g•••.com-team.json');
-    expect(maskEmails('session · person@corp.io')).toBe('session · p•••@c•••.io');
-    expect(maskEmails('kimi-oauth.json')).toBe('kimi-oauth.json');
   });
 });
