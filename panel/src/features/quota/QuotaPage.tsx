@@ -451,7 +451,7 @@ export function QuotaPage() {
                 ariaLabel={t('quota_management.sort_label')}
               />
             </div>
-            <div className={styles.control}>
+            <div className={`${styles.control} ${styles.viewControl}`}>
               <span className={styles.controlLabel}>
                 {t('quota_management.view_label')}
                 <Tooltip
