@@ -11,12 +11,11 @@ import { formatDaysLeft } from '../../compactDuration';
 import type { QuotaFileEntry } from '../../logic';
 import type { QuotaCardState } from '..';
 import { formatResetWindows, useClaudeResetGrants } from './ClaudeResetGrants';
-import { groupResetGrants, suggestReset, type ResetGrantKind } from './resetGrantGroups';
+import type { ResetGrantKind, ResetSuggestion } from './resetGrantGroups';
 import styles from './ClaudeResetGroups.module.scss';
 
 export interface ClaudeResetSuggestionProps {
-  /** Every Claude account; the suggestion compares them all. */
-  entries: QuotaFileEntry[];
+  suggestion: ResetSuggestion<QuotaFileEntry>;
   quotaFor: (entry: QuotaFileEntry) => QuotaCardState | undefined;
   /** True when that account's ⚡ would be disabled. */
   isBlocked: (entry: QuotaFileEntry) => boolean;
@@ -43,23 +42,13 @@ function Notice({ children, action }: { children: ReactNode; action?: ReactNode 
 
 /** One notice naming the reset to use now across Claude accounts, or why none is worth it. */
 export function ClaudeResetSuggestion({
-  entries,
+  suggestion,
   quotaFor,
   isBlocked,
   onRefresh,
 }: ClaudeResetSuggestionProps) {
   const { t } = useTranslation();
   const now = useNow();
-  const suggestion = suggestReset(
-    entries.map((entry) => {
-      const quota = quotaFor(entry) as ClaudeQuotaState | undefined;
-      const status = quota?.status === 'success' ? quota.resetGrants : null;
-      return {
-        account: entry,
-        groups: status ? groupResetGrants(status, quota?.windows ?? [], now) : null,
-      };
-    })
-  );
 
   if (suggestion.state === 'none') {
     return <Notice>{t(`claude_reset.suggest_none_${suggestion.reason}`)}</Notice>;

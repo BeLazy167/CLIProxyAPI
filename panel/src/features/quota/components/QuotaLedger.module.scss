@@ -8,7 +8,7 @@
 .ledger {
   display: flex;
   flex-direction: column;
-  gap: 26px;
+  gap: 16px;
   min-width: 0;
 }
 
@@ -21,9 +21,12 @@
 .groupHead {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: 6px 28px;
-  margin-bottom: 10px;
+  align-items: center;
+  gap: 4px 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--border-color);
+  border-bottom: 0;
+  background: var(--bg-primary);
 }
 
 .groupTitle {
@@ -31,35 +34,32 @@
   align-items: center;
   gap: 8px;
   margin: 0;
-  font-size: 16px;
-  font-weight: 650;
+  font-size: var(--fs-title);
+  line-height: var(--lh-title);
+  font-weight: 600;
   color: var(--text-primary);
-  align-self: center;
 }
 
 .groupCount {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-tertiary);
+  padding: 0 6px;
+  background: var(--count-badge-bg);
+  color: var(--count-badge-text);
+  font-size: var(--fs-meta);
+  font-weight: 400;
+  line-height: 20px;
   font-variant-numeric: tabular-nums;
-}
-
-.groupHint {
-  flex: 1 1 100%;
-  min-width: 0;
 }
 
 .poolSummary {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 4px 28px;
-  font-size: 14px;
+  gap: 4px 16px;
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
 
   strong {
-    font-weight: 650;
+    font-weight: 600;
     color: var(--text-primary);
   }
 }
@@ -68,54 +68,77 @@
   color: var(--text-secondary);
 }
 
+/* The table: a gray header band over rows, one shared column template per group. */
 .columnHead,
 .row {
   display: grid;
   grid-template-columns: var(--ledger-template);
-  align-items: center;
-  column-gap: 28px;
+  column-gap: 16px;
 }
 
 .columnHead {
-  padding: 0 0 8px;
-  border-bottom: 1px solid var(--border-color);
-  font-size: 12.5px;
-  color: var(--text-tertiary);
+  align-items: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-band);
+  font-weight: 600;
+  color: var(--text-primary);
 
   > span {
     min-width: 0;
-    @include text-ellipsis;
   }
+}
+
+.columnTip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.columnActions {
+  text-align: right;
 }
 
 .rows {
   margin: 0;
   padding: 0;
   list-style: none;
+  border: 1px solid var(--border-color);
+  border-top: 0;
+  background: var(--bg-primary);
 }
 
 .row {
-  row-gap: 10px;
-  padding: 16px 0;
-  border-bottom: 1px solid var(--border-color);
+  align-items: start;
+  row-gap: 8px;
+  padding: 12px 16px;
 
-  &:last-child {
-    border-bottom: 0;
+  & + & {
+    border-top: 1px solid var(--border-color);
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .row:hover {
+    background: var(--bg-hover);
   }
 }
 
 .identity {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
   min-width: 0;
 }
 
+/* Credentials wrap in full: a cut-off identifier is the one detail a reader needs. */
 .name {
-  font-size: 14px;
-  font-weight: 650;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 20px;
   color: var(--text-primary);
-  @include text-ellipsis;
+  overflow-wrap: anywhere;
 }
 
 .meta {
@@ -123,14 +146,13 @@
   align-items: center;
   gap: 6px;
   min-width: 0;
-  font-size: 12.5px;
-  color: var(--text-tertiary);
+  font-size: var(--fs-meta);
+  color: var(--text-secondary);
 }
 
 .metaGlyph {
   width: 16px;
   height: 16px;
-  border-radius: 4px;
   background: transparent;
 
   img {
@@ -141,106 +163,120 @@
 
 .metaText {
   min-width: 0;
-  @include text-ellipsis;
 }
 
 .cell {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
   min-width: 0;
 }
 
 .cellAbsent {
-  opacity: 0.7;
+  color: var(--text-secondary);
 }
 
-/* Column header names each cell on wide screens; the label returns when stacked. */
+/* The column header names each cell on wide screens; the label returns on cards. */
 .cellLabel {
   display: none;
   min-width: 0;
-  font-size: 12px;
-  color: var(--text-tertiary);
-  @include text-ellipsis;
+  color: var(--text-secondary);
+}
+
+.cellBody {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
 }
 
 .cellPercent {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 4px 8px;
   min-width: 0;
-  font-size: 14px;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
-  white-space: nowrap;
 }
 
 .cellPercentLow {
-  color: var(--warning-text);
+  color: var(--danger-text);
+}
+
+.cellNote {
+  font-size: var(--fs-meta);
+  font-weight: 400;
+  color: var(--text-secondary);
 }
 
 .lowMark {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-weight: 550;
+  padding: 0 4px;
+  border: 1px solid var(--danger-border);
+  color: var(--danger-text);
+  font-size: var(--fs-meta);
+  font-weight: 400;
+  line-height: 18px;
 }
 
 .track {
-  height: 5px;
-  border-radius: $radius-full;
-  background: color-mix(in srgb, var(--text-primary) 12%, transparent);
+  height: 6px;
+  background: var(--track-color);
   overflow: hidden;
 }
 
 .trackUnknown {
   background: transparent;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-tertiary) 55%, transparent);
+  box-shadow: inset 0 0 0 1px var(--hatch-color);
   background-image: repeating-linear-gradient(
     -45deg,
-    color-mix(in srgb, var(--text-tertiary) 30%, transparent) 0 2px,
-    transparent 2px 5px
+    var(--hatch-color) 0 1px,
+    transparent 1px 5px
   );
 }
 
 .fill {
   height: 100%;
-  border-radius: inherit;
-  background: color-mix(in srgb, var(--text-primary) 82%, transparent);
   transition: width 360ms var(--ease-out-strong, ease);
 }
 
+.fillHigh {
+  background: var(--success-color);
+}
+
+.fillMedium {
+  background: var(--quota-medium-color);
+}
+
 .fillLow {
-  background: var(--warning-color);
+  background: var(--error-color);
 }
 
 .cellReset {
-  min-height: 1.4em;
-  font-size: 12.5px;
-  line-height: 1.4;
-  color: var(--text-tertiary);
+  font-size: var(--fs-meta);
+  line-height: var(--lh-meta);
+  color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
-  @include text-ellipsis;
 }
 
 .cellResetMuted {
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 
 .cellResetStale {
-  color: var(--danger-text);
+  color: var(--warning-text);
+  font-weight: 600;
 }
 
 .rowMessage {
   grid-column: span var(--ledger-span);
   margin: 0;
-  font-size: 12.5px;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 
 .rowError {
-  color: var(--danger-color);
+  color: var(--danger-text);
   overflow-wrap: anywhere;
 }
 
@@ -248,7 +284,7 @@
   grid-column: span var(--ledger-span);
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
-  gap: 10px 28px;
+  gap: 10px 16px;
 }
 
 .skeletonLabel {
@@ -268,27 +304,45 @@
   }
 }
 
-.resets {
+/* Claude's three grant columns: the lines are subgrid rows across them. */
+.resets,
+.resetLines {
+  display: grid;
+  grid-template-columns: subgrid;
   min-width: 0;
+}
+
+.resets {
+  grid-column: span 3;
+}
+
+.resetLines {
+  grid-column: 1 / -1;
+}
+
+.resetsLabel {
+  display: none;
 }
 
 .action {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
-  gap: 2px;
+  gap: 4px;
 }
 
 .iconButton {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   width: 32px;
   height: 32px;
   padding: 0;
-  border: 0;
-  border-radius: 8px;
+  border: 1px solid var(--border-primary);
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--text-primary);
+  font: inherit;
   cursor: pointer;
 
   &:focus-visible {
@@ -297,15 +351,19 @@
   }
 
   &:disabled {
+    border-color: var(--border-color);
+    color: var(--text-quaternary);
     cursor: not-allowed;
-    opacity: 0.5;
   }
+}
+
+.actionText {
+  display: none;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .iconButton:not(:disabled):hover {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
+    background: var(--bg-hover);
   }
 }
 
@@ -347,34 +405,78 @@
   }
 }
 
-/* 平板与手机：列头隐藏；身份 + 动作同行，窗口格与重置区在下方两列铺开。 */
+/* Tablet and phone: each row is a card of label and value fields, with full-width actions. */
 @media (max-width: #{$breakpoint-tablet}) {
+  .groupHead {
+    padding: 8px 0;
+    border: 0;
+    background: transparent;
+  }
+
   .columnHead {
     display: none;
   }
 
+  .rows {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border: 0;
+    background: transparent;
+  }
+
   .row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: 20px;
+    display: block;
+    padding: 0;
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+
+    & + & {
+      border-top: 1px solid var(--border-color);
+    }
   }
 
-  .identity {
-    grid-column: 1;
-    grid-row: 1;
-  }
-
-  .action {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
+  .identity,
+  .cell,
   .resets,
   .rowMessage,
   .skeletonCells {
-    grid-column: 1 / -1;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color);
   }
 
-  .cellLabel {
+  .cell,
+  .resets {
+    display: grid;
+    grid-template-columns: 112px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .cellLabel,
+  .resetsLabel {
+    display: flex;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .resetLines {
     display: block;
+    grid-column: auto;
+  }
+
+  .action {
+    justify-content: stretch;
+    gap: 8px;
+    padding: 12px 16px;
+  }
+
+  .iconButton {
+    flex: 1 1 0;
+    width: auto;
+    height: 48px;
+  }
+
+  .actionText {
+    display: inline;
   }
 }

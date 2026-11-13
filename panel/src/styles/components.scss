@@ -657,6 +657,26 @@ textarea {
   white-space: nowrap;
 }
 
+.pagination-lead {
+  align-items: center;
+  gap: 4px;
+  padding: 0 16px;
+  font-size: var(--fs-meta);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* A full-width bar: the lead on the left, the count filling the middle. */
+.pagination-bar {
+  .pagination-list {
+    flex: 1 1 auto;
+  }
+
+  .pagination-info {
+    flex: 1 1 auto;
+  }
+}
+
 .stack {
   display: flex;
   flex-direction: column;

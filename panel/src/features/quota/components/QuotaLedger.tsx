@@ -5,13 +5,15 @@
  * rows reports), so the same limit lines up down the group, and an account that
  * lacks a limit shows an explicit "not reported" cell instead of shifting its
  * other windows left. The group header repeats the pool summary. Claude rows
- * add a Resets column with one spend button per reset group.
+ * add three columns (Reset grant, Eligibility, Spend) with one line per reset group.
+ * Up to tablet width each row becomes a card of label and value fields.
  */
 
 import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { IconAlertTriangle, IconRefreshCw, IconZap } from '@/components/ui/icons';
+import { Tooltip } from '@/components/ui/Tooltip';
 import type { ClaudeQuotaState, ResolvedTheme } from '@/types';
 import { formatInstantShort, resolveQuotaErrorMessage } from '@/utils/quota';
 import { getQuotaCacheKey, getQuotaDisplayName } from '@/utils/quota/identity';
@@ -23,6 +25,7 @@ import { resolveQuotaPlanLabel } from '../planLabels';
 import { QUOTA_ADAPTERS, type QuotaCardState } from '../providers';
 import { useClaudeResetGrants } from '../providers/claude/ClaudeResetGrants';
 import { ClaudeResetGroups } from '../providers/claude/ClaudeResetGroups';
+import type { ResetGrantKind } from '../providers/claude/resetGrantGroups';
 import { ledgerColumns, type ProviderPool } from '../quotaPool';
 import {
   formatQuotaWindowLabel,
@@ -30,8 +33,10 @@ import {
   type NormalizedQuotaWindow,
   type QuotaWindowLabel,
 } from '../quotaWindows';
+import { QUOTA_PROGRESS_MEDIUM_THRESHOLD } from './QuotaMeter';
 import { remainingTone } from './quotaTone';
 import { ProviderGlyph } from './ProviderGlyph';
+import { QuotaWindowName } from './QuotaWindowName';
 import styles from './QuotaLedger.module.scss';
 
 export interface QuotaLedgerProps {
@@ -45,6 +50,8 @@ export interface QuotaLedgerProps {
   resettingKey: string | null;
   onRefresh: (entry: QuotaFileEntry) => void;
   onReset: (entry: QuotaFileEntry) => void;
+  /** The account and kind the reset notice suggests, so its row can say so. */
+  suggested: { key: string; kind: ResetGrantKind } | null;
 }
 
 type Column = { key: string; label: QuotaWindowLabel };
@@ -56,7 +63,7 @@ function resetText(
   t: TFunction,
   window: NormalizedQuotaWindow,
   now: number
-): { text: string; title?: string; tone: 'normal' | 'muted' | 'stale' } | null {
+): { text: string; tip?: string; tone: 'normal' | 'muted' | 'stale' } | null {
   if (window.resetAtMs === null) {
     // A full window with nothing scheduled is a fact worth stating; a depleted
     // or unknown one without a reset instant simply wasn't reported.
@@ -65,13 +72,17 @@ function resetText(
       : null;
   }
   if (window.resetAtMs <= now) {
-    return { text: t('quota_management.ledger_reset_passed'), tone: 'stale' };
+    return {
+      text: t('quota_management.ledger_reset_passed'),
+      tip: t('quota_management.tip_stale'),
+      tone: 'stale',
+    };
   }
   return {
     text: t('quota_management.ledger_resets_in', {
       time: formatCountdown(t, window.resetAtMs - now),
     }),
-    title: formatInstantShort(window.resetAtMs),
+    tip: t('quota_management.tip_resets_at', { time: formatInstantShort(window.resetAtMs) }),
     tone: 'normal',
   };
 }
@@ -81,6 +92,21 @@ const RESET_TONE_CLASS = {
   muted: `${styles.cellReset} ${styles.cellResetMuted}`,
   stale: `${styles.cellReset} ${styles.cellResetStale}`,
 } as const;
+
+const FILL_TONE_CLASS = {
+  high: styles.fillHigh,
+  medium: styles.fillMedium,
+  low: styles.fillLow,
+} as const;
+
+function NotReported() {
+  const { t } = useTranslation();
+  return (
+    <Tooltip content={t('quota_management.tip_not_reported')}>
+      {t('quota_management.ledger_not_reported')}
+    </Tooltip>
+  );
+}
 
 function WindowCell({
   window,
@@ -93,57 +119,88 @@ function WindowCell({
 }) {
   const { t } = useTranslation();
   const text = formatQuotaWindowLabel(t, label);
+  const name = (
+    <span className={styles.cellLabel}>
+      <QuotaWindowName label={label} />
+    </span>
+  );
 
   if (!window) {
     return (
       <div className={`${styles.cell} ${styles.cellAbsent}`}>
-        <span className={styles.cellLabel}>{text}</span>
-        <span className={styles.cellPercent}>--</span>
-        <div className={`${styles.track} ${styles.trackUnknown}`} aria-hidden="true" />
-        <div className={styles.cellReset}>{t('quota_management.ledger_not_reported')}</div>
+        {name}
+        <div className={styles.cellBody}>
+          <span className={styles.cellPercent}>
+            --
+            <span className={styles.cellNote}>
+              <NotReported />
+            </span>
+          </span>
+          <div className={`${styles.track} ${styles.trackUnknown}`} aria-hidden="true" />
+        </div>
       </div>
     );
   }
 
   const percent = window.remainingPercent;
-  const low = percent !== null && remainingTone(percent) === 'low';
+  const tone = percent === null ? null : remainingTone(percent);
+  const low = tone === 'low';
   const reset = resetText(t, window, now);
   return (
     <div className={styles.cell}>
-      <span className={styles.cellLabel}>{text}</span>
-      <span className={low ? `${styles.cellPercent} ${styles.cellPercentLow}` : styles.cellPercent}>
-        {percent === null
-          ? '--'
-          : t('quota_management.ledger_percent_left', { percent: Math.round(percent) })}
-        {low && (
-          <span className={styles.lowMark}>
-            <IconAlertTriangle size={13} aria-hidden="true" />
-            {t('quota_management.ledger_low')}
-          </span>
-        )}
-      </span>
-      {percent === null ? (
-        <div className={`${styles.track} ${styles.trackUnknown}`} aria-hidden="true" />
-      ) : (
-        <div
-          className={styles.track}
-          role="meter"
-          aria-label={t('quota_management.window_remaining_label', {
-            label: text,
-            percent: Math.round(percent),
-          })}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={Math.round(percent)}
-        >
+      {name}
+      <div className={styles.cellBody}>
+        <span className={styles.cellPercent}>
+          {percent === null ? (
+            <>
+              --
+              <span className={styles.cellNote}>
+                <NotReported />
+              </span>
+            </>
+          ) : (
+            <span className={low ? styles.cellPercentLow : undefined}>
+              {t('quota_management.ledger_percent_left', { percent: Math.round(percent) })}
+            </span>
+          )}
+          {low && (
+            <span className={styles.lowMark}>
+              <IconAlertTriangle size={12} aria-hidden="true" />
+              <Tooltip
+                content={t('quota_management.tip_low', {
+                  percent: QUOTA_PROGRESS_MEDIUM_THRESHOLD,
+                })}
+              >
+                {t('quota_management.ledger_low')}
+              </Tooltip>
+            </span>
+          )}
+        </span>
+        {percent === null || tone === null ? (
+          <div className={`${styles.track} ${styles.trackUnknown}`} aria-hidden="true" />
+        ) : (
           <div
-            className={low ? `${styles.fill} ${styles.fillLow}` : styles.fill}
-            style={{ width: `${Math.round(percent * 100) / 100}%` }}
-          />
-        </div>
-      )}
-      <div className={RESET_TONE_CLASS[reset?.tone ?? 'normal']} title={reset?.title}>
-        {reset?.text ?? (percent === null ? t('quota_management.member_status_unreported') : '')}
+            className={styles.track}
+            role="meter"
+            aria-label={t('quota_management.window_remaining_label', {
+              label: text,
+              percent: Math.round(percent),
+            })}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(percent)}
+          >
+            <div
+              className={`${styles.fill} ${FILL_TONE_CLASS[tone]}`}
+              style={{ width: `${Math.round(percent * 100) / 100}%` }}
+            />
+          </div>
+        )}
+        {reset && (
+          <div className={RESET_TONE_CLASS[reset.tone]}>
+            {reset.tip ? <Tooltip content={reset.tip}>{reset.text}</Tooltip> : reset.text}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -168,6 +225,7 @@ function LedgerRow({
   resetting,
   onRefresh,
   onReset,
+  suggestedKind,
 }: {
   entry: QuotaFileEntry;
   quota: QuotaCardState | undefined;
@@ -179,6 +237,7 @@ function LedgerRow({
   resetting: boolean;
   onRefresh: () => void;
   onReset: () => void;
+  suggestedKind: ResetGrantKind | null;
 }) {
   const { t } = useTranslation();
   const adapter = QUOTA_ADAPTERS[entry.type];
@@ -197,11 +256,10 @@ function LedgerRow({
     Boolean(adapter.resetQuota) &&
     quota !== undefined &&
     Boolean(adapter.canResetQuota?.(quota));
-  const meta = [
-    getTypeLabel(t, entry.type),
-    resolveQuotaPlanLabel(entry.type, quota, t),
-    status === 'success' ? loadedAgo(t, quota?.loadedAtMs, now) : null,
-  ].filter(Boolean);
+  const meta = [getTypeLabel(t, entry.type), resolveQuotaPlanLabel(entry.type, quota, t)].filter(
+    Boolean
+  );
+  const ago = status === 'success' ? loadedAgo(t, quota?.loadedAtMs, now) : null;
 
   let body;
   if (status === 'success' && own.length > 0) {
@@ -246,22 +304,34 @@ function LedgerRow({
   return (
     <li className={styles.row}>
       <div className={styles.identity}>
-        <span className={styles.name} title={displayName}>
-          {displayName}
-        </span>
+        <span className={styles.name}>{displayName}</span>
         <span className={styles.meta}>
           <ProviderGlyph
             provider={entry.type}
             resolvedTheme={resolvedTheme}
             className={styles.metaGlyph}
           />
-          <span className={styles.metaText}>{meta.join(' · ')}</span>
+          <span className={styles.metaText}>
+            {meta.join(' · ')}
+            {ago && (
+              <>
+                {' · '}
+                <Tooltip content={t('quota_management.tip_loaded_ago')}>{ago}</Tooltip>
+              </>
+            )}
+          </span>
         </span>
       </div>
       {body}
       {isClaude && (
         <div className={styles.resets}>
-          <ClaudeResetGroups reset={claudeReset} now={now} />
+          <span className={styles.resetsLabel}>
+            {t('quota_management.ledger_reset_grants')}
+            <Tooltip label={t('claude_reset.tip_spend_label')} content={t('claude_reset.tip_spend')} />
+          </span>
+          <div className={styles.resetLines}>
+            <ClaudeResetGroups reset={claudeReset} now={now} suggestedKind={suggestedKind} />
+          </div>
         </div>
       )}
       <div className={styles.action}>
@@ -272,13 +342,13 @@ function LedgerRow({
             onClick={onReset}
             disabled={!canRefresh || loading || resetting}
             aria-label={t('codex_quota.reset_button')}
-            title={t('codex_quota.reset_button')}
           >
             <IconZap
               size={15}
               aria-hidden="true"
               className={resetting ? styles.pulsing : undefined}
             />
+            <span className={styles.actionText}>{t('codex_quota.reset_button')}</span>
           </button>
         )}
         <button
@@ -287,14 +357,22 @@ function LedgerRow({
           onClick={onRefresh}
           disabled={isQuotaRefreshDisabled(canRefresh, loading, resetting || claudeReset.busy)}
           aria-label={t('quota_management.ledger_refresh_label', { name: displayName })}
-          title={t('auth_files.quota_refresh_hint')}
         >
           <IconRefreshCw
             size={15}
             aria-hidden="true"
             className={loading ? styles.spinning : undefined}
           />
+          <span className={styles.actionText}>{t('quota_management.ledger_refresh_text')}</span>
         </button>
+        <Tooltip
+          label={t('quota_management.tip_actions_label')}
+          content={
+            showReset
+              ? `${t('quota_management.tip_codex_reset')} ${t('quota_management.tip_refresh')}`
+              : t('quota_management.tip_refresh')
+          }
+        />
       </div>
     </li>
   );
@@ -315,7 +393,7 @@ function PoolSummary({ pool }: { pool: ProviderPool | undefined }) {
   if (!primary || primary.totalRemaining === null) return null;
   const next = primary.nextReset;
   return (
-    <span className={styles.poolSummary} title={formatQuotaWindowLabel(t, primary.label)}>
+    <span className={styles.poolSummary}>
       <span className={styles.poolTotal}>
         <strong>{`${Math.round(primary.totalRemaining)}%`}</strong>{' '}
         {t('quota_management.ledger_pool', { capacity: primary.capacity })}
@@ -341,6 +419,7 @@ export function QuotaLedger({
   resettingKey,
   onRefresh,
   onReset,
+  suggested,
 }: QuotaLedgerProps) {
   const { t } = useTranslation();
   // Groups follow the sorted entries: a provider appears where its first row lands, so
@@ -362,10 +441,10 @@ export function QuotaLedger({
         );
         const hasResets = group.provider === 'claude';
         const template = [
-          'minmax(150px, 1.15fr)',
+          'minmax(200px, 1.2fr)',
           `repeat(${Math.max(columns.length, 1)}, minmax(0, 1fr))`,
-          hasResets ? 'minmax(200px, 1fr)' : null,
-          'auto',
+          hasResets ? '136px 184px 48px' : null,
+          '104px',
         ]
           .filter(Boolean)
           .join(' ');
@@ -390,19 +469,31 @@ export function QuotaLedger({
               </h3>
               <PoolSummary pool={pool} />
             </header>
-            <div className={styles.columnHead} aria-hidden="true">
+            <div className={styles.columnHead}>
               <span>{t('quota_management.ledger_credential')}</span>
               {columns.length === 0 ? (
                 <span />
               ) : (
                 columns.map((column) => (
                   <span key={column.key} className={styles.columnLabel}>
-                    {formatQuotaWindowLabel(t, column.label)}
+                    <QuotaWindowName label={column.label} />
                   </span>
                 ))
               )}
-              {hasResets && <span>{t('quota_management.ledger_resets')}</span>}
-              <span />
+              {hasResets && (
+                <>
+                  <span>{t('quota_management.ledger_reset_grant')}</span>
+                  <span>{t('quota_management.ledger_eligibility')}</span>
+                  <span className={styles.columnTip}>
+                    {t('quota_management.ledger_spend')}
+                    <Tooltip
+                      label={t('claude_reset.tip_spend_label')}
+                      content={t('claude_reset.tip_spend')}
+                    />
+                  </span>
+                </>
+              )}
+              <span className={styles.columnActions}>{t('quota_management.ledger_actions')}</span>
             </div>
             <ul className={styles.rows}>
               {group.entries.map((entry) => {
@@ -420,6 +511,7 @@ export function QuotaLedger({
                     resetting={resettingKey === key}
                     onRefresh={() => onRefresh(entry)}
                     onReset={() => onReset(entry)}
+                    suggestedKind={suggested?.key === key ? suggested.kind : null}
                   />
                 );
               })}

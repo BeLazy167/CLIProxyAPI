@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Pagination as SdkPagination,
@@ -13,11 +14,20 @@ export interface PaginationProps {
   /** 总条目数（用于「第 x / y 页 · n 条」文案）。 */
   totalItems: number;
   onChange: (page: number) => void;
+  /** Shown before the steps, e.g. the page size with its tip. */
+  lead?: ReactNode;
   className?: string;
 }
 
 /** 列表底部分页（Quota / 凭证库共用）。少于两页时不渲染。 */
-export function Pagination({ page, totalPages, totalItems, onChange, className }: PaginationProps) {
+export function Pagination({
+  page,
+  totalPages,
+  totalItems,
+  onChange,
+  lead,
+  className,
+}: PaginationProps) {
   const { t } = useTranslation();
   if (totalPages <= 1) return null;
   return (
@@ -29,6 +39,7 @@ export function Pagination({ page, totalPages, totalItems, onChange, className }
       onPageChange={(next) => onChange(next)}
     >
       <PaginationList className="pagination-list">
+        {lead && <PaginationItem className="pagination-lead">{lead}</PaginationItem>}
         <PaginationItem>
           <PaginationPrevious className="pagination-step">
             {t('common.pagination_prev')}

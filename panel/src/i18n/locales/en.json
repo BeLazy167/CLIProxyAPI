@@ -1858,7 +1858,10 @@
     "tip_page_size": "{{size}} accounts per page. The bar shows when there are more than {{size}} accounts.",
     "tip_page_size_label": "About page size",
     "tip_windows_label": "About Quota windows",
-    "tip_suggestion_label": "About the reset suggestion"
+    "tip_suggestion_label": "About the reset suggestion",
+    "windows_scroll_cue_one": "Scroll sideways for the whole day",
+    "windows_scroll_cue_other": "Scroll sideways for all {{count}} days",
+    "windows_chart_label": "Quota window lanes"
   },
   "plugin_management": {
     "title": "Plugin Management",

@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Select } from '@/components/ui/Select';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { useHeaderRefresh } from '@/hooks/useHeaderRefresh';
 import { useNow } from '@/hooks/useNow';
 import { useRevealGroup } from '@/hooks/motion';
@@ -29,6 +30,7 @@ import { Pagination } from '@/components/ui/Pagination';
 import { SearchField } from '@/components/ui/SearchField';
 import { QuotaHeader } from './components/QuotaHeader';
 import { ClaudeResetSuggestion } from './providers/claude/ClaudeResetSuggestion';
+import { claudeResetSuggestion } from './providers/claude/claudeResetSuggestion';
 import { QuotaCard } from './components/QuotaCard';
 import { QuotaLedger } from './components/QuotaLedger';
 import { QuotaPools } from './components/QuotaPools';
@@ -323,10 +325,18 @@ export function QuotaPage() {
     () => entries.filter((entry) => entry.type === 'claude'),
     [entries]
   );
+  const resetSuggestion = useMemo(
+    () => claudeResetSuggestion(claudeEntries, getQuota, clock),
+    [claudeEntries, getQuota, clock]
+  );
+  const suggestedReset =
+    resetSuggestion.state === 'ready'
+      ? { key: getQuotaCacheKey(resetSuggestion.account.file), kind: resetSuggestion.kind }
+      : null;
   const claudeHint =
     claudeEntries.length > 0 ? (
       <ClaudeResetSuggestion
-        entries={claudeEntries}
+        suggestion={resetSuggestion}
         quotaFor={getQuota}
         isBlocked={(entry) =>
           !canUseActions ||
@@ -419,27 +429,45 @@ export function QuotaPage() {
           />
         )}
 
-        {/* Sort and view only reorder the account list, so they sit right above it. */}
-        <div className={styles.controls}>
-          <div className={styles.sort}>
-            <Select
-              value={sortMode}
-              options={sortOptions}
-              onChange={handleSortModeChange}
-              ariaLabel={t('quota_management.sort_label')}
-              size="sm"
-              variant="quiet"
-            />
-          </div>
-          <div className={styles.viewSelect}>
-            <Select
-              value={view}
-              options={viewOptions}
-              onChange={handleViewChange}
-              ariaLabel={t('quota_management.view_label')}
-              size="sm"
-              variant="quiet"
-            />
+        {/* Sort and view only reorder the account list, so they sit in its bar right above it. */}
+        <div className={styles.accountsBar}>
+          <h2 className={styles.accountsTitle}>{t('quota_management.accounts_title')}</h2>
+          <span className={styles.accountsNote}>
+            {t(`quota_management.accounts_meta_${sortMode}`, { count: filteredEntries.length })}
+          </span>
+          <div className={styles.controls}>
+            <div className={styles.control}>
+              <span className={styles.controlLabel}>
+                {t('quota_management.sort_label')}
+                <Tooltip
+                  label={t('quota_management.tip_sort_label')}
+                  content={t('quota_management.tip_sort')}
+                />
+              </span>
+              <Select
+                value={sortMode}
+                options={sortOptions}
+                onChange={handleSortModeChange}
+                ariaLabel={t('quota_management.sort_label')}
+                size="sm"
+              />
+            </div>
+            <div className={styles.control}>
+              <span className={styles.controlLabel}>
+                {t('quota_management.view_label')}
+                <Tooltip
+                  label={t('quota_management.tip_view_label')}
+                  content={t('quota_management.tip_view')}
+                />
+              </span>
+              <Select
+                value={view}
+                options={viewOptions}
+                onChange={handleViewChange}
+                ariaLabel={t('quota_management.view_label')}
+                size="sm"
+              />
+            </div>
           </div>
         </div>
 
@@ -488,6 +516,7 @@ export function QuotaPage() {
             resettingKey={resettingQuotaName}
             onRefresh={(entry) => void refreshQuota(entry.file, QUOTA_ADAPTERS[entry.type])}
             onReset={(entry) => resetQuota(entry.file, QUOTA_ADAPTERS[entry.type])}
+            suggested={suggestedReset}
           />
         ) : (
           <div className={styles.grid}>
@@ -510,10 +539,20 @@ export function QuotaPage() {
 
         {!loading && (
           <Pagination
+            className="pagination-bar"
             page={currentPage}
             totalPages={totalPages}
             totalItems={filteredEntries.length}
             onChange={setPage}
+            lead={
+              <>
+                {t('quota_management.items_per_page', { size: QUOTA_PAGE_SIZE })}
+                <Tooltip
+                  label={t('quota_management.tip_page_size_label')}
+                  content={t('quota_management.tip_page_size', { size: QUOTA_PAGE_SIZE })}
+                />
+              </>
+            }
           />
         )}
 

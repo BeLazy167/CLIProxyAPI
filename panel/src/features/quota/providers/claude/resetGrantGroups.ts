@@ -59,7 +59,12 @@ export type ResetGroupAction =
       endsAtMs: number | null;
       windows: ResetWindowReading[];
     }
-  | { state: 'blocked'; reason: ResetGroupBlock };
+  | {
+      state: 'blocked';
+      reason: ResetGroupBlock;
+      /** What the grant would clear, when the waste guard is what holds it. */
+      windows?: ResetWindowReading[];
+    };
 
 export interface ResetGrantGroup {
   kind: ResetGrantKind;
@@ -144,7 +149,7 @@ function groupAction(
   const readings = readWindows(grant, windows);
   const guard = wasteGuard(readings, now);
   return guard
-    ? { state: 'blocked', reason: guard }
+    ? { state: 'blocked', reason: guard, windows: readings }
     : { state: 'ready', grantId: grant.id, endsAtMs: parseMs(grant.endsAt), windows: readings };
 }
 
@@ -160,7 +165,10 @@ function preferNarrowerReset(groups: ResetGrantGroup[]): ResetGrantGroup[] {
     group.kind === 'account' &&
     group.action.state === 'ready' &&
     group.action.windows.filter(isLimited).every((reading) => covered.has(reading.window))
-      ? { ...group, action: { state: 'blocked', reason: 'use_model_reset' } }
+      ? {
+          ...group,
+          action: { state: 'blocked', reason: 'use_model_reset', windows: group.action.windows },
+        }
       : group
   );
 }

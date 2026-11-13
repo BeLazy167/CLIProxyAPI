@@ -18,9 +18,10 @@
   }
 }
 
+/* The vertical padding widens the tap area without moving the line. */
 .text {
   display: inline;
-  padding: 0;
+  padding: 2px 0;
   border: 0;
   border-bottom: 1px dotted currentColor;
   background: transparent;
@@ -31,9 +32,11 @@
 }
 
 .block {
-  display: block;
+  display: flex;
+  align-items: center;
   width: 100%;
-  padding: 4px 0;
+  min-height: 24px;
+  padding: 0;
   border: 0;
   background: transparent;
   cursor: help;

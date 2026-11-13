@@ -1,70 +1,81 @@
 @use '../../../../styles/mixins' as *;
 
-.groups {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.group {
+/* Grant lines outside the ledger: the same three cells on their own grid. */
+.lines {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
+  column-gap: 12px;
+}
+
+/* A grant line spans the Reset grant, Eligibility and Spend columns of its row as a subgrid. */
+.line {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
   align-items: center;
-  gap: 8px;
-  min-height: 30px;
+  min-height: 32px;
 }
 
 .summary {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
-  white-space: nowrap;
-  font-size: 13px;
+  min-width: 0;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .count {
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-primary);
-}
-
-.kind {
-  color: var(--text-secondary);
 }
 
 .expiry {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  margin-left: 4px;
-  color: var(--text-tertiary);
+  gap: 2px;
+  margin-left: 6px;
+  color: var(--text-secondary);
+}
 
-  svg {
-    align-self: center;
-  }
+.ready,
+.reason {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  min-width: 0;
+}
+
+.ready {
+  color: var(--success-text);
+  font-weight: 600;
 }
 
 .reason {
-  min-width: 0;
-  font-size: 11.5px;
-  color: var(--text-tertiary);
-  text-align: right;
-  @include text-ellipsis;
+  color: var(--text-secondary);
+}
+
+.suggestedTag {
+  padding: 0 6px;
+  border: 1px solid var(--primary-color);
+  color: var(--link-color);
+  font-size: var(--fs-meta);
+  font-weight: 400;
+  line-height: 18px;
+}
+
+.spendCell {
+  display: flex;
 }
 
 .spend {
-  grid-column: 3;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   padding: 0;
-  border: 0;
-  border-radius: 8px;
+  border: 1px solid var(--primary-color);
   background: transparent;
-  color: var(--text-primary);
+  color: var(--primary-color);
   cursor: pointer;
 
   &:focus-visible {
@@ -73,16 +84,51 @@
   }
 
   &:disabled {
+    border-color: var(--border-color);
+    color: var(--text-quaternary);
     cursor: not-allowed;
-    color: var(--text-tertiary);
-    opacity: 0.55;
   }
 }
 
 @media (hover: hover) and (pointer: fine) {
   .spend:not(:disabled):hover {
-    background: var(--bg-tertiary);
-    color: var(--warning-text);
+    background: var(--bg-hover);
+  }
+}
+
+/* Phone and tablet: the grant and its eligibility stack, the ⚡ sits on the right at 48 px. */
+@media (max-width: $breakpoint-tablet) {
+  .line {
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 8px;
+    min-height: 56px;
+    padding: 8px 0;
+
+    & + & {
+      border-top: 1px solid var(--border-color);
+    }
+  }
+
+  .summary {
+    grid-column: 1;
+    grid-row: 1;
+    white-space: normal;
+  }
+
+  .ready,
+  .reason {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .spendCell {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
+  .spend {
+    width: 48px;
+    height: 48px;
   }
 }
 
@@ -97,8 +143,9 @@
 }
 
 .message {
+  grid-column: 1 / -1;
   margin: 4px 0 0;
-  font-size: 12px;
+  font-size: var(--fs-meta);
   color: var(--text-secondary);
 }
 
