@@ -70,21 +70,21 @@ const isUsableMs = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
 
 /**
- * A reset returns capacity only when the window has used some. A window at 0%
- * used, or with unknown usage, gives nothing back, so it must not sort an
- * otherwise healthy credential ahead of one that is actually waiting.
+ * A reset returns capacity only when the window has used some (a percent or a
+ * count above zero). A window with nothing used, or with unknown usage, gives
+ * nothing back, so it must not sort an otherwise healthy credential ahead of
+ * one that is actually waiting.
  */
-const hasUsedQuota = (usedPercent: number | null | undefined): boolean =>
-  isUsableMs(usedPercent) && usedPercent > 0;
+const hasUsedQuota = (used: number | null | undefined): boolean => isUsableMs(used) && used > 0;
 
 const collectRows = <Row extends WindowLike>(
   rows: readonly Row[],
   fallbackPrefix: string,
-  usedPercentOf: (row: Row) => number | null | undefined
+  usedOf: (row: Row) => number | null | undefined
 ): QuotaRowInstant[] =>
   rows
     .map((row, index): QuotaRowInstant | null =>
-      isUsableMs(row.resetAtMs) && hasUsedQuota(usedPercentOf(row))
+      isUsableMs(row.resetAtMs) && hasUsedQuota(usedOf(row))
         ? { rowId: row.id || `${fallbackPrefix}-${index}`, atMs: row.resetAtMs, kind: 'window' }
         : null
     )
