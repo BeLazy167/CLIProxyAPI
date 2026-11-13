@@ -39,7 +39,7 @@ interface MenuProps {
   items?: MenuEntry[];
   /** A single-choice menu instead: one checked option among `options`. */
   value?: string;
-  options?: { value: string; label: ReactNode; textValue?: string }[];
+  options?: { value: string; label: ReactNode; textValue?: string; className?: string }[];
   onValueChange?: (value: string) => void;
 }
 
@@ -80,7 +80,7 @@ export function Menu({
                 key={option.value}
                 value={option.value}
                 label={option.textValue}
-                className={styles.item}
+                className={[styles.item, option.className].filter(Boolean).join(' ')}
               >
                 {option.label}
               </MenuRadioItem>
