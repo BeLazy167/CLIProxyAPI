@@ -1,6 +1,4 @@
-import { useId, useRef, useState } from 'react';
-import { useDismissable } from '@/features/authFiles/hooks/useDismissable';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Menu } from '@/components/ui/Menu';
 import styles from './OverflowMenu.module.scss';
 
 export type OverflowMenuItem = {
@@ -55,60 +53,23 @@ export function OverflowMenu({
   size = 'sm',
   className,
 }: OverflowMenuProps) {
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const menuId = useId();
-  useDismissable(rootRef, open, () => setOpen(false));
-
   const triggerClass = [
     styles.trigger,
     appearance === 'quiet' ? styles.triggerQuiet : '',
     size === 'md' ? styles.triggerMd : '',
-    open ? styles.triggerOpen : '',
+    className,
   ]
     .filter(Boolean)
     .join(' ');
 
   return (
-    <div className={`${styles.root} ${className ?? ''}`} ref={rootRef}>
-      <button
-        type="button"
-        className={triggerClass}
-        aria-label={label}
-        title={label}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-controls={open ? menuId : undefined}
-        disabled={disabled}
-        onClick={() => setOpen((value) => !value)}
-      >
-        <IconDots />
-      </button>
-      {open && (
-        <div
-          id={menuId}
-          role="menu"
-          aria-label={label}
-          className={`${styles.menu} ${align === 'left' ? styles.menuLeft : ''}`}
-        >
-          {items.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              role="menuitem"
-              className={`${styles.item} ${item.danger ? styles.itemDanger : ''}`}
-              disabled={item.disabled || item.loading}
-              onClick={() => {
-                setOpen(false);
-                item.onSelect();
-              }}
-            >
-              {item.loading && <LoadingSpinner size={12} />}
-              <span>{item.label}</span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+    <Menu
+      label={label}
+      trigger={<IconDots />}
+      triggerClassName={triggerClass}
+      disabled={disabled}
+      align={align === 'left' ? 'start' : 'end'}
+      items={items}
+    />
   );
 }
