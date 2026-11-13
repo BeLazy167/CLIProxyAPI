@@ -1,4 +1,5 @@
-import type { ChangeEvent, ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import { Checkbox, CheckboxIndicator } from '@ui-sdk/react/checkbox';
 import { IconCheck } from './icons';
 import styles from './SelectionCheckbox.module.scss';
 
@@ -26,24 +27,21 @@ export function SelectionCheckbox({
   const rootClassName = [styles.root, disabled ? styles.disabled : '', className]
     .filter(Boolean)
     .join(' ');
-  const boxClassName = [styles.box, checked ? styles.boxChecked : ''].filter(Boolean).join(' ');
   const textClassName = [styles.label, labelClassName].filter(Boolean).join(' ');
-
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    onChange(event.target.checked);
-  };
 
   return (
     <label className={rootClassName} title={title}>
-      <input
-        className={styles.input}
-        type="checkbox"
+      <Checkbox
+        className={styles.box}
         checked={checked}
-        onChange={handleChange}
-        aria-label={ariaLabel}
+        onCheckedChange={(next) => onChange(next === true)}
         disabled={disabled}
-      />
-      <span className={boxClassName}>{checked ? <IconCheck size={12} /> : null}</span>
+        aria-label={ariaLabel}
+      >
+        <CheckboxIndicator className={styles.indicator}>
+          <IconCheck size={12} />
+        </CheckboxIndicator>
+      </Checkbox>
       {label ? <div className={textClassName}>{label}</div> : null}
     </label>
   );
