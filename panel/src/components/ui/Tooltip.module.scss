@@ -1,0 +1,44 @@
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--primary-color);
+  vertical-align: middle;
+  cursor: help;
+
+  @media (max-width: $breakpoint-mobile) {
+    width: 40px;
+    height: 40px;
+    margin: -8px;
+  }
+}
+
+.text {
+  display: inline;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px dotted currentColor;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: help;
+}
+
+.content {
+  box-sizing: border-box;
+  max-width: min(288px, calc(100vw - 16px));
+  margin: 0;
+  padding: 8px 12px;
+  background: var(--tooltip-bg);
+  color: var(--tooltip-text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-meta);
+  line-height: var(--lh-meta);
+  box-shadow: var(--floating-shadow);
+}
