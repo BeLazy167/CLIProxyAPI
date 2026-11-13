@@ -42,7 +42,7 @@ export interface ProviderResourceLedgerProps {
 }
 
 /** 行内自带点击行为的元素;点到它们不打开详情。 */
-const ROW_CONTROL_SELECTOR = 'button, input, label, a, [role="menu"], [role="dialog"]';
+const ROW_CONTROL_SELECTOR = 'button, input, label, a, [data-slot$="-content"]';
 
 const resourceDisplayName = (resource: ProviderResource): string =>
   resource.name ?? resource.apiKeyPreview ?? resource.identifier;

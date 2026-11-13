@@ -237,7 +237,7 @@
   }
 }
 
-.tabActive {
+.tab[data-selected] {
   color: var(--text-primary);
   font-weight: 650;
 
@@ -279,7 +279,7 @@
   border-radius: $radius-full;
   background: color-mix(in srgb, var(--text-primary) 6%, transparent);
 
-  .tabActive & {
+  [data-selected] > & {
     color: var(--text-primary);
     background: color-mix(in srgb, var(--text-primary) 10%, transparent);
   }
@@ -289,5 +289,13 @@
   .tab,
   .tab::after {
     transition: none;
+  }
+}
+
+.tabsWrap {
+  min-width: 0;
+
+  @media (min-width: 1280px) {
+    display: none;
   }
 }

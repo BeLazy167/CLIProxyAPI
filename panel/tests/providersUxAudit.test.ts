@@ -130,8 +130,9 @@ describe('providers: ledger and panel contracts', () => {
   });
 
   test('model filter is a labelled dialog with search', () => {
-    expect(toolbar).toContain('aria-haspopup="dialog"');
-    expect(toolbar).toContain('role="dialog"');
+    // The shared Popover is a dialog named by its label, opened from a dialog-popup trigger.
+    expect(toolbar).toContain('<Popover');
+    expect(toolbar).toContain("label={t('providersPage.toolbar.filter.dialogLabel')}");
     expect(toolbar).toContain('providersPage.toolbar.filter.searchPlaceholder');
   });
 

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Tab, TabList, Tabs } from '@/components/ui/Tabs';
 import { scrollProviderTabs } from '@/features/authFiles/components/providerTabsWheel';
 import { PROVIDER_LOGOS } from '../brandLogos';
 import type { ProviderBrand, ProviderGroup } from '../types';
@@ -63,7 +64,7 @@ export function ProviderCategoryList({
   const tabsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const strip = tabsRef.current;
+    const strip = tabsRef.current?.querySelector<HTMLElement>('[data-slot="tabs-list"]');
     if (!strip) return;
     const onWheel = (event: WheelEvent) => scrollProviderTabs(strip, event);
     // React 的 wheel 事件是 passive 的;本地监听才能阻止页面随之滚动。
@@ -148,39 +149,31 @@ export function ProviderCategoryList({
         )}
       </div>
 
-      <div
-        ref={tabsRef}
-        className={styles.tabs}
-        role="group"
-        aria-label={t('providersPage.categories.title')}
-      >
-        {orderedTabs.map((group) => {
-          const active = group.id === activeBrand;
-          return (
-            <button
-              key={group.id}
-              type="button"
-              className={`${styles.tab} ${active ? styles.tabActive : ''}`}
-              aria-pressed={active}
-              onClick={() => onSelect(group.id)}
-            >
-              <span className={styles.tabIconWrap}>
-                <BrandLogo brand={group.id} className={styles.tabIcon} />
-              </span>
-              <span className={styles.tabLabel}>
-                {t(`providersPage.providerNames.${group.id}`)}
-              </span>
-              <span className={styles.tabCount}>{group.resources.length}</span>
-              {needsAttention(group.id) ? (
-                <span
-                  className={styles.attentionDot}
-                  role="img"
-                  aria-label={t('providersPage.categories.attention')}
-                />
-              ) : null}
-            </button>
-          );
-        })}
+      <div ref={tabsRef} className={styles.tabsWrap}>
+        <Tabs value={activeBrand} onChange={(brand) => onSelect(brand as ProviderBrand)}>
+          <TabList className={styles.tabs} aria-label={t('providersPage.categories.title')}>
+            {orderedTabs.map((group) => {
+              return (
+                <Tab key={group.id} value={group.id} className={styles.tab}>
+                  <span className={styles.tabIconWrap}>
+                    <BrandLogo brand={group.id} className={styles.tabIcon} />
+                  </span>
+                  <span className={styles.tabLabel}>
+                    {t(`providersPage.providerNames.${group.id}`)}
+                  </span>
+                  <span className={styles.tabCount}>{group.resources.length}</span>
+                  {needsAttention(group.id) ? (
+                    <span
+                      className={styles.attentionDot}
+                      role="img"
+                      aria-label={t('providersPage.categories.attention')}
+                    />
+                  ) : null}
+                </Tab>
+              );
+            })}
+          </TabList>
+        </Tabs>
       </div>
     </>
   );
