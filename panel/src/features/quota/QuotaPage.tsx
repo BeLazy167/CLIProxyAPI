@@ -28,6 +28,7 @@ import { ProviderTabs } from '@/features/authFiles/components/ProviderTabs';
 import { Pagination } from '@/components/ui/Pagination';
 import { SearchField } from '@/components/ui/SearchField';
 import { QuotaHeader } from './components/QuotaHeader';
+import { ClaudeResetSuggestion } from './providers/claude/ClaudeResetSuggestion';
 import { QuotaCard } from './components/QuotaCard';
 import { QuotaLedger } from './components/QuotaLedger';
 import { QuotaPools } from './components/QuotaPools';
@@ -53,7 +54,6 @@ import {
   sortQuotaEntries,
   type QuotaFileEntry,
 } from './logic';
-import { displayNameTransform } from './maskIdentity';
 import { buildProviderPools } from './quotaPool';
 import { nextRecoveryMs } from './resetSchedule';
 import { QUOTA_ADAPTERS, getQuotaSetter, type QuotaCardState } from './providers';
@@ -61,16 +61,12 @@ import type { QuotaProviderType } from './providers/types';
 import { useQuotaAutoLoad } from './hooks/useQuotaAutoLoad';
 import { useQuotaActions } from './hooks/useQuotaActions';
 import { useQuotaBatchLoader } from './hooks/useQuotaBatchLoader';
-import {
-  readQuotaUiState,
-  readShowEmailsPreference,
-  writeQuotaUiState,
-  writeShowEmailsPreference,
-} from './uiState';
+import { readQuotaUiState, writeQuotaUiState } from './uiState';
 import styles from './QuotaPage.module.scss';
 
 const TAB_IDS: string[] = ['all', ...QUOTA_TAB_ORDER];
 const SKELETON_CARD_COUNT = 6;
+const drainNameOf = (entry: QuotaFileEntry) => getQuotaDisplayName(entry.file);
 
 export function QuotaPage() {
   const { t } = useTranslation();
@@ -85,10 +81,6 @@ export function QuotaPage() {
     () => readQuotaUiState()?.sortMode ?? 'default'
   );
   const [view, setView] = useState<QuotaViewMode>(() => readQuotaUiState()?.view ?? 'ledger');
-  // Shared with the Auth Files page; the session-scoped quota field is the legacy fallback.
-  const [showEmails, setShowEmails] = useState(
-    () => readShowEmailsPreference() ?? readQuotaUiState()?.showEmails ?? false
-  );
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -219,17 +211,6 @@ export function QuotaPage() {
     writeQuotaUiState({ view: next as QuotaViewMode });
   }, []);
 
-  const handleToggleEmails = useCallback(() => {
-    const next = !showEmails;
-    setShowEmails(next);
-    writeQuotaUiState({ showEmails: next });
-    writeShowEmailsPreference(next);
-  }, [showEmails]);
-
-  // Display names are masked unless emails are shown; search and cache keys
-  // keep using the real names. Memoized so the timeline's lanes stay stable.
-  const displayNameFor = useMemo(() => displayNameTransform(showEmails), [showEmails]);
-
   const viewOptions = useMemo(
     () =>
       QUOTA_VIEW_MODES.map((mode) => ({ value: mode, label: t(`quota_management.view_${mode}`) })),
@@ -248,11 +229,6 @@ export function QuotaPage() {
   const pools = useMemo(
     () => buildProviderPools(filteredEntries, getQuota, clock),
     [filteredEntries, getQuota, clock]
-  );
-
-  const drainNameOf = useCallback(
-    (entry: QuotaFileEntry) => displayNameFor(getQuotaDisplayName(entry.file)),
-    [displayNameFor]
   );
 
   const { loadedCount, attentionCount } = useMemo(() => {
@@ -340,6 +316,25 @@ export function QuotaPage() {
 
   const canUseActions = !disableControls && !loading && filesGeneration === sessionGeneration;
 
+  const claudeEntries = useMemo(
+    () => entries.filter((entry) => entry.type === 'claude'),
+    [entries]
+  );
+  const claudeHint =
+    claudeEntries.length > 0 ? (
+      <ClaudeResetSuggestion
+        entries={claudeEntries}
+        quotaFor={getQuota}
+        isBlocked={(entry) =>
+          !canUseActions ||
+          Boolean(entry.file.disabled) ||
+          getQuota(entry)?.status === 'loading' ||
+          resettingQuotaName === getQuotaCacheKey(entry.file)
+        }
+        onRefresh={(entry) => void refreshQuota(entry.file, QUOTA_ADAPTERS.claude)}
+      />
+    ) : null;
+
   /* ---------- 首屏卡片一次性级联入场 ----------
    * 首批数据渲染后立即翻转 cardsAnimated；已挂载的卡片在挂载时捕获过自己的
    * 延迟（QuotaCard 内 useState 初始化），后续切 tab/翻页/刷新新挂载的卡片
@@ -370,8 +365,6 @@ export function QuotaPage() {
         attentionCount={attentionCount}
         refreshing={loading || batchLoading}
         disableControls={disableControls}
-        showEmails={showEmails}
-        onToggleEmails={handleToggleEmails}
         onRefreshAll={handleRefreshAll}
       />
 
@@ -431,7 +424,7 @@ export function QuotaPage() {
             pools={pools}
             now={clock}
             resolvedTheme={resolvedTheme}
-            displayNameFor={displayNameFor}
+            claudeHint={claudeHint}
           />
         )}
 
@@ -482,7 +475,6 @@ export function QuotaPage() {
           <QuotaLedger
             entries={pageItems}
             quotaFor={getQuota}
-            displayNameFor={displayNameFor}
             resolvedTheme={resolvedTheme}
             now={clock}
             pools={pools}
@@ -490,6 +482,7 @@ export function QuotaPage() {
             resettingKey={resettingQuotaName}
             onRefresh={(entry) => void refreshQuota(entry.file, QUOTA_ADAPTERS[entry.type])}
             onReset={(entry) => resetQuota(entry.file, QUOTA_ADAPTERS[entry.type])}
+            claudeHint={claudeHint}
           />
         ) : (
           <div className={styles.grid}>
@@ -501,7 +494,7 @@ export function QuotaPage() {
                 resolvedTheme={resolvedTheme}
                 canRefresh={canUseActions && !entry.file.disabled}
                 resetting={resettingQuotaName === getQuotaCacheKey(entry.file)}
-                displayName={displayNameFor(getQuotaDisplayName(entry.file))}
+                displayName={getQuotaDisplayName(entry.file)}
                 entranceDelayMs={cardEntranceDelay(index)}
                 onRefresh={() => void refreshQuota(entry.file, QUOTA_ADAPTERS[entry.type])}
                 onReset={() => resetQuota(entry.file, QUOTA_ADAPTERS[entry.type])}
@@ -520,12 +513,7 @@ export function QuotaPage() {
         )}
 
         {/* 时间线只比较当前页凭证，避免大量凭证一次性生成无界泳道。 */}
-        <QuotaTimeline
-          entries={pageItems}
-          quotaFor={getQuota}
-          displayNameFor={displayNameFor}
-          resolvedTheme={resolvedTheme}
-        />
+        <QuotaTimeline entries={pageItems} quotaFor={getQuota} resolvedTheme={resolvedTheme} />
       </section>
     </div>
   );

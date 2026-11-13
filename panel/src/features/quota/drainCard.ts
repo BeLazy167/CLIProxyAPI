@@ -2,8 +2,10 @@
  * One drain card: a provider's pooled window joined with its recorded history.
  *
  * The live quota state gives each account's figure and reset instant; the
- * Lamplighter history gives its pace. Accounts with no recorded readings are
- * left out of every projected figure and counted instead.
+ * Lamplighter history gives its pace. An account with no pace under the chosen
+ * method gets no line of its own and is counted instead; the pool still holds
+ * its live figure and refills it at its reset, so the pool never reads empty
+ * while that account has quota.
  *
  * Pure and React-free; `nowMs` is passed in.
  */
@@ -105,7 +107,7 @@ export function buildDrainCard(input: {
   const { window, nowMs, options } = input;
   const reported = window.members.filter((member) => member.status === 'reported');
   const accounts: DrainAccount[] = [];
-  let unrecordedCount = 0;
+  const held: AccountProjection[] = [];
   let anyRecorded = false;
   const horizonMs = Math.max(input.toMs, nowMs + MIN_HORIZON_MS);
 
@@ -125,7 +127,7 @@ export function buildDrainCard(input: {
     };
     const rate = accountRate(live, rateReadings, nowMs, options);
     if (!authIndex || !rate) {
-      unrecordedCount += 1;
+      held.push(projectAccount({ ...live, perHour: 0 }, nowMs, horizonMs));
       continue;
     }
     const readings = readingsOf(input.drawSeries, authIndex, input.history);
@@ -148,9 +150,10 @@ export function buildDrainCard(input: {
   };
   if (accounts.length === 0) return anyRecorded ? { kind: 'sparse', ...head } : null;
 
-  const pool = sumProjections(
-    accounts.map((a) => ({ projection: a.projection, perHour: a.rate.perHour }))
-  );
+  const pool = sumProjections([
+    ...accounts.map((a) => ({ projection: a.projection, perHour: a.rate.perHour })),
+    ...held.map((projection) => ({ projection, perHour: 0 })),
+  ]);
   const draining = accounts.filter((a) => a.remaining > 0);
   const firstEmpty = draining
     .filter((a) => a.projection.emptyAtMs !== null)
@@ -161,7 +164,7 @@ export function buildDrainCard(input: {
     kind: 'forecast',
     ...head,
     accounts,
-    unrecordedCount,
+    unrecordedCount: held.length,
     pool,
     recorded: recordedOf(accounts.map((a) => a.readings)),
     burn: {

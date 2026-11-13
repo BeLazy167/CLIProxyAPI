@@ -446,7 +446,13 @@ export function PageTransition({
                   isAnimating,
                 }}
               >
-                {render(layer.location)}
+                {/* Layers freeze their location for exit animations; a query-only change
+                    (`?tab=errors`) starts no transition, so the current layer reads it live. */}
+                {render(
+                  layer.status === 'current' && layer.location.pathname === location.pathname
+                    ? location
+                    : layer.location
+                )}
               </PageTransitionLayerContext.Provider>
             </div>
           );

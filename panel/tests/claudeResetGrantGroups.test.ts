@@ -264,6 +264,7 @@ describe('reset grant groups', () => {
     expect(groups[0].action).toEqual({
       state: 'ready',
       grantId: 'account',
+      endsAtMs: Date.parse('2027-03-09T07:59:00Z'),
       windows: [
         {
           window: 'seven_day',

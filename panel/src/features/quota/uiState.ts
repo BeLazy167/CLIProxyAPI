@@ -12,8 +12,6 @@ export type QuotaUiState = {
   tab?: QuotaTabId;
   sortMode?: QuotaSortMode;
   view?: QuotaViewMode;
-  /** Emails in display names are masked unless this is true. */
-  showEmails?: boolean;
 };
 
 const QUOTA_UI_STATE_KEY = 'quotaPage.uiState';
@@ -42,7 +40,6 @@ export const readQuotaUiState = (): QuotaUiState | null => {
       tab: isQuotaTabId(parsed.tab) ? parsed.tab : undefined,
       sortMode: isQuotaSortMode(parsed.sortMode) ? parsed.sortMode : undefined,
       view: isQuotaViewMode(parsed.view) ? parsed.view : undefined,
-      showEmails: typeof parsed.showEmails === 'boolean' ? parsed.showEmails : undefined,
     };
   } catch {
     return null;
@@ -61,34 +58,6 @@ export const writeQuotaUiState = (state: QuotaUiState) => {
   try {
     const next = { ...readQuotaUiState(), ...state };
     window.sessionStorage.setItem(QUOTA_UI_STATE_KEY, JSON.stringify(next));
-  } catch {
-    // ignore
-  }
-};
-
-/**
- * "Show emails" is one preference shared by every page that displays credential
- * identities (Quota, Auth Files). Persisted across sessions in localStorage;
- * `null` means nothing stored yet (callers fall back to masked).
- */
-const SHOW_EMAILS_KEY = 'credentials.showEmails';
-
-export const readShowEmailsPreference = (): boolean | null => {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = window.localStorage.getItem(SHOW_EMAILS_KEY);
-    if (raw === null) return null;
-    const parsed: unknown = JSON.parse(raw);
-    return typeof parsed === 'boolean' ? parsed : null;
-  } catch {
-    return null;
-  }
-};
-
-export const writeShowEmailsPreference = (showEmails: boolean) => {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(SHOW_EMAILS_KEY, JSON.stringify(showEmails));
   } catch {
     // ignore
   }

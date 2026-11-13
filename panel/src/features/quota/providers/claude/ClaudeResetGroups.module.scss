@@ -102,6 +102,54 @@
   color: var(--text-secondary);
 }
 
+.suggestion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.suggestionText {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.suggestionSpend {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 1px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    color: var(--text-tertiary);
+    opacity: 0.55;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .suggestionSpend:not(:disabled):hover {
+    background: var(--bg-tertiary);
+    color: var(--warning-text);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pulsing {
     animation: none;

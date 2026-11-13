@@ -17,7 +17,7 @@ import type { AuthFileItem, ResolvedTheme, ThemeColors } from '@/types';
 import { normalizeOAuthProviderKey } from '@/utils/providerKeys';
 import { parseTimestamp } from '@/utils/timestamp';
 import { TYPE_COLORS } from '@/utils/quota';
-import { isCoolingAuthFile } from './cooldowns';
+import { isCoolingAuthFile, isQuotaCoolingAuthFile } from './cooldowns';
 
 export type { ResolvedTheme, ThemeColors, TypeColorSet } from '@/types';
 export type AuthFileModelItem = {
@@ -136,10 +136,25 @@ export const hasAuthFileStatusWarning = (file: AuthFileItem): boolean => {
 /**
  * 是否为需要用户处理的问题凭证。
  * 主动停用是独立状态，不应进入“问题”筛选或“删除问题凭证”的批量操作。
+ * The backend marks a quota-blocked credential unavailable with a 429 message; while
+ * only quota timers run and quota explains the message, it recovers on its own, so it
+ * is cooling down. The backend keeps quota timers on a credential whose token also
+ * failed, and waiting does not fix that, so any other message stays a problem.
  */
-export const isProblemAuthFile = (file: AuthFileItem): boolean => {
+const QUOTA_STATUS_MESSAGE = /rate[_ ]?limit|usage[_ ]?limit|quota|\b429\b|too many requests/i;
+const AUTH_STATUS_MESSAGE =
+  /\b40[13]\b|unauthori[sz]ed|forbidden|not authori[sz]ed|authenticat|invalid[_ ]?(?:grant|token)|(?:access|refresh)[_ ]?token|token[_ ]?(?:expired|invalid|revoked)|(?:expired|revoked)[_ ]?token/i;
+
+const quotaExplainsStatus = (file: AuthFileItem): boolean => {
+  if (!hasAuthFileStatusWarning(file)) return true;
+  const message = getAuthFileStatusMessage(file);
+  return QUOTA_STATUS_MESSAGE.test(message) && !AUTH_STATUS_MESSAGE.test(message);
+};
+
+export const isProblemAuthFile = (file: AuthFileItem, nowMs: number): boolean => {
   const status = typeof file.status === 'string' ? file.status.trim().toLowerCase() : '';
   if (file.disabled === true || status === 'disabled') return false;
+  if (isQuotaCoolingAuthFile(file, nowMs) && quotaExplainsStatus(file)) return false;
   return file.unavailable === true || status === 'error' || hasAuthFileStatusWarning(file);
 };
 
@@ -153,7 +168,7 @@ export type AuthFileStatusKind = 'active' | 'problem' | 'cooling' | 'disabled';
 export const getAuthFileStatusKind = (file: AuthFileItem, nowMs: number): AuthFileStatusKind => {
   const status = typeof file.status === 'string' ? file.status.trim().toLowerCase() : '';
   if (file.disabled === true || status === 'disabled') return 'disabled';
-  if (isProblemAuthFile(file)) return 'problem';
+  if (isProblemAuthFile(file, nowMs)) return 'problem';
   if (isCoolingAuthFile(file, nowMs)) return 'cooling';
   return 'active';
 };

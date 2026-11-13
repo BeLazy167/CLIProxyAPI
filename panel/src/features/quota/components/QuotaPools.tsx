@@ -5,7 +5,7 @@
  * disclosure. All arithmetic lives in quotaPool.ts; this file only renders it.
  */
 
-import { useId, useState } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import type { ResolvedTheme } from '@/types';
@@ -20,7 +20,6 @@ import {
   type ProviderPool,
 } from '../quotaPool';
 import { formatQuotaWindowLabel, formatRemainingPercent } from '../quotaWindows';
-import type { QuotaFileEntry } from '../logic';
 import { ProviderGlyph } from './ProviderGlyph';
 import { QuotaSegmentBar, type QuotaSegment } from './QuotaSegmentBar';
 import styles from './QuotaPools.module.scss';
@@ -29,10 +28,9 @@ export interface QuotaPoolsProps {
   pools: ProviderPool[];
   now: number;
   resolvedTheme: ResolvedTheme;
-  displayNameFor: (name: string) => string;
+  /** Shown at the foot of the Claude card: the reset suggestion. */
+  claudeHint?: ReactNode;
 }
-
-type NameFor = (entry: QuotaFileEntry) => string;
 
 const UNKNOWN_STATUS_ORDER: Exclude<PoolMemberStatus, 'reported' | 'absent'>[] = [
   'loading',
@@ -41,8 +39,8 @@ const UNKNOWN_STATUS_ORDER: Exclude<PoolMemberStatus, 'reported' | 'absent'>[] =
   'unreported',
 ];
 
-function memberSegment(t: TFunction, member: PoolMember, nameFor: NameFor): QuotaSegment {
-  const name = nameFor(member.entry);
+function memberSegment(t: TFunction, member: PoolMember): QuotaSegment {
+  const name = getQuotaDisplayName(member.entry.file);
   return {
     id: `${member.entry.type}:${member.entry.file.name}:${String(member.entry.file.authIndex ?? '')}`,
     percent: member.status === 'reported' ? member.remainingPercent : null,
@@ -133,12 +131,12 @@ function PoolCard({
   pool,
   now,
   resolvedTheme,
-  nameFor,
+  hint,
 }: {
   pool: ProviderPool;
   now: number;
   resolvedTheme: ResolvedTheme;
-  nameFor: NameFor;
+  hint?: ReactNode;
 }) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
@@ -157,16 +155,12 @@ function PoolCard({
   const pendingSegments: QuotaSegment[] = primary
     ? []
     : pool.credentials.map(({ entry, status }) =>
-        memberSegment(
-          t,
-          {
-            entry,
-            status: status === 'success' ? 'unreported' : status,
-            remainingPercent: null,
-            resetAtMs: null,
-          },
-          nameFor
-        )
+        memberSegment(t, {
+          entry,
+          status: status === 'success' ? 'unreported' : status,
+          remainingPercent: null,
+          resetAtMs: null,
+        })
       );
   const pendingParts = primary
     ? []
@@ -207,7 +201,7 @@ function PoolCard({
           </p>
           <QuotaSegmentBar
             label={t('quota_management.pool_segments_label', { label: primaryLabel })}
-            segments={primary.members.map((member) => memberSegment(t, member, nameFor))}
+            segments={primary.members.map((member) => memberSegment(t, member))}
           />
           {coverage.length > 0 && <p className={styles.coverage}>{coverage.join(' · ')}</p>}
           <PoolReset window={primary} now={now} />
@@ -249,7 +243,7 @@ function PoolCard({
                       <QuotaSegmentBar
                         size="sm"
                         label={t('quota_management.pool_segments_label', { label })}
-                        segments={window.members.map((member) => memberSegment(t, member, nameFor))}
+                        segments={window.members.map((member) => memberSegment(t, member))}
                       />
                       {coverageParts(t, window).length > 0 && (
                         <p className={styles.coverage}>{coverageParts(t, window).join(' · ')}</p>
@@ -277,14 +271,14 @@ function PoolCard({
           </button>
         </div>
       )}
+      {hint}
     </article>
   );
 }
 
-export function QuotaPools({ pools, now, resolvedTheme, displayNameFor }: QuotaPoolsProps) {
+export function QuotaPools({ pools, now, resolvedTheme, claudeHint }: QuotaPoolsProps) {
   const { t } = useTranslation();
   if (pools.length === 0) return null;
-  const nameFor: NameFor = (entry) => displayNameFor(getQuotaDisplayName(entry.file));
   return (
     <section className={styles.pools} aria-label={t('quota_management.pools_label')}>
       {pools.map((pool) => (
@@ -293,7 +287,7 @@ export function QuotaPools({ pools, now, resolvedTheme, displayNameFor }: QuotaP
           pool={pool}
           now={now}
           resolvedTheme={resolvedTheme}
-          nameFor={nameFor}
+          hint={pool.provider === 'claude' ? claudeHint : undefined}
         />
       ))}
     </section>

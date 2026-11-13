@@ -41,6 +41,21 @@ export function isCoolingAuthFile(
   );
 }
 
+const QUOTA_REASONS = new Set(['quota', 'credential_quota']);
+
+/** Every running timer is a quota timer: the credential is blocked only until its quota returns. */
+export function isQuotaCoolingAuthFile(
+  file: { cooldownSnapshot?: AuthFileCooldownSnapshot },
+  nowMs: number
+): boolean {
+  const snapshot = file.cooldownSnapshot;
+  if (!snapshot?.records?.length) return false;
+  const running = snapshot.records.filter(
+    (record) => cooldownRemainingSeconds(record, snapshot.receivedAtMs, nowMs) > 0
+  );
+  return running.length > 0 && running.every((record) => QUOTA_REASONS.has(record.reason));
+}
+
 export function summarizeCooldowns(snapshot: AuthFileCooldownSnapshot, nowMs: number) {
   const rows = (snapshot.records ?? []).map((record) => ({
     record,
