@@ -1,4 +1,5 @@
-import type { ChangeEvent, ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import { Switch, SwitchThumb } from '@ui-sdk/react/switch';
 import styles from './ToggleSwitch.module.scss';
 
 interface ToggleSwitchProps {
@@ -18,10 +19,6 @@ export function ToggleSwitch({
   disabled = false,
   labelPosition = 'right',
 }: ToggleSwitchProps) {
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    onChange(event.target.checked);
-  };
-
   const className = [
     styles.root,
     labelPosition === 'left' ? styles.labelLeft : '',
@@ -32,16 +29,15 @@ export function ToggleSwitch({
 
   return (
     <label className={className}>
-      <input
-        type="checkbox"
+      <Switch
+        className={styles.track}
         checked={checked}
-        onChange={handleChange}
+        onCheckedChange={(next) => onChange(next)}
         disabled={disabled}
         aria-label={ariaLabel}
-      />
-      <span className={styles.track}>
-        <span className={styles.thumb} />
-      </span>
+      >
+        <SwitchThumb className={styles.thumb} />
+      </Switch>
       {label && <span className={styles.label}>{label}</span>}
     </label>
   );

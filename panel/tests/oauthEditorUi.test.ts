@@ -91,10 +91,15 @@ describe('OAuth editor UI', () => {
   });
 
   test('preserves the last-row delete guard and disabled editing state', () => {
+    // UI SDK mirrors a control's value into a hidden form input; only visible controls count.
+    const disabledControls = (markup: string) =>
+      (markup.match(/<[a-z]+\b[^>]*\sdisabled=""[^>]*>/g) ?? []).filter(
+        (tag) => !tag.includes('aria-hidden="true"')
+      );
     const lastRow = renderMapping({ canRemove: false });
-    expect(lastRow.match(/disabled=""/g)).toHaveLength(1);
+    expect(disabledControls(lastRow)).toHaveLength(1);
     const disabledRow = renderMapping({ disabled: true });
-    expect(disabledRow.match(/disabled=""/g)).toHaveLength(4);
+    expect(disabledControls(disabledRow)).toHaveLength(4);
   });
 
   test('all four locales include editor guidance and accessible row labels', () => {
