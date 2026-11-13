@@ -78,6 +78,7 @@ const renderLedger = () =>
       resettingKey: null,
       onRefresh: () => {},
       onReset: () => {},
+      suggested: null,
     })
   );
 
@@ -108,10 +109,13 @@ describe('QuotaLedger rendering', () => {
       markup.indexOf('quota-ledger-claude'),
       markup.indexOf('quota-ledger-codex')
     );
-    const head = claude.slice(claude.indexOf('Credential'), claude.indexOf('</div>'));
+    // The header row ends where the rows list starts; tips inside it hold their own divs.
+    const head = claude.slice(claude.indexOf('Credential'), claude.indexOf('<ul'));
     expect(head).toContain('5-hour');
     expect(head).toContain('7-day Fable');
-    expect(head).toContain('Resets');
+    expect(head).toContain('Reset grant');
+    expect(head).toContain('Eligibility');
+    expect(head).toContain('Spend');
     expect(claude).toContain('of 200% pool');
     expect(claude).toContain('Next reset +');
   });
@@ -135,12 +139,13 @@ describe('QuotaLedger rendering', () => {
         resettingKey: null,
         onRefresh: () => {},
         onReset: () => {},
+        suggested: null,
       })
     );
     expect(markup).toContain('11% left');
     expect(markup).toContain('Low');
     expect(markup).toContain('Resets in 2d 0h');
-    expect(markup).toContain('Claude · 4m ago');
+    expect(markup.replace(/<[^>]+>/g, '')).toContain('Claude · 4m ago');
   });
 
   test('distinguishes not loaded, failed, and loaded rows', () => {
