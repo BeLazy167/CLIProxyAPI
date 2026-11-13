@@ -212,10 +212,6 @@ export const FIELD_VALUE_KEYS: Record<string, readonly string[]> = {
   payloadFilterRules: ['payloadFilterRules'],
 };
 
-/** tab / tabpanel 的 DOM id：单点定义，ConfigTabs 与页面侧面板用同一函数生成 aria 关联。 */
-export const configTabDomId = (id: ConfigTabId) => `config-tab-${id}`;
-export const configPanelDomId = (id: ConfigTabId) => `config-panel-${id}`;
-
 /** localStorage 键：mode 沿用旧键（'visual' | 'source' 值域不变）；section 为新键。 */
 export const CONFIG_MODE_STORAGE_KEY = 'config-management:tab';
 export const CONFIG_SECTION_STORAGE_KEY = 'config-management:section';

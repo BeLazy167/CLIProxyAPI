@@ -50,7 +50,7 @@
   color: var(--text-primary);
   box-shadow: var(--floating-shadow);
 
-  &:not(:has([data-slot='autocomplete-item']:not([hidden]))) {
+  &:not(:has([data-slot='autocomplete-item']:not([hidden]), [data-slot='autocomplete-empty'][data-empty])) {
     display: none;
   }
 }
@@ -93,4 +93,14 @@
 .itemLabel {
   font-size: var(--fs-meta);
   color: var(--text-secondary);
+}
+
+.empty:not([data-empty]) {
+  display: none;
+}
+
+.empty {
+  padding: 12px 16px;
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
 }

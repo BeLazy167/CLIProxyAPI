@@ -1,6 +1,7 @@
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Input } from '@/components/ui/Input';
+import { Toggle } from '@/components/ui/Toggle';
 import { IconEye, IconEyeOff } from '@/components/ui/icons';
 import { useNotificationStore } from '@/stores';
 import { CONFIG_TAB_ICONS, SECTION_INDEX_LABELS } from '../../constants';
@@ -248,18 +249,15 @@ export function SectionConnectivity({
                   onChange={(e) => onChange({ rmSecretKey: e.target.value })}
                   disabled={disabled}
                   rightElement={
-                    <button
-                      type="button"
+                    <Toggle
                       className={styles.revealButton}
                       disabled={disabled}
-                      onClick={() => setShowSecret((v) => !v)}
-                      aria-label={t(
-                        showSecret ? `${S}.remote.secret_key_hide` : `${S}.remote.secret_key_show`
-                      )}
-                      aria-pressed={showSecret}
+                      pressed={showSecret}
+                      onPressedChange={setShowSecret}
+                      ariaLabel={t(`${S}.remote.secret_key_show`)}
                     >
                       {showSecret ? <IconEyeOff size={15} /> : <IconEye size={15} />}
-                    </button>
+                    </Toggle>
                   }
                   hint={
                     <>

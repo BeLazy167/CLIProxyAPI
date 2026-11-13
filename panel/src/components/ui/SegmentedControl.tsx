@@ -52,6 +52,12 @@ export function SegmentedControl<T extends string>({
           key={option.value}
           value={option.value}
           aria-label={option.ariaLabel}
+          onKeyDown={(event) => {
+            // Radios check on Space and arrows; Enter keeps working as it did on the old buttons.
+            if (event.key !== 'Enter' || disabled) return;
+            event.preventDefault();
+            onChange(option.value);
+          }}
           className={[styles.item, itemClassName, option.className].filter(Boolean).join(' ')}
         >
           {option.label}

@@ -64,3 +64,8 @@
     gap: 10px;
   }
 }
+
+/* The tabs root only joins the tab list to its panel; it adds no box of its own. */
+.tabsRoot {
+  display: contents;
+}

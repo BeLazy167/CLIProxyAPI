@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import {
   Autocomplete,
   AutocompleteContent,
+  AutocompleteEmpty,
   AutocompleteInput as SdkAutocompleteInput,
   AutocompleteItem,
   AutocompleteList,
@@ -24,6 +25,21 @@ interface AutocompleteInputProps {
   wrapperStyle?: CSSProperties;
   id?: string;
   rightElement?: ReactNode;
+  ariaLabel?: string;
+  /** Picking a suggestion runs this instead of filling the field; the typed text stays. */
+  onSelect?: (value: string) => void;
+  /** Draws a suggestion; by default its value, with its label under it when they differ. */
+  renderOption?: (value: string) => ReactNode;
+  /** The options already match the typed text, so the field does not filter them again. */
+  prefiltered?: boolean;
+  /** Shown when nothing matches; without it, an empty list stays hidden. */
+  emptyText?: ReactNode;
+  /** Whether focus alone opens the suggestions; on by default. */
+  openOnFocus?: boolean;
+  /** Hides the suggestions button, for a field that shows its own icon. */
+  hideTrigger?: boolean;
+  /** Highlights the first suggestion while typing, so Enter picks it. */
+  autoHighlight?: boolean;
 }
 
 /** Free text with suggestions: whatever is typed stays, through blur and Escape. */
@@ -41,6 +57,14 @@ export function AutocompleteInput({
   wrapperStyle,
   id,
   rightElement,
+  ariaLabel,
+  onSelect,
+  renderOption,
+  prefiltered = false,
+  emptyText,
+  openOnFocus = true,
+  hideTrigger = false,
+  autoHighlight = false,
 }: AutocompleteInputProps) {
   const items = options.map((opt) =>
     typeof opt === 'string'
@@ -53,29 +77,44 @@ export function AutocompleteInput({
       {label && <label htmlFor={id}>{label}</label>}
       <Autocomplete
         value={value}
-        onValueChange={(next) => onChange(next)}
+        onValueChange={(next, details) => {
+          if (onSelect && details.reason === 'item-press') {
+            details.cancel();
+            onSelect(next);
+            return;
+          }
+          onChange(next);
+        }}
         disabled={disabled}
-        openOnFocus
+        openOnFocus={openOnFocus}
+        autoHighlight={autoHighlight}
+        filter={prefiltered ? false : undefined}
       >
         <div className={styles.field}>
           <SdkAutocompleteInput
             id={id}
             className={`input ${styles.input} ${className}`.trim()}
             placeholder={placeholder}
+            aria-label={ariaLabel}
           />
           <span className={styles.adornment}>
             {rightElement}
-            <AutocompleteTrigger
-              className={styles.trigger}
-              tabIndex={-1}
-              aria-label={placeholder || label}
-            >
-              <IconChevronDown size={16} />
-            </AutocompleteTrigger>
+            {!hideTrigger && (
+              <AutocompleteTrigger
+                className={styles.trigger}
+                tabIndex={-1}
+                aria-label={placeholder || label}
+              >
+                <IconChevronDown size={16} />
+              </AutocompleteTrigger>
+            )}
           </span>
         </div>
         <AutocompleteContent className={styles.content} sideOffset={4} collisionPadding={8}>
-          <AutocompleteList className={styles.list}>
+          {emptyText !== undefined && (
+            <AutocompleteEmpty className={styles.empty}>{emptyText}</AutocompleteEmpty>
+          )}
+          <AutocompleteList className={styles.list} aria-label={ariaLabel ?? label ?? placeholder}>
             {items.map((item) => (
               <AutocompleteItem
                 key={item.value}
@@ -84,9 +123,15 @@ export function AutocompleteInput({
                 keywords={[item.label]}
                 className={styles.item}
               >
-                <span className={styles.itemValue}>{item.value}</span>
-                {item.label !== item.value && (
-                  <span className={styles.itemLabel}>{item.label}</span>
+                {renderOption ? (
+                  renderOption(item.value)
+                ) : (
+                  <>
+                    <span className={styles.itemValue}>{item.value}</span>
+                    {item.label !== item.value && (
+                      <span className={styles.itemLabel}>{item.label}</span>
+                    )}
+                  </>
                 )}
               </AutocompleteItem>
             ))}

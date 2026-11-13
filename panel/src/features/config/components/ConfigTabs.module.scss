@@ -47,12 +47,12 @@
     transition: background-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out);
   }
 
-  &:disabled {
+  &[data-disabled] {
     cursor: not-allowed;
     opacity: 0.55;
   }
 
-  &:active:not(:disabled) {
+  &:active:not([data-disabled]) {
     transform: translateY(0.5px);
   }
 
@@ -63,13 +63,13 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .tab:hover:not(:disabled) {
+  .tab:hover:not([data-disabled]) {
     color: var(--text-primary);
     background: color-mix(in srgb, var(--bg-tertiary) 55%, transparent);
   }
 }
 
-.tabActive {
+.tab[data-selected] {
   color: var(--text-primary);
   font-weight: 650;
 
@@ -78,7 +78,7 @@
   }
 
   /* 整体禁用（保存中）时激活 tab 仍保持完整对比度 */
-  &:disabled {
+  &[data-disabled] {
     opacity: 1;
   }
 }
@@ -87,7 +87,7 @@
   flex-shrink: 0;
   color: var(--text-tertiary);
 
-  .tabActive & {
+  [data-selected] > & {
     color: var(--text-primary);
   }
 }
@@ -136,7 +136,13 @@
     transition: none;
   }
 
-  .tab:active:not(:disabled) {
+  .tab:active:not([data-disabled]) {
     transform: none;
   }
+}
+
+.tabsWrap {
+  display: flex;
+  flex: 1;
+  min-width: 0;
 }

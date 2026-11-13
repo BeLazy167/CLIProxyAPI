@@ -1,13 +1,8 @@
-import { useEffect, useRef, type KeyboardEvent } from 'react';
+import { useEffect, useRef } from 'react';
+import { Tab, TabList } from '@/components/ui/Tabs';
 import { useTranslation } from 'react-i18next';
 import { prefersReducedMotion } from '@/hooks/motion';
-import {
-  CONFIG_TAB_ICONS,
-  CONFIG_TAB_IDS,
-  configPanelDomId,
-  configTabDomId,
-  type ConfigTabId,
-} from '../constants';
+import { CONFIG_TAB_ICONS, CONFIG_TAB_IDS, type ConfigTabId } from '../constants';
 import styles from './ConfigTabs.module.scss';
 
 export type ConfigTabsProps = {
@@ -19,10 +14,10 @@ export type ConfigTabsProps = {
   /** 有非阻断警告的 tabs（如远程访问已开但管理密钥为空），显示琥珀「!」徽章。 */
   warningTabs?: ReadonlySet<ConfigTabId>;
   disabled?: boolean;
-  onChange: (id: ConfigTabId) => void;
 };
 
 /**
+ * 分区 tab 列表，放在 ConfigPage 的 Tabs 根里（选中与切换由根管）。
  * 分区 tabs：安静的下划线式（与提供商 tabs 同语汇），图标 + 标签 + 错误徽章 + 脏点。
  * 「常用」是首 tab；tab 切换是高频操作，零动画。
  */
@@ -32,97 +27,66 @@ export function ConfigTabs({
   dirtyTabs,
   warningTabs,
   disabled = false,
-  onChange,
 }: ConfigTabsProps) {
   const { t } = useTranslation();
-  const listRef = useRef<HTMLDivElement | null>(null);
-  const buttonRefs = useRef<Partial<Record<ConfigTabId, HTMLButtonElement | null>>>({});
+  const wrapRef = useRef<HTMLDivElement | null>(null);
 
   // 移动端横滚时把激活 tab 带回视野中央；无溢出时不动，避免无谓的页面滚动。
   useEffect(() => {
-    const scroller = listRef.current;
-    const button = buttonRefs.current[active];
-    if (!scroller || !button) return;
+    const scroller = wrapRef.current?.firstElementChild;
+    const tab = scroller?.querySelector<HTMLElement>('[data-selected]');
+    if (!scroller || !tab) return;
     if (scroller.scrollWidth <= scroller.clientWidth) return;
-    button.scrollIntoView({
+    tab.scrollIntoView({
       behavior: prefersReducedMotion() ? 'auto' : 'smooth',
       block: 'nearest',
       inline: 'center',
     });
   }, [active]);
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
-    const count = CONFIG_TAB_IDS.length;
-    const currentIndex = CONFIG_TAB_IDS.indexOf(active);
-    let nextIndex = -1;
-    if (event.key === 'ArrowRight') nextIndex = (currentIndex + 1) % count;
-    else if (event.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + count) % count;
-    else if (event.key === 'Home') nextIndex = 0;
-    else if (event.key === 'End') nextIndex = count - 1;
-    if (nextIndex < 0) return;
-    event.preventDefault();
-    const nextId = CONFIG_TAB_IDS[nextIndex];
-    onChange(nextId);
-    buttonRefs.current[nextId]?.focus();
-  };
-
   return (
-    <div
-      className={styles.tabs}
-      role="tablist"
-      aria-label={t('config_management.title')}
-      ref={listRef}
-    >
-      {CONFIG_TAB_IDS.map((id) => {
-        const Icon = CONFIG_TAB_ICONS[id];
-        const isActive = active === id;
-        const errorCount = errorCounts[id] ?? 0;
-        const isDirty = dirtyTabs.has(id);
-        const hasWarning = warningTabs?.has(id) ?? false;
-        const tabLabel = t(`config_management.visual.sections.${id}.title`);
-        const accessibleLabel = [
-          tabLabel,
-          errorCount > 0 ? t('config_management.meta_errors', { count: errorCount }) : null,
-          hasWarning ? t('config_management.meta_warning') : null,
-          isDirty ? t('config_management.status_dirty_short') : null,
-        ]
-          .filter(Boolean)
-          .join(', ');
+    <div ref={wrapRef} className={styles.tabsWrap}>
+      <TabList className={styles.tabs} aria-label={t('config_management.title')}>
+        {CONFIG_TAB_IDS.map((id) => {
+          const Icon = CONFIG_TAB_ICONS[id];
+          const errorCount = errorCounts[id] ?? 0;
+          const isDirty = dirtyTabs.has(id);
+          const hasWarning = warningTabs?.has(id) ?? false;
+          const tabLabel = t(`config_management.visual.sections.${id}.title`);
+          const accessibleLabel = [
+            tabLabel,
+            errorCount > 0 ? t('config_management.meta_errors', { count: errorCount }) : null,
+            hasWarning ? t('config_management.meta_warning') : null,
+            isDirty ? t('config_management.status_dirty_short') : null,
+          ]
+            .filter(Boolean)
+            .join(', ');
 
-        return (
-          <button
-            key={id}
-            ref={(node) => {
-              buttonRefs.current[id] = node;
-            }}
-            type="button"
-            role="tab"
-            id={configTabDomId(id)}
-            aria-selected={isActive}
-            aria-controls={configPanelDomId(id)}
-            aria-label={accessibleLabel}
-            tabIndex={isActive ? 0 : -1}
-            className={`${styles.tab} ${isActive ? styles.tabActive : ''}`}
-            disabled={disabled}
-            onClick={() => onChange(id)}
-            onKeyDown={handleKeyDown}
-          >
-            <Icon size={15} className={styles.tabGlyph} />
-            <span className={styles.tabLabel}>{tabLabel}</span>
-            {errorCount > 0 ? (
-              <span className={styles.tabBadge} aria-hidden="true">
-                {errorCount}
-              </span>
-            ) : null}
-            {hasWarning ? (
-              <span className={styles.tabWarningBadge} aria-hidden="true">
-                !
-              </span>
-            ) : null}
-            {isDirty ? <span className={styles.tabDirtyDot} aria-hidden="true" /> : null}
-          </button>
-        );
-      })}
+          return (
+            <Tab
+              key={id}
+              value={id}
+              aria-label={accessibleLabel}
+              className={styles.tab}
+              disabled={disabled}
+            >
+              <Icon size={15} className={styles.tabGlyph} />
+              <span className={styles.tabLabel}>{tabLabel}</span>
+              {errorCount > 0 ? (
+                <span className={styles.tabBadge} aria-hidden="true">
+                  {errorCount}
+                </span>
+              ) : null}
+              {hasWarning ? (
+                <span className={styles.tabWarningBadge} aria-hidden="true">
+                  !
+                </span>
+              ) : null}
+              {isDirty ? <span className={styles.tabDirtyDot} aria-hidden="true" /> : null}
+            </Tab>
+          );
+        })}
+      </TabList>
     </div>
   );
 }
