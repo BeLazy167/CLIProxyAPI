@@ -43,6 +43,10 @@
   flex-wrap: wrap;
   gap: 8px 16px;
   min-width: 0;
+
+  > * {
+    max-width: none;
+  }
 }
 
 /* The Accounts bar: title and count on the left, labeled Sort and View on the right. */

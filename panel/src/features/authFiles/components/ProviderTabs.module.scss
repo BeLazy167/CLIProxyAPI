@@ -15,6 +15,11 @@
   &::-webkit-scrollbar {
     display: none;
   }
+
+  // On a phone the strip scrolls sideways; a fade at the right edge says more tabs follow.
+  @media (max-width: $breakpoint-mobile) {
+    mask-image: linear-gradient(90deg, #000 calc(100% - 48px), transparent);
+  }
 }
 
 .tab {
@@ -26,10 +31,11 @@
   border: 0;
   background: none;
   cursor: pointer;
-  padding: 8px 12px 11px;
-  border-radius: 8px 8px 0 0;
-  font-size: 13px;
-  font-weight: 550;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 0;
+  font-size: var(--fs-body);
+  font-weight: 400;
   color: var(--text-secondary);
   white-space: nowrap;
   transition:
@@ -39,11 +45,10 @@
   &::after {
     content: '';
     position: absolute;
-    left: 10px;
-    right: 10px;
-    bottom: -1px;
+    left: 0;
+    right: 0;
+    bottom: 0;
     height: 2px;
-    border-radius: $radius-full;
     background: transparent;
     transition: background-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out);
   }
@@ -56,21 +61,25 @@
     outline: var(--focus-ring);
     outline-offset: -2px;
   }
+
+  @media (max-width: $breakpoint-mobile) {
+    min-height: 48px;
+  }
 }
 
 @media (hover: hover) and (pointer: fine) {
   .tab:hover {
     color: var(--text-primary);
-    background: color-mix(in srgb, var(--bg-tertiary) 55%, transparent);
+    background: var(--bg-hover);
   }
 }
 
 .tab[data-selected] {
   color: var(--text-primary);
-  font-weight: 650;
+  font-weight: 600;
 
   &::after {
-    background: var(--text-primary);
+    background: var(--primary-color);
   }
 }
 
