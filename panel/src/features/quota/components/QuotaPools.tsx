@@ -5,10 +5,11 @@
  * disclosure. All arithmetic lives in quotaPool.ts; this file only renders it.
  */
 
-import { useId, useState, type ReactNode } from 'react';
+import { Fragment, useId, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import type { ResolvedTheme } from '@/types';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { buildResetDisplay, formatInstantShort } from '@/utils/quota';
 import { getQuotaDisplayName } from '@/utils/quota/identity';
 import { getTypeLabel } from '@/features/authFiles/constants';
@@ -21,6 +22,7 @@ import {
 } from '../quotaPool';
 import { formatQuotaWindowLabel, formatRemainingPercent } from '../quotaWindows';
 import { ProviderGlyph } from './ProviderGlyph';
+import { QuotaWindowName } from './QuotaWindowName';
 import { QuotaSegmentBar, type QuotaSegment } from './QuotaSegmentBar';
 import styles from './QuotaPools.module.scss';
 
@@ -28,8 +30,8 @@ export interface QuotaPoolsProps {
   pools: ProviderPool[];
   now: number;
   resolvedTheme: ResolvedTheme;
-  /** Shown at the foot of the Claude card: the reset suggestion. */
-  claudeHint?: ReactNode;
+  /** Shown under the tiles: the reset suggestion. */
+  notice?: ReactNode;
 }
 
 const UNKNOWN_STATUS_ORDER: Exclude<PoolMemberStatus, 'reported' | 'absent'>[] = [
@@ -54,9 +56,9 @@ function memberSegment(t: TFunction, member: PoolMember): QuotaSegment {
   };
 }
 
-/** "4 of 5 reporting · 1 loading · 2 without this limit" — empty when fully reported. */
-function coverageParts(t: TFunction, window: PoolWindow): string[] {
-  const parts: string[] = [];
+/** "4 of 5 reporting · 1 loading · 2 without this limit": empty when fully reported. */
+function coverageParts(t: TFunction, window: PoolWindow): ReactNode[] {
+  const parts: ReactNode[] = [];
   if (window.unknownCount > 0) {
     parts.push(
       t('quota_management.pool_reporting', {
@@ -66,7 +68,7 @@ function coverageParts(t: TFunction, window: PoolWindow): string[] {
     );
     UNKNOWN_STATUS_ORDER.forEach((status) => {
       const count = window.members.filter((member) => member.status === status).length;
-      if (count > 0) parts.push(t(`quota_management.pool_status_${status}`, { count }));
+      if (count > 0) parts.push(statusPart(t, status, count));
     });
   }
   if (window.absentCount > 0) {
@@ -75,55 +77,141 @@ function coverageParts(t: TFunction, window: PoolWindow): string[] {
   return parts;
 }
 
-function PoolReset({ window, now }: { window: PoolWindow; now: number }) {
+/** "1 without a figure" gets its tip: loaded, yet no percent, which is not 0%. */
+function statusPart(t: TFunction, status: string, count: number): ReactNode {
+  const text = t(`quota_management.pool_status_${status}`, { count });
+  return status === 'unreported' ? (
+    <Tooltip content={t('quota_management.tip_unreported', { count })}>{text}</Tooltip>
+  ) : (
+    text
+  );
+}
+
+function joinParts(parts: ReactNode[]): ReactNode {
+  return parts.map((part, index) => (
+    <Fragment key={index}>
+      {index > 0 && ' · '}
+      {part}
+    </Fragment>
+  ));
+}
+
+/** The pool's reset facts as label and value pairs, each figure with its tip. */
+function PoolFacts({
+  window,
+  now,
+  provider,
+  coverage,
+}: {
+  window: PoolWindow | null;
+  now: number;
+  provider: string;
+  coverage: ReactNode[];
+}) {
   const { t, i18n } = useTranslation();
-  const next = window.nextReset;
+  const next = window?.nextReset ?? null;
   const nextDisplay = next ? buildResetDisplay(null, next.atMs, now, i18n.resolvedLanguage) : null;
   const restore = next ? Math.round(next.restorePercent) : 0;
   const showAll =
-    window.allResetAtMs !== null &&
+    window?.allResetAtMs != null &&
     next !== null &&
     window.allResetAtMs - next.atMs > RESET_GROUP_TOLERANCE_MS;
   const isFull =
+    window !== null &&
     window.reportedCount > 0 &&
     window.members.every(
       (member) => member.status !== 'reported' || (member.remainingPercent as number) >= 100
     );
+  const status: ReactNode[] = [...coverage];
+  if (!next && isFull) status.unshift(t('quota_management.pool_full'));
 
   return (
-    <div className={styles.reset}>
-      {next && nextDisplay ? (
-        <p
-          className={styles.resetLine}
-          title={t('quota_management.pool_next_reset_hint', {
-            count: next.accountCount,
-            percent: restore,
-          })}
-        >
-          <span className={styles.resetLead}>
-            {t('quota_management.pool_next_reset', { percent: restore })}
-          </span>
-          {nextDisplay.relative && (
-            <span className={styles.resetRelative}>{nextDisplay.relative}</span>
+    <>
+      {(next || showAll || status.length > 0) && (
+        <dl className={styles.facts}>
+          {next && nextDisplay && (
+            <>
+              <dt>{t('quota_management.pool_next_reset_label')}</dt>
+              <dd>
+                <Tooltip
+                  content={t('quota_management.tip_pool_next_reset', {
+                    count: next.accountCount,
+                    percent: restore,
+                  })}
+                >
+                  {t('quota_management.pool_next_reset_gain', { percent: restore })}
+                </Tooltip>
+                {nextDisplay.relative && ` ${nextDisplay.relative}`}
+                <span className={styles.resetAbsolute}>{nextDisplay.absolute}</span>
+              </dd>
+            </>
           )}
-          <span className={styles.resetAbsolute}>{nextDisplay.absolute}</span>
-        </p>
-      ) : isFull ? (
-        <p className={styles.resetLine}>{t('quota_management.pool_full')}</p>
-      ) : null}
-      {showAll && (
-        <p className={styles.resetMuted}>
-          {t('quota_management.pool_all_reset', {
-            time: formatInstantShort(window.allResetAtMs as number),
-          })}
-        </p>
+          {showAll && (
+            <>
+              <dt>{t('quota_management.pool_all_reset_label')}</dt>
+              <dd>
+                <Tooltip content={t('quota_management.tip_pool_all_reset', { provider })}>
+                  {t('quota_management.pool_all_reset_by', {
+                    time: formatInstantShort(window.allResetAtMs as number),
+                  })}
+                </Tooltip>
+              </dd>
+            </>
+          )}
+          {status.length > 0 && (
+            <>
+              <dt>{t('quota_management.pool_status_label')}</dt>
+              <dd>{joinParts(status)}</dd>
+            </>
+          )}
+        </dl>
       )}
-      {window.staleCount > 0 && (
+      {window !== null && window.staleCount > 0 && (
         <p className={styles.resetStale}>
-          {t('quota_management.pool_stale', { count: window.staleCount })}
+          <Tooltip content={t('quota_management.tip_stale')}>
+            {t('quota_management.pool_stale', { count: window.staleCount })}
+          </Tooltip>
         </p>
       )}
-    </div>
+    </>
+  );
+}
+
+/** "of 300%", with the sum spelled out when more than one account adds to it. */
+function PoolCapacity({ window, provider }: { window: PoolWindow; provider: string }) {
+  const { t } = useTranslation();
+  const text = t('quota_management.pool_of_capacity', { capacity: window.capacity });
+  if (window.reportedCount < 2) return <span className={styles.capacity}>{text}</span>;
+  const parts = window.members
+    .filter((member) => member.status === 'reported')
+    .map((member) => formatRemainingPercent(member.remainingPercent))
+    .join(' + ');
+  return (
+    <span className={styles.capacity}>
+      <Tooltip
+        content={t('quota_management.tip_pool_of', {
+          provider,
+          count: window.reportedCount,
+          capacity: window.capacity,
+          parts,
+        })}
+      >
+        {text}
+      </Tooltip>
+    </span>
+  );
+}
+
+/** The per-account meter; a tap on it explains the segments when there is more than one. */
+function PoolMeter({ label, segments }: { label: string; segments: QuotaSegment[] }) {
+  const { t } = useTranslation();
+  const bar = <QuotaSegmentBar label={label} segments={segments} />;
+  return segments.length > 1 ? (
+    <Tooltip block content={t('quota_management.tip_pool_segments')}>
+      {bar}
+    </Tooltip>
+  ) : (
+    bar
   );
 }
 
@@ -131,12 +219,10 @@ function PoolCard({
   pool,
   now,
   resolvedTheme,
-  hint,
 }: {
   pool: ProviderPool;
   now: number;
   resolvedTheme: ResolvedTheme;
-  hint?: ReactNode;
 }) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
@@ -148,7 +234,6 @@ function PoolCard({
   const visibleSecondary = expanded ? secondary : secondary.slice(0, 1);
 
   const primaryLabel = primary ? formatQuotaWindowLabel(t, primary.label) : null;
-  const coverage = primary ? coverageParts(t, primary) : [];
 
   // Before any window is known, still draw one dashed segment per account so the
   // card states how many accounts are pending instead of showing an empty pool.
@@ -162,19 +247,17 @@ function PoolCard({
           resetAtMs: null,
         })
       );
-  const pendingParts = primary
+  const pendingParts: ReactNode[] = primary
     ? []
-    : (['loading', 'error', 'idle'] as const)
-        .filter((status) => pool.statusCounts[status] > 0)
-        .map((status) =>
-          t(`quota_management.pool_status_${status}`, { count: pool.statusCounts[status] })
-        )
-        .concat(
-          // Loaded, but nothing that can be pooled was reported.
-          pool.statusCounts.success > 0
-            ? [t('quota_management.pool_status_unreported', { count: pool.statusCounts.success })]
-            : []
-        );
+    : [
+        ...(['loading', 'error', 'idle'] as const)
+          .filter((status) => pool.statusCounts[status] > 0)
+          .map((status) => statusPart(t, status, pool.statusCounts[status])),
+        // Loaded, but nothing that can be pooled was reported.
+        ...(pool.statusCounts.success > 0
+          ? [statusPart(t, 'unreported', pool.statusCounts.success)]
+          : []),
+      ];
 
   return (
     <article className={styles.card} aria-labelledby={headingId}>
@@ -190,21 +273,25 @@ function PoolCard({
 
       {primary ? (
         <>
-          <div className={styles.windowLabel}>{primaryLabel}</div>
-          <p className={styles.total} title={t('quota_management.pool_total_hint')}>
+          <div className={styles.windowLabel}>
+            <QuotaWindowName label={primary.label} />
+          </div>
+          <p className={styles.total}>
             <span className={styles.totalValue}>
               {formatRemainingPercent(primary.totalRemaining)}
             </span>
-            <span className={styles.capacity}>
-              {t('quota_management.pool_of_capacity', { capacity: primary.capacity })}
-            </span>
+            <PoolCapacity window={primary} provider={providerLabel} />
           </p>
-          <QuotaSegmentBar
+          <PoolMeter
             label={t('quota_management.pool_segments_label', { label: primaryLabel })}
             segments={primary.members.map((member) => memberSegment(t, member))}
           />
-          {coverage.length > 0 && <p className={styles.coverage}>{coverage.join(' · ')}</p>}
-          <PoolReset window={primary} now={now} />
+          <PoolFacts
+            window={primary}
+            now={now}
+            provider={providerLabel}
+            coverage={coverageParts(t, primary)}
+          />
         </>
       ) : (
         <>
@@ -214,8 +301,8 @@ function PoolCard({
               {t('quota_management.pool_of_capacity', { capacity: pool.credentialCount * 100 })}
             </span>
           </p>
-          <QuotaSegmentBar label={t('quota_management.pool_no_data')} segments={pendingSegments} />
-          <p className={styles.coverage}>{pendingParts.join(' · ')}</p>
+          <PoolMeter label={t('quota_management.pool_no_data')} segments={pendingSegments} />
+          <PoolFacts window={null} now={now} provider={providerLabel} coverage={pendingParts} />
         </>
       )}
 
@@ -227,7 +314,9 @@ function PoolCard({
               return (
                 <li key={window.key} className={styles.moreItem}>
                   <div className={styles.moreHead}>
-                    <span className={styles.moreLabel}>{label}</span>
+                    <span className={styles.moreLabel}>
+                      <QuotaWindowName label={window.label} />
+                    </span>
                     <span className={styles.moreValue}>
                       {formatRemainingPercent(window.totalRemaining)}
                       {window.reportedCount > 0 && (
@@ -240,16 +329,24 @@ function PoolCard({
                   </div>
                   {expanded && (
                     <>
-                      <QuotaSegmentBar
-                        size="sm"
+                      <PoolMeter
                         label={t('quota_management.pool_segments_label', { label })}
                         segments={window.members.map((member) => memberSegment(t, member))}
                       />
-                      {coverageParts(t, window).length > 0 && (
-                        <p className={styles.coverage}>{coverageParts(t, window).join(' · ')}</p>
-                      )}
-                      <PoolReset window={window} now={now} />
+                      <PoolFacts
+                        window={window}
+                        now={now}
+                        provider={providerLabel}
+                        coverage={coverageParts(t, window)}
+                      />
                     </>
+                  )}
+                  {!expanded && window.staleCount > 0 && (
+                    <p className={styles.resetStale}>
+                      <Tooltip content={t('quota_management.tip_stale')}>
+                        {t('quota_management.pool_stale', { count: window.staleCount })}
+                      </Tooltip>
+                    </p>
                   )}
                 </li>
               );
@@ -271,25 +368,28 @@ function PoolCard({
           </button>
         </div>
       )}
-      {hint}
     </article>
   );
 }
 
-export function QuotaPools({ pools, now, resolvedTheme, claudeHint }: QuotaPoolsProps) {
+export function QuotaPools({ pools, now, resolvedTheme, notice }: QuotaPoolsProps) {
   const { t } = useTranslation();
   if (pools.length === 0) return null;
+  const headingId = 'quota-pools-heading';
   return (
-    <section className={styles.pools} aria-label={t('quota_management.pools_label')}>
-      {pools.map((pool) => (
-        <PoolCard
-          key={pool.provider}
-          pool={pool}
-          now={now}
-          resolvedTheme={resolvedTheme}
-          hint={pool.provider === 'claude' ? claudeHint : undefined}
-        />
-      ))}
+    <section className={styles.section} aria-labelledby={headingId}>
+      <header className={styles.sectionHead}>
+        <h2 id={headingId} className={styles.sectionTitle}>
+          {t('quota_management.pools_label')}
+        </h2>
+        <span className={styles.sectionNote}>{t('quota_management.pools_note')}</span>
+      </header>
+      <div className={styles.pools}>
+        {pools.map((pool) => (
+          <PoolCard key={pool.provider} pool={pool} now={now} resolvedTheme={resolvedTheme} />
+        ))}
+      </div>
+      {notice}
     </section>
   );
 }

@@ -12,6 +12,8 @@ interface TooltipProps {
    */
   children?: ReactNode;
   label?: string;
+  /** Draws `children` as a full-width area with no underline, e.g. a meter. */
+  block?: boolean;
   side?: 'top' | 'bottom';
   className?: string;
 }
@@ -20,12 +22,20 @@ interface TooltipProps {
  * A tip on a button whose only job is the tip, so a tap can open it on a phone. Never wrap an
  * action button; put an (i) beside it instead.
  */
-export function Tooltip({ content, children, label, side = 'bottom', className }: TooltipProps) {
+export function Tooltip({
+  content,
+  children,
+  label,
+  block = false,
+  side = 'bottom',
+  className,
+}: TooltipProps) {
   const text = children !== undefined;
+  const look = !text ? styles.icon : block ? styles.block : styles.text;
   return (
     <SdkTooltip toggleable>
       <TooltipTrigger
-        className={[text ? styles.text : styles.icon, className].filter(Boolean).join(' ')}
+        className={[look, className].filter(Boolean).join(' ')}
         aria-label={text ? undefined : label}
       >
         {text ? children : <IconInfo size={16} aria-hidden="true" />}

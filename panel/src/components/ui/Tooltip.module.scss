@@ -30,6 +30,15 @@
   cursor: help;
 }
 
+.block {
+  display: block;
+  width: 100%;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  cursor: help;
+}
+
 .content {
   box-sizing: border-box;
   max-width: min(288px, calc(100vw - 16px));

@@ -8,7 +8,7 @@
  * add a Resets column with one spend button per reset group.
  */
 
-import type { CSSProperties, ReactNode } from 'react';
+import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { IconAlertTriangle, IconRefreshCw, IconZap } from '@/components/ui/icons';
@@ -45,8 +45,6 @@ export interface QuotaLedgerProps {
   resettingKey: string | null;
   onRefresh: (entry: QuotaFileEntry) => void;
   onReset: (entry: QuotaFileEntry) => void;
-  /** Shown under the Claude group heading: the reset suggestion. */
-  claudeHint?: ReactNode;
 }
 
 type Column = { key: string; label: QuotaWindowLabel };
@@ -343,7 +341,6 @@ export function QuotaLedger({
   resettingKey,
   onRefresh,
   onReset,
-  claudeHint,
 }: QuotaLedgerProps) {
   const { t } = useTranslation();
   // Groups follow the sorted entries: a provider appears where its first row lands, so
@@ -392,9 +389,6 @@ export function QuotaLedger({
                 <span className={styles.groupCount}>{group.entries.length}</span>
               </h3>
               <PoolSummary pool={pool} />
-              {group.provider === 'claude' && claudeHint && (
-                <div className={styles.groupHint}>{claudeHint}</div>
-              )}
             </header>
             <div className={styles.columnHead} aria-hidden="true">
               <span>{t('quota_management.ledger_credential')}</span>

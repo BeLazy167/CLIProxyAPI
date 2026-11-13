@@ -231,15 +231,18 @@ export function QuotaPage() {
     [filteredEntries, getQuota, clock]
   );
 
-  const { loadedCount, attentionCount } = useMemo(() => {
+  const { loadedCount, attentionCount, readAtMs } = useMemo(() => {
     let loaded = 0;
     let attention = 0;
+    let readAt: number | null = null;
     entries.forEach((entry) => {
-      const status = quotaByType[entry.type][getQuotaCacheKey(entry.file)]?.status;
-      if (status === 'success') loaded += 1;
-      else if (status === 'error') attention += 1;
+      const quota = quotaByType[entry.type][getQuotaCacheKey(entry.file)];
+      if (quota?.status === 'success') {
+        loaded += 1;
+        if (quota.loadedAtMs !== undefined) readAt = Math.max(readAt ?? 0, quota.loadedAtMs);
+      } else if (quota?.status === 'error') attention += 1;
     });
-    return { loadedCount: loaded, attentionCount: attention };
+    return { loadedCount: loaded, attentionCount: attention, readAtMs: readAt };
   }, [entries, quotaByType]);
 
   // 剪枝：文件列表落定后，各 provider 缓存只保留仍存在的凭证
@@ -363,6 +366,7 @@ export function QuotaPage() {
         totalCount={entries.length}
         loadedCount={loadedCount}
         attentionCount={attentionCount}
+        readAtMs={readAtMs}
         refreshing={loading || batchLoading}
         disableControls={disableControls}
         onRefreshAll={handleRefreshAll}
@@ -402,7 +406,7 @@ export function QuotaPage() {
             pools={pools}
             now={clock}
             resolvedTheme={resolvedTheme}
-            claudeHint={claudeHint}
+            notice={pools.some((pool) => pool.provider === 'claude') ? claudeHint : null}
           />
         )}
 
@@ -484,7 +488,6 @@ export function QuotaPage() {
             resettingKey={resettingQuotaName}
             onRefresh={(entry) => void refreshQuota(entry.file, QUOTA_ADAPTERS[entry.type])}
             onReset={(entry) => resetQuota(entry.file, QUOTA_ADAPTERS[entry.type])}
-            claudeHint={claudeHint}
           />
         ) : (
           <div className={styles.grid}>
