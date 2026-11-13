@@ -22,6 +22,7 @@ import {
 } from '../quotaPool';
 import { formatQuotaWindowLabel, formatRemainingPercent } from '../quotaWindows';
 import { ProviderGlyph } from './ProviderGlyph';
+import { QuotaSection } from './QuotaSection';
 import { QuotaWindowName } from './QuotaWindowName';
 import { QuotaSegmentBar, type QuotaSegment } from './QuotaSegmentBar';
 import styles from './QuotaPools.module.scss';
@@ -375,21 +376,18 @@ function PoolCard({
 export function QuotaPools({ pools, now, resolvedTheme, notice }: QuotaPoolsProps) {
   const { t } = useTranslation();
   if (pools.length === 0) return null;
-  const headingId = 'quota-pools-heading';
   return (
-    <section className={styles.section} aria-labelledby={headingId}>
-      <header className={styles.sectionHead}>
-        <h2 id={headingId} className={styles.sectionTitle}>
-          {t('quota_management.pools_label')}
-        </h2>
-        <span className={styles.sectionNote}>{t('quota_management.pools_note')}</span>
-      </header>
+    <QuotaSection
+      id="quota-pools-heading"
+      title={t('quota_management.pools_label')}
+      note={t('quota_management.pools_note')}
+    >
       <div className={styles.pools}>
         {pools.map((pool) => (
           <PoolCard key={pool.provider} pool={pool} now={now} resolvedTheme={resolvedTheme} />
         ))}
       </div>
       {notice}
-    </section>
+    </QuotaSection>
   );
 }

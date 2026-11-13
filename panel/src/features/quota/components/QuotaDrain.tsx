@@ -11,6 +11,7 @@ import { Select } from '@/components/ui/Select';
 import { Tab, TabList, TabPanel, Tabs } from '@/components/ui/Tabs';
 import { Toggle } from '@/components/ui/Toggle';
 import { ToggleSwitch } from '@/components/ui/ToggleSwitch';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { IconChevronLeft } from '@/components/ui/icons';
 import { useAuthStore } from '@/stores/useAuthStore';
 import type { ResolvedTheme } from '@/types';
@@ -22,6 +23,7 @@ import type { QuotaHistorySeries } from '../drainSeries';
 import { BURN_WINDOW_HOURS, FUTURE_USAGE, type FutureUsage } from '../quotaForecast';
 import { buildDrainCard, DRAIN_WINDOWS } from '../drainCard';
 import { DrainCard, type DrainTab } from './DrainCard';
+import { QuotaSection } from './QuotaSection';
 import styles from './QuotaDrain.module.scss';
 
 const HOUR_MS = 3_600_000;
@@ -111,20 +113,32 @@ export function QuotaDrain({ pools, now, resolvedTheme, nameOf }: QuotaDrainProp
   if (cards.length === 0) return null;
 
   return (
-    <section className={styles.drain} aria-label={t('quota_management.drain_title')}>
+    <QuotaSection
+      id="quota-drain-heading"
+      title={t('quota_management.drain_title')}
+      note={t('quota_management.drain_note')}
+    >
       <Tabs className={styles.tabsRoot} value={tab} onChange={(next) => setTab(next as DrainTab)}>
         <div className={styles.toolbar}>
-          <TabList className={styles.segmented} aria-label={t('quota_management.drain_title')}>
-            {(['remaining', 'drain'] as const).map((id) => (
-              <Tab key={id} value={id} className={styles.segment}>
-                {t(`quota_management.drain_tab_${id}`)}
-              </Tab>
-            ))}
-          </TabList>
+          <div className={styles.group}>
+            <TabList className={styles.segmented} aria-label={t('quota_management.drain_title')}>
+              {(['remaining', 'drain'] as const).map((id) => (
+                <Tab key={id} value={id} className={styles.segment}>
+                  {t(`quota_management.drain_tab_${id}`)}
+                </Tab>
+              ))}
+            </TabList>
+            <Tooltip
+              label={t('quota_management.tip_drain_mode_label')}
+              content={t('quota_management.tip_drain_mode')}
+            />
+          </div>
 
           <div className={styles.group}>
             <span className={styles.groupLabel} id="drain-burn-label">
-              {t('quota_management.drain_burn_label')}
+              <Tooltip content={t('quota_management.tip_burn_rate')}>
+                {t('quota_management.drain_burn_label')}
+              </Tooltip>
             </span>
             <SegmentedControl
               className={styles.segmented}
@@ -140,22 +154,31 @@ export function QuotaDrain({ pools, now, resolvedTheme, nameOf }: QuotaDrainProp
           </div>
 
           <div className={styles.group}>
-            <span className={styles.groupLabel}>{t('quota_management.drain_usage_label')}</span>
+            <span className={styles.groupLabel}>
+              <Tooltip content={t('quota_management.tip_future_usage')}>
+                {t('quota_management.drain_usage_label')}
+              </Tooltip>
+            </span>
             <Select
               value={usage}
               options={usageOptions}
               onChange={(value) => setUsage(value as FutureUsage)}
               ariaLabel={t('quota_management.drain_usage_label')}
               size="sm"
-              variant="quiet"
             />
           </div>
 
-          <ToggleSwitch
-            checked={showAccounts}
-            onChange={setShowAccounts}
-            label={t('quota_management.drain_accounts')}
-          />
+          <div className={styles.group}>
+            <ToggleSwitch
+              checked={showAccounts}
+              onChange={setShowAccounts}
+              label={t('quota_management.drain_accounts')}
+            />
+            <Tooltip
+              label={t('quota_management.tip_drain_accounts_label')}
+              content={t('quota_management.tip_drain_accounts')}
+            />
+          </div>
 
           <div className={styles.range}>
             <span className={styles.rangeLabel}>
@@ -174,7 +197,7 @@ export function QuotaDrain({ pools, now, resolvedTheme, nameOf }: QuotaDrainProp
               <IconChevronLeft size={16} />
             </button>
             <Toggle
-              className={`${styles.segmented} ${styles.segment}`}
+              className={styles.today}
               pressed={weekOffset === 0}
               onPressedChange={() => setWeekOffset(0)}
             >
@@ -192,7 +215,7 @@ export function QuotaDrain({ pools, now, resolvedTheme, nameOf }: QuotaDrainProp
           </div>
         </div>
 
-        <TabPanel value={tab} className={styles.tabsRoot}>
+        <TabPanel value={tab} className={styles.cards}>
           {cards.map((model) => (
             <DrainCard
               key={model.window.key}
@@ -209,6 +232,6 @@ export function QuotaDrain({ pools, now, resolvedTheme, nameOf }: QuotaDrainProp
           ))}
         </TabPanel>
       </Tabs>
-    </section>
+    </QuotaSection>
   );
 }

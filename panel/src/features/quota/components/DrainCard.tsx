@@ -5,10 +5,17 @@
  * in drainCard.ts and quotaForecast.ts; this file only draws it.
  */
 
-import { useId, useState, type CSSProperties, type PointerEvent } from 'react';
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent,
+} from 'react';
 import { useTranslation } from 'react-i18next';
+import { Tooltip } from '@/components/ui/Tooltip';
 import type { ResolvedTheme } from '@/types';
-import { TYPE_COLORS } from '@/utils/quota';
 import { getTypeLabel } from '@/features/authFiles/constants';
 import type { QuotaFileEntry } from '../logic';
 import { formatCountdown } from '../compactDuration';
@@ -21,11 +28,13 @@ import styles from './QuotaDrain.module.scss';
 
 const HOUR_MS = 3_600_000;
 const DAY_MS = 24 * HOUR_MS;
-const W = 1000;
+/** Below this width the chart labels every other day, by its date only. */
+const NARROW_W = 600;
 const PAD = { left: 52, right: 14, top: 26, bottom: 28 };
 const ACCOUNT_MIX = [100, 62, 38, 22];
 const RUN_JOIN_MS = 30 * 60_000;
-const LABEL_SLOTS = 40;
+/** Room one refill label needs, in CSS pixels, before it folds into its neighbour. */
+const LABEL_WIDTH = 40;
 
 export type DrainTab = 'remaining' | 'drain';
 
@@ -52,6 +61,23 @@ const monthDay = (ms: number) =>
 const percent = (value: number) => `${Math.round(value)}%`;
 const polyline = (points: ForecastPoint[], x: (ms: number) => number, y: (v: number) => number) =>
   points.map((p) => `${x(p.atMs).toFixed(1)},${y(p.remaining).toFixed(1)}`).join(' ');
+
+/** The element's width in CSS pixels, so the chart draws at its real size and its text stays legible. */
+function useWidth<T extends HTMLElement>(fallback: number) {
+  const ref = useRef<T>(null);
+  const [width, setWidth] = useState(fallback);
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const observer = new ResizeObserver(([entry]) => {
+      const next = Math.round(entry.contentRect.width);
+      if (next > 0) setWidth(next);
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+  return [ref, width] as const;
+}
 
 /** Projected drain as a step line: each pool segment's slope, in points per hour. */
 function projectedDrain(points: readonly ForecastPoint[]): ForecastPoint[] {
@@ -108,17 +134,15 @@ export function DrainCard({
   const { t } = useTranslation();
   const clipId = useId();
   const [hoverMs, setHoverMs] = useState<number | null>(null);
+  const [plotRef, W] = useWidth<HTMLDivElement>(1000);
   const compact = model.size === 'compact';
-  const H = compact ? 170 : 290;
-
-  const colors = TYPE_COLORS[model.provider] ?? TYPE_COLORS.unknown;
-  const accent = (resolvedTheme === 'dark' && colors.dark ? colors.dark : colors.light).text;
+  const narrow = W < NARROW_W;
+  const H = compact ? 170 : narrow ? 220 : 260;
   const title = compact
     ? `${getTypeLabel(t, model.provider)} · ${formatQuotaWindowLabel(t, model.window.label)}`
     : getTypeLabel(t, model.provider);
   const cardProps = {
     className: compact ? `${styles.card} ${styles.compact}` : styles.card,
-    style: { '--drain-accent': accent } as CSSProperties,
     'aria-label': title,
   };
   const identity = (
@@ -205,10 +229,8 @@ export function DrainCard({
       ...recorded.refills.map((r) => ({ ...r, value: recordedAt(r.atMs) ?? 0 })),
       ...pool.refills.map((r) => ({ ...r, value: valueAt(pool.points, r.atMs, 'after') })),
     ].filter((r) => inView(r.atMs) && r.restore >= 0.5),
-    (toMs - fromMs) / LABEL_SLOTS
+    ((toMs - fromMs) * LABEL_WIDTH) / (W - PAD.left - PAD.right)
   );
-  const areaOf = (points: ForecastPoint[]) =>
-    `${x(points[0].atMs)},${y(0)} ${polyline(points, x, y)} ${x(points[points.length - 1].atMs)},${y(0)}`;
   const emptyAt =
     pool.emptyAtMs !== null && pool.emptyAtMs > now && inView(pool.emptyAtMs)
       ? pool.emptyAtMs
@@ -253,9 +275,10 @@ export function DrainCard({
   const horizonEnd = pool.points[pool.points.length - 1].atMs;
   const notBy = t('quota_management.drain_not_by', { when: monthDay(horizonEnd - 1) });
   const nextReset = pool.refills.find((r) => r.restore >= 0.5);
-  const stats = [
+  const stats: { label: string; tip?: string; value: string; note?: string | null }[] = [
     {
       label: t('quota_management.drain_stat_pool_empty'),
+      tip: t('quota_management.tip_pool_empty', { notBy }),
       value:
         pool.emptyAtMs === null
           ? notBy
@@ -265,6 +288,7 @@ export function DrainCard({
     },
     {
       label: t('quota_management.drain_stat_first_empty'),
+      tip: t('quota_management.tip_first_empty'),
       value: model.firstEmpty
         ? t('quota_management.drain_first_empty', {
             name: nameOf(model.firstEmpty.account.entry),
@@ -287,6 +311,7 @@ export function DrainCard({
     },
     {
       label: t('quota_management.drain_stat_burn', { hours: burnHours }),
+      tip: t('quota_management.tip_burn', { count: burnHours }),
       value: t(
         model.burn.estimated
           ? 'quota_management.drain_rate_estimated'
@@ -305,7 +330,7 @@ export function DrainCard({
         <dl className={styles.stats}>
           {stats.map((stat) => (
             <div key={stat.label} className={styles.stat}>
-              <dt>{stat.label}</dt>
+              <dt>{stat.tip ? <Tooltip content={stat.tip}>{stat.label}</Tooltip> : stat.label}</dt>
               <dd>
                 {stat.value}
                 {stat.note && <span className={styles.statNote}>{stat.note}</span>}
@@ -315,7 +340,7 @@ export function DrainCard({
         </dl>
       </header>
 
-      <div className={styles.plot}>
+      <div className={styles.plot} ref={plotRef}>
         {hover && <div className={styles.readout}>{hover.text}</div>}
         <svg
           className={styles.chart}
@@ -334,10 +359,6 @@ export function DrainCard({
                 height={H - PAD.bottom + 1}
               />
             </clipPath>
-            <linearGradient id={`${clipId}-fill`} x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" className={styles.fillTop} />
-              <stop offset="100%" className={styles.fillBottom} />
-            </linearGradient>
           </defs>
 
           {[0, 0.5, 1].map((f) => (
@@ -355,12 +376,12 @@ export function DrainCard({
               </text>
             </g>
           ))}
-          {ticks.map((ms) => (
+          {ticks.map((ms, index) => (
             <g key={ms}>
               <line className={styles.dayLine} x1={x(ms)} x2={x(ms)} y1={PAD.top} y2={y(0)} />
-              {!compact || new Date(ms).getDay() % 2 === 0 ? (
+              {!(compact || narrow) || index % 2 === 0 ? (
                 <text className={styles.axis} x={x(ms + DAY_MS / 2)} y={H - 8} textAnchor="middle">
-                  {weekdayDay(ms)}
+                  {narrow ? new Date(ms).getDate() : weekdayDay(ms)}
                 </text>
               ) : null}
             </g>
@@ -369,9 +390,6 @@ export function DrainCard({
           <g clipPath={`url(#${clipId})`}>
             {tab === 'remaining' ? (
               <>
-                {[...runs, projected].map((points, i) => (
-                  <polygon key={i} fill={`url(#${clipId}-fill)`} points={areaOf(points)} />
-                ))}
                 {showAccounts &&
                   accounts.map((a, i) => (
                     <g
@@ -495,7 +513,10 @@ export function DrainCard({
           <i className={styles.solid} /> {t('quota_management.drain_legend_recorded')}
         </span>
         <span>
-          <i className={styles.dash} /> {t('quota_management.drain_legend_projected')}
+          <i className={styles.dash} />
+          <Tooltip content={t('quota_management.tip_projected')}>
+            {t('quota_management.drain_legend_projected')}
+          </Tooltip>
         </span>
         {showAccounts &&
           accounts.map((a, i) => (

@@ -5,39 +5,6 @@
  * 遥测数字一律 mono + tabular-nums，与额度卡同语汇。
  * ============================================================ */
 
-/* Section frame shared by pools, drain and timeline: a header band over a bordered body. */
-.section {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.sectionHead {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 12px;
-  min-height: 48px;
-  padding: 8px 16px;
-  border: 1px solid var(--border-color);
-  border-bottom: 0;
-  background: var(--bg-primary);
-}
-
-.sectionTitle {
-  margin: 0;
-  font-size: var(--fs-title);
-  line-height: var(--lh-title);
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.sectionNote {
-  font-size: var(--fs-meta);
-  line-height: var(--lh-meta);
-  color: var(--text-secondary);
-}
-
 /* Tiles divided by 1 px lines: each tile draws its right and bottom edge, the frame clips the outer ones. */
 .pools {
   display: grid;
