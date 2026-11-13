@@ -6,7 +6,11 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Select } from '@/components/ui/Select';
+import { Tab, TabList, TabPanel, Tabs } from '@/components/ui/Tabs';
+import { Toggle } from '@/components/ui/Toggle';
+import { ToggleSwitch } from '@/components/ui/ToggleSwitch';
 import { IconChevronLeft } from '@/components/ui/icons';
 import { useAuthStore } from '@/stores/useAuthStore';
 import type { ResolvedTheme } from '@/types';
@@ -108,113 +112,103 @@ export function QuotaDrain({ pools, now, resolvedTheme, nameOf }: QuotaDrainProp
 
   return (
     <section className={styles.drain} aria-label={t('quota_management.drain_title')}>
-      <div className={styles.toolbar}>
-        <div
-          className={styles.segmented}
-          role="tablist"
-          aria-label={t('quota_management.drain_title')}
-        >
-          {(['remaining', 'drain'] as const).map((id) => (
-            <button
-              key={id}
-              type="button"
-              role="tab"
-              aria-selected={tab === id}
-              className={styles.segment}
-              onClick={() => setTab(id)}
-            >
-              {t(`quota_management.drain_tab_${id}`)}
-            </button>
-          ))}
-        </div>
-
-        <div className={styles.group}>
-          <span className={styles.groupLabel} id="drain-burn-label">
-            {t('quota_management.drain_burn_label')}
-          </span>
-          <div className={styles.segmented} role="group" aria-labelledby="drain-burn-label">
-            {BURN_WINDOW_HOURS.map((hours) => (
-              <button
-                key={hours}
-                type="button"
-                aria-pressed={burnHours === hours}
-                className={styles.segment}
-                onClick={() => setBurnHours(hours)}
-              >
-                {t('quota_management.drain_hours', { hours })}
-              </button>
+      <Tabs className={styles.tabsRoot} value={tab} onChange={(next) => setTab(next as DrainTab)}>
+        <div className={styles.toolbar}>
+          <TabList className={styles.segmented} aria-label={t('quota_management.drain_title')}>
+            {(['remaining', 'drain'] as const).map((id) => (
+              <Tab key={id} value={id} className={styles.segment}>
+                {t(`quota_management.drain_tab_${id}`)}
+              </Tab>
             ))}
+          </TabList>
+
+          <div className={styles.group}>
+            <span className={styles.groupLabel} id="drain-burn-label">
+              {t('quota_management.drain_burn_label')}
+            </span>
+            <SegmentedControl
+              className={styles.segmented}
+              itemClassName={styles.segment}
+              ariaLabelledBy="drain-burn-label"
+              value={String(burnHours)}
+              onChange={(hours) => setBurnHours(Number(hours))}
+              options={BURN_WINDOW_HOURS.map((hours) => ({
+                value: String(hours),
+                label: t('quota_management.drain_hours', { hours }),
+              }))}
+            />
+          </div>
+
+          <div className={styles.group}>
+            <span className={styles.groupLabel}>{t('quota_management.drain_usage_label')}</span>
+            <Select
+              value={usage}
+              options={usageOptions}
+              onChange={(value) => setUsage(value as FutureUsage)}
+              ariaLabel={t('quota_management.drain_usage_label')}
+              size="sm"
+              variant="quiet"
+            />
+          </div>
+
+          <ToggleSwitch
+            checked={showAccounts}
+            onChange={setShowAccounts}
+            label={t('quota_management.drain_accounts')}
+          />
+
+          <div className={styles.range}>
+            <span className={styles.rangeLabel}>
+              {t('quota_management.drain_range', {
+                from: monthDay(fromMs),
+                to: monthDay(toMs - 1),
+              })}
+            </span>
+            <button
+              type="button"
+              className={styles.iconButton}
+              disabled={!canGoBack}
+              aria-label={t('quota_management.drain_prev')}
+              onClick={() => setWeekOffset((week) => week - 1)}
+            >
+              <IconChevronLeft size={16} />
+            </button>
+            <Toggle
+              className={`${styles.segmented} ${styles.segment}`}
+              pressed={weekOffset === 0}
+              onPressedChange={() => setWeekOffset(0)}
+            >
+              {t('quota_management.drain_today')}
+            </Toggle>
+            <button
+              type="button"
+              className={styles.iconButton}
+              disabled={weekOffset >= MAX_FORWARD_WEEKS}
+              aria-label={t('quota_management.drain_next')}
+              onClick={() => setWeekOffset((week) => week + 1)}
+            >
+              <IconChevronLeft size={16} className={styles.flip} />
+            </button>
           </div>
         </div>
 
-        <div className={styles.group}>
-          <span className={styles.groupLabel}>{t('quota_management.drain_usage_label')}</span>
-          <Select
-            value={usage}
-            options={usageOptions}
-            onChange={(value) => setUsage(value as FutureUsage)}
-            ariaLabel={t('quota_management.drain_usage_label')}
-            size="sm"
-            variant="quiet"
-          />
-        </div>
-
-        <button
-          type="button"
-          aria-pressed={showAccounts}
-          className={`${styles.segmented} ${styles.segment} ${styles.toggle}`}
-          onClick={() => setShowAccounts((on) => !on)}
-        >
-          {t('quota_management.drain_accounts')}
-        </button>
-
-        <div className={styles.range}>
-          <span className={styles.rangeLabel}>
-            {t('quota_management.drain_range', { from: monthDay(fromMs), to: monthDay(toMs - 1) })}
-          </span>
-          <button
-            type="button"
-            className={styles.iconButton}
-            disabled={!canGoBack}
-            aria-label={t('quota_management.drain_prev')}
-            onClick={() => setWeekOffset((week) => week - 1)}
-          >
-            <IconChevronLeft size={16} />
-          </button>
-          <button
-            type="button"
-            className={`${styles.segmented} ${styles.segment}`}
-            aria-pressed={weekOffset === 0}
-            onClick={() => setWeekOffset(0)}
-          >
-            {t('quota_management.drain_today')}
-          </button>
-          <button
-            type="button"
-            className={styles.iconButton}
-            disabled={weekOffset >= MAX_FORWARD_WEEKS}
-            aria-label={t('quota_management.drain_next')}
-            onClick={() => setWeekOffset((week) => week + 1)}
-          >
-            <IconChevronLeft size={16} className={styles.flip} />
-          </button>
-        </div>
-      </div>
-
-      {cards.map((model) => (
-        <DrainCard
-          key={model.window.key}
-          model={model}
-          tab={tab}
-          burnHours={burnHours}
-          showAccounts={showAccounts}
-          now={now}
-          fromMs={fromMs}
-          toMs={toMs}
-          resolvedTheme={resolvedTheme}
-          nameOf={nameOf}
-        />
-      ))}
+        <TabPanel value={tab} className={styles.tabsRoot}>
+          {cards.map((model) => (
+            <DrainCard
+              key={model.window.key}
+              model={model}
+              tab={tab}
+              burnHours={burnHours}
+              showAccounts={showAccounts}
+              now={now}
+              fromMs={fromMs}
+              toMs={toMs}
+              resolvedTheme={resolvedTheme}
+              nameOf={nameOf}
+            />
+          ))}
+        </TabPanel>
+      </Tabs>
     </section>
   );
 }

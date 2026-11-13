@@ -15,6 +15,7 @@
 import { useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { formatRelativeInstant, TYPE_COLORS } from '@/utils/quota';
 import { getQuotaCacheKey, getQuotaDisplayName } from '@/utils/quota/identity';
 import { useNow } from '@/hooks/useNow';
@@ -199,23 +200,24 @@ export function QuotaTimeline({
             </button>
           </div>
 
-          <div className={styles.modes} role="group">
-            {(['weekly', 'session'] as const).map((value) => (
-              <button
-                key={value}
-                type="button"
-                aria-pressed={mode === value}
-                onClick={() => {
-                  setMode(value);
-                  setOffset(0); // spans differ in size; an old offset means nothing
-                }}
-              >
-                {value === 'weekly'
-                  ? t('quota_management.windows_mode_weekly', { defaultValue: 'Weekly' })
-                  : t('quota_management.windows_mode_session', { defaultValue: '5-hour' })}
-              </button>
-            ))}
-          </div>
+          <SegmentedControl
+            className={styles.modes}
+            value={mode}
+            onChange={(value) => {
+              setMode(value);
+              setOffset(0); // spans differ in size; an old offset means nothing
+            }}
+            options={[
+              {
+                value: 'weekly',
+                label: t('quota_management.windows_mode_weekly', { defaultValue: 'Weekly' }),
+              },
+              {
+                value: 'session',
+                label: t('quota_management.windows_mode_session', { defaultValue: '5-hour' }),
+              },
+            ]}
+          />
         </div>
       </header>
 

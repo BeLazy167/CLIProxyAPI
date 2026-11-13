@@ -70,7 +70,7 @@ $lane-width: 210px;
       cursor: default;
     }
 
-    &[aria-pressed='true'] {
+    &[data-checked] {
       background: var(--floating-surface, var(--bg-primary));
       border-color: var(--border-hover);
       color: var(--text-primary);
