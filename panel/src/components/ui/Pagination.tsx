@@ -7,6 +7,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@ui-sdk/react/pagination';
+import { IconChevronLeft, IconChevronRight } from '@/components/ui/icons';
 
 export interface PaginationProps {
   page: number;
@@ -41,15 +42,17 @@ export function Pagination({
       <PaginationList className="pagination-list">
         {lead && <PaginationItem className="pagination-lead">{lead}</PaginationItem>}
         <PaginationItem>
-          <PaginationPrevious className="pagination-step">
-            {t('common.pagination_prev')}
+          <PaginationPrevious className="pagination-step" aria-label={t('common.pagination_prev')}>
+            <IconChevronLeft size={16} aria-hidden="true" />
           </PaginationPrevious>
         </PaginationItem>
         <PaginationItem className="pagination-info" aria-live="polite">
           {t('common.pagination_info', { current: page, total: totalPages, count: totalItems })}
         </PaginationItem>
         <PaginationItem>
-          <PaginationNext className="pagination-step">{t('common.pagination_next')}</PaginationNext>
+          <PaginationNext className="pagination-step" aria-label={t('common.pagination_next')}>
+            <IconChevronRight size={16} aria-hidden="true" />
+          </PaginationNext>
         </PaginationItem>
       </PaginationList>
     </SdkPagination>

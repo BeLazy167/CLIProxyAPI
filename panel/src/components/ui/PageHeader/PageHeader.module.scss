@@ -1,6 +1,6 @@
 @use '../../../styles/mixins' as *;
 
-/* 全站页头（Quota 页语汇）：紧排标题 / ▍mono 遥测 / 药丸动作。
+/* 全站页头：24px 标题 / 12px mono 遥测行 / 方形动作。
  * meta 语义：ok = 活数据（绿），attention = 失败色，warning = 琥珀，其余中性。 */
 
 .header {
@@ -14,16 +14,15 @@
 .copy {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 4px;
   min-width: 0;
 }
 
 .title {
   margin: 0;
-  font-size: clamp(26px, 3.2vw, 30px);
-  line-height: 1.15;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-size: var(--fs-page);
+  line-height: var(--lh-page);
+  font-weight: 400;
   color: var(--text-primary);
 }
 
@@ -33,21 +32,12 @@
   align-items: baseline;
   flex-wrap: wrap;
   gap: 4px 8px;
-  font-family: $font-mono;
-  font-size: var(--fs-base);
-  font-weight: 500;
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta);
+  line-height: var(--lh-meta);
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
   color: var(--text-secondary);
-
-  &::before {
-    content: '▍';
-    color: var(--viz-success);
-    font-size: 13px;
-    line-height: 1;
-    align-self: center;
-    margin-right: 1px;
-  }
 }
 
 .description {
@@ -59,7 +49,7 @@
 }
 
 .metaDot {
-  color: var(--text-quaternary);
+  color: var(--text-secondary);
   user-select: none;
 }
 
@@ -87,7 +77,7 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
