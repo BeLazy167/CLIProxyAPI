@@ -2,6 +2,8 @@
  * 全局样式
  */
 
+// Sass requires @use before any rule, so the layer order is a module used first.
+@use './layers.scss';
 @use './variables.scss' as *;
 @use './mixins.scss' as *;
 @use './reset.scss';
