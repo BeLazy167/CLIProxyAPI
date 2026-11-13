@@ -6,81 +6,60 @@
 $lane-width: 210px;
 
 .timeline {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-md;
-}
-
-.head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: $spacing-md;
-  flex-wrap: wrap;
-}
-
-.title {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 650;
-  color: var(--text-primary);
-}
-
-.range {
-  margin: 2px 0 0;
-  font-size: 12px;
-  color: var(--text-quaternary);
-  font-variant-numeric: tabular-nums;
-}
-
-.controls {
-  display: flex;
-  align-items: center;
-  gap: $spacing-sm;
-  flex-wrap: wrap;
+  gap: 0;
 }
 
 .nav,
 .modes {
   display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 3px;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-color);
-  border-radius: 999px;
+  align-items: stretch;
+  border: 1px solid var(--border-primary);
+  background: var(--bg-primary);
 
   button {
-    padding: 4px 12px;
-    font: inherit;
-    font-size: 12.5px;
-    color: var(--text-secondary);
+    min-height: 32px;
+    padding: 0 12px;
+    border: 0;
+    border-right: 1px solid var(--border-primary);
+    border-radius: 0;
     background: transparent;
-    border: 1px solid transparent;
-    border-radius: 999px;
+    color: var(--text-primary);
+    font: inherit;
     cursor: pointer;
-    transition: all $transition-fast;
+
+    &:last-child {
+      border-right: 0;
+    }
 
     &:hover:not(:disabled) {
-      color: var(--text-primary);
+      background: var(--bg-hover);
     }
 
     &:disabled {
-      opacity: 0.5;
+      color: var(--text-quaternary);
       cursor: default;
     }
 
     &[data-checked] {
-      background: var(--floating-surface, var(--bg-primary));
-      border-color: var(--border-hover);
-      color: var(--text-primary);
+      background: var(--text-primary);
+      color: var(--bg-primary);
+      font-weight: 600;
+    }
+
+    &:focus-visible {
+      outline: var(--focus-ring);
+      outline-offset: -2px;
+    }
+
+    @media (max-width: $breakpoint-mobile) {
+      min-height: 44px;
+      padding: 0 14px;
     }
   }
 }
 
 .chart {
   border: 1px solid var(--border-color);
-  border-radius: $radius-lg;
   background: var(--bg-primary);
   overflow: hidden;
 }
@@ -103,15 +82,13 @@ $lane-width: 210px;
 
 .axis {
   border-bottom: 1px solid var(--border-color);
+  background: var(--bg-band);
 }
 
 .axisLabel {
   padding: 8px 12px;
-  font-size: 10.5px;
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-quaternary);
+  color: var(--text-primary);
   display: flex;
   align-items: flex-end;
 }
@@ -136,20 +113,20 @@ $lane-width: 210px;
 
   // The current day is the reference point for reading the whole chart.
   &[data-today='1'] {
-    background: rgba(255, 255, 255, 0.03);
+    box-shadow: inset 0 -3px 0 var(--primary-color);
   }
 }
 
 .axisWeekday {
-  font-size: 10px;
-  color: var(--text-quaternary);
+  font-size: var(--fs-meta);
+  color: var(--text-secondary);
   min-height: 12px;
 }
 
 .axisDate {
-  font-size: 11.5px;
+  font-size: var(--fs-meta);
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -213,8 +190,8 @@ $lane-width: 210px;
 .laneLimit {
   padding: 1px 6px;
   border-radius: $radius-sm;
-  font-size: 10.5px;
-  color: var(--text-quaternary);
+  font-size: var(--fs-meta);
+  color: var(--text-secondary);
   background: var(--bg-tertiary);
 
   b {
@@ -340,9 +317,10 @@ $lane-width: 210px;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: $spacing-md;
-  font-size: 11px;
-  color: var(--text-quaternary);
+  gap: 8px 24px;
+  padding: 8px 0;
+  font-size: var(--fs-meta);
+  color: var(--text-secondary);
 }
 
 .legendItem {
@@ -377,9 +355,8 @@ $lane-width: 210px;
   background: var(--amber-color);
 }
 
-.legendNote {
-  flex: 1 1 320px;
-  min-width: 0;
+.scrollCue {
+  display: none;
 }
 
 @include mobile {
@@ -387,6 +364,17 @@ $lane-width: 210px;
   // chart scrolls horizontally rather than compressing to illegibility.
   .chart {
     overflow-x: auto;
+  }
+
+  .scrollCue {
+    display: block;
+    padding: 8px 0;
+    border: 1px solid var(--border-color);
+    border-bottom: 0;
+    padding-inline: 12px;
+    background: var(--bg-primary);
+    font-size: var(--fs-meta);
+    color: var(--text-secondary);
   }
 
   .axis,
