@@ -37,14 +37,12 @@ describe('log workspace layout contract', () => {
   });
 
   test('tabs use tablist semantics, live in the route query, and keep the viewer mounted', () => {
-    expect(page).toContain('role="tablist"');
-    expect(page).toContain('role="tab"');
+    // The shared Tabs wrapper renders the tablist, tab and tabpanel roles.
+    expect(page).toContain('<TabList');
+    expect(page).toContain('<Tab key={tab} value={tab}>');
     expect(page).toContain("searchParams.get('tab') === 'errors'");
-    expect(page).toContain("inert={activeTab !== 'logs'}");
+    expect(page).toContain('<TabPanel value="logs" keepMounted');
     expect(page).not.toContain("activeTab === 'logs' && (");
-    const hidden = styles.match(/\.panelHidden \{([^}]+)\}/)?.[1] ?? '';
-    expect(hidden).toContain('visibility: hidden');
-    expect(hidden).not.toContain('display: none');
   });
 
   test('quick filters, popovers and chips replace the modal filter panel', () => {
@@ -73,7 +71,7 @@ describe('log workspace layout contract', () => {
   });
 
   test('live pill replaces the timer icon and the footer no longer announces the clock', () => {
-    expect(page).toContain('aria-pressed={autoRefresh}');
+    expect(page).toMatch(/<Toggle\s+className=\{\[styles\.livePill[^]*?pressed=\{autoRefresh\}/);
     expect(page).toContain("t('logs.read_status_retrying', { seconds: retrySeconds })");
     expect(page).not.toContain('IconTimer');
     expect(page).toContain('<footer className={styles.statusBar}>');

@@ -31,58 +31,17 @@
   }
 }
 
-/* ---------- tabs ---------- */
-
-.tabs {
-  display: flex;
-  align-items: stretch;
-  gap: 2px;
-  min-width: 0;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.tab {
-  @include button-reset;
-  position: relative;
-  padding: 8px 12px 11px;
-  border-radius: 8px 8px 0 0;
-  font-size: 13px;
-  font-weight: 550;
-  color: var(--text-secondary);
-  white-space: nowrap;
-  cursor: pointer;
-
-  &::after {
-    content: '';
-    position: absolute;
-    left: 10px;
-    right: 10px;
-    bottom: -1px;
-    height: 2px;
-    border-radius: 999px;
-    background: transparent;
-  }
-
-  &:hover {
-    color: var(--text-primary);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--primary-color);
-    outline-offset: -2px;
-  }
-}
-
-.tabActive {
-  color: var(--text-primary);
-  font-weight: 650;
-
-  &::after {
-    background: var(--text-primary);
-  }
-}
-
 /* ---------- panels ---------- */
+
+/* The tabs root sits between the page column and the panels, so it passes the height down. */
+.tabsRoot {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  min-height: 0;
+}
 
 .content {
   position: relative;
@@ -99,14 +58,6 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-}
-
-/* Hidden, not unmounted: the viewer keeps its scroll position across tab switches. */
-.panelHidden {
-  position: absolute;
-  inset: 0;
-  visibility: hidden;
-  pointer-events: none;
 }
 
 .logCard,
@@ -188,6 +139,7 @@
 .segment {
   display: inline-flex;
   padding: 2px;
+  border: 0;
   border-radius: 999px;
   background: var(--bg-tertiary);
 }
@@ -216,7 +168,7 @@
   }
 }
 
-.segmentActive {
+.segmentItem[data-checked] {
   color: var(--text-primary);
   background: var(--bg-primary);
   box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
@@ -228,13 +180,9 @@
   font-variant-numeric: tabular-nums;
   color: var(--text-tertiary);
 
-  .segmentActive & {
+  [data-checked] > & {
     color: var(--text-secondary);
   }
-}
-
-.popover {
-  position: relative;
 }
 
 .popoverBadge {
@@ -250,10 +198,6 @@
 }
 
 .popoverPanel {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  z-index: 20;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -264,17 +208,6 @@
   border-radius: var(--radius-lg);
   background: var(--bg-primary);
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.12);
-
-  &[role='menu'] {
-    gap: 2px;
-    min-width: 220px;
-    padding: 6px;
-  }
-}
-
-.popoverEnd {
-  left: auto;
-  right: 0;
 }
 
 .filterGroup {
@@ -329,7 +262,7 @@
   }
 }
 
-.filterChipActive {
+.filterChip[data-pressed] {
   border-color: var(--primary-color);
   color: var(--primary-color);
   background: color-mix(in srgb, var(--primary-color) 10%, transparent);
@@ -355,46 +288,6 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-}
-
-.menuItem {
-  @include button-reset;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 7px 10px;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  color: var(--text-primary);
-  text-align: left;
-  cursor: pointer;
-
-  &:hover:not(:disabled),
-  &:focus-visible {
-    background: var(--bg-tertiary);
-    outline: none;
-  }
-
-  &:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
-}
-
-.menuItemDanger {
-  color: var(--danger-text);
-
-  &:hover:not(:disabled),
-  &:focus-visible {
-    background: var(--danger-bg);
-  }
-}
-
-.menuSeparator {
-  height: 1px;
-  margin: 4px 0;
-  background: var(--border-color);
 }
 
 /* Live / Paused / Retrying pill driven by request health. */
