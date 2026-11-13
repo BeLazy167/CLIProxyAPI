@@ -33,6 +33,7 @@ import type { TimelineLane, TimelineMode } from '../quotaTimelineModel';
 import type { QuotaFileEntry } from '../logic';
 import type { QuotaCardState } from '../providers';
 import { QuotaSection } from './QuotaSection';
+import { remainingTone } from './quotaTone';
 import styles from './QuotaTimeline.module.scss';
 
 const WEEKDAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
@@ -407,7 +408,13 @@ function Lane({ lane, span, now, mode, cells, nowPercent, resolvedTheme }: LaneP
             return (
               <div
                 key={window.startMs}
-                className={`${styles.window} ${styles[`window${capitalize(window.state)}`]}`}
+                className={[
+                  styles.window,
+                  styles[`window${capitalize(window.state)}`],
+                  window.remaining !== null && remainingTone(window.remaining) === 'low'
+                    ? styles.windowLow
+                    : '',
+                ].join(' ')}
                 style={{ left: `${window.leftPercent}%`, width: `${window.widthPercent}%` }}
                 title={`${lane.displayName}\n${formatDay(window.startMs)} ${formatTime(
                   window.startMs
