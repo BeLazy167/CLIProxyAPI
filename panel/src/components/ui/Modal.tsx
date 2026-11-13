@@ -8,6 +8,7 @@ import {
 } from '@ui-sdk/react/alert-dialog';
 import { Dialog, DialogClose, DialogContent, DialogTitle } from '@ui-sdk/react/dialog';
 import { IconX } from './icons';
+import { useScrollLock } from './scrollLock';
 
 interface ModalProps {
   open: boolean;
@@ -37,6 +38,7 @@ export function Modal({
   children,
 }: PropsWithChildren<ModalProps>) {
   const { t } = useTranslation();
+  useScrollLock(open);
   const Content = alert ? AlertDialogContent : DialogContent;
   const Title = alert ? AlertDialogTitle : DialogTitle;
   const Close = alert ? AlertDialogClose : DialogClose;

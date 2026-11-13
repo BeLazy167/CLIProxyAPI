@@ -44,8 +44,7 @@ body.modal-open {
   overflow: hidden;
 }
 
-body.modal-open .content,
-body:has([aria-modal='true'][data-open]) .content {
+body.modal-open .content {
   overflow: hidden;
 }
 

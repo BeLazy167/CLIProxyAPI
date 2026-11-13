@@ -9,6 +9,7 @@ import {
   DrawerTitle,
 } from '@ui-sdk/react/drawer';
 import { IconX } from '../icons';
+import { useScrollLock } from '../scrollLock';
 import styles from './Sheet.module.scss';
 
 export type SheetSize = 'md' | 'lg' | 'xl';
@@ -52,6 +53,7 @@ export function Sheet({
   children,
 }: PropsWithChildren<SheetProps>) {
   const { t } = useTranslation();
+  useScrollLock(open);
   const confirming = useRef(false);
 
   const requestClose = async () => {

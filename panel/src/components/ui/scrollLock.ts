@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 const MODAL_LOCK_CLASS = 'modal-open';
 
 let activeLockCount = 0;
@@ -85,11 +87,12 @@ export function unlockScroll(): void {
   }
 }
 
-export const FOCUSABLE_SELECTOR = [
-  'a[href]',
-  'button:not([disabled])',
-  'input:not([disabled])',
-  'select:not([disabled])',
-  'textarea:not([disabled])',
-  '[tabindex]:not([tabindex="-1"])',
-].join(',');
+
+/** Locks the page, including the app's own scroll container, while a modal is open. */
+export function useScrollLock(locked: boolean): void {
+  useEffect(() => {
+    if (!locked) return;
+    lockScroll();
+    return () => unlockScroll();
+  }, [locked]);
+}
