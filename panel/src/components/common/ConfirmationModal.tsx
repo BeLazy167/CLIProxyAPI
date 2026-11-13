@@ -18,7 +18,8 @@ export function ConfirmationModal() {
     if (!isOpen) setError(null);
   }, [isOpen]);
 
-  if (!isOpen || !options) {
+  // Options stay after closing, so the dialog can animate out and return focus to its opener.
+  if (!options) {
     return null;
   }
 
@@ -58,6 +59,7 @@ export function ConfirmationModal() {
 
   return (
     <Modal
+      alert
       open={isOpen}
       onClose={handleCancel}
       title={title}

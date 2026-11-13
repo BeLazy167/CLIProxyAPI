@@ -313,149 +313,94 @@ textarea {
   animation: spin 0.8s linear infinite;
 }
 
-.modal-overlay {
+.modal {
+  box-sizing: border-box;
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.35);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: $z-modal;
-  padding: $spacing-lg;
-
-  &.modal-overlay-entering {
-    animation: modal-overlay-fade-in var(--dur-hover, 200ms) var(--ease-out-strong, ease-out)
-      forwards;
-  }
-
-  &.modal-overlay-closing {
-    animation: modal-overlay-fade-out var(--dur-press, 160ms) ease-in forwards;
-  }
-}
-
-@keyframes modal-overlay-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes modal-overlay-fade-out {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
-.modal {
-  background: var(--bg-primary);
-  border-radius: $radius-lg;
-  border: 1px solid var(--border-color);
-  box-shadow: $shadow-lg;
-  max-width: 100%;
-  max-height: 90vh;
-  overflow: hidden;
+  margin: auto;
+  height: fit-content;
+  max-height: calc(100dvh - 32px);
+  padding: 0;
   display: flex;
   flex-direction: column;
-  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.35);
+  transition:
+    opacity var(--dur-hover, 200ms) var(--ease-out-strong, ease-out),
+    translate var(--dur-hover, 200ms) var(--ease-out-strong, ease-out);
 
-  &.modal-entering {
-    animation: modal-rise-in var(--dur-hover, 200ms) var(--ease-out-strong, ease-out) forwards;
+  &::backdrop {
+    background: var(--overlay-color);
+    transition: opacity var(--dur-hover, 200ms) ease-out;
   }
 
-  &.modal-closing {
-    animation: modal-fade-out var(--dur-press, 160ms) ease-in forwards;
-  }
-}
-
-@keyframes modal-rise-in {
-  from {
+  &[data-starting-style],
+  &[data-ending-style] {
     opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+    translate: 0 6px;
 
-@keyframes modal-fade-out {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
+    &::backdrop {
+      opacity: 0;
+    }
   }
 }
 
 .modal-close-floating {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 32px;
-  height: 32px;
+  top: 8px;
+  right: 8px;
+  width: 40px;
+  height: 40px;
   padding: 0;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  color: var(--text-secondary);
-  cursor: pointer;
-  border-radius: $radius-full;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition:
-    color 0.15s ease,
-    background-color 0.15s ease,
-    transform 0.15s ease;
-  z-index: 10;
-
-  svg {
-    display: block;
-  }
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  z-index: 1;
 
   &:hover {
-    color: var(--text-primary);
-    background: var(--bg-tertiary);
-    transform: scale(1.1);
-  }
-
-  &:active {
-    transform: scale(0.95);
+    background: var(--bg-hover);
   }
 
   &:disabled {
     cursor: not-allowed;
-    opacity: 0.6;
-    transform: none;
+    color: var(--text-quaternary);
+    background: transparent;
   }
 
-  &:disabled:hover {
-    color: var(--text-secondary);
-    background: var(--bg-secondary);
-    transform: none;
+  svg {
+    display: block;
   }
 }
 
 .modal-header {
   display: flex;
   align-items: center;
-  padding: $spacing-md $spacing-lg;
-  border-bottom: 1px solid var(--border-color);
+  min-height: 56px;
+  padding: 16px 56px 0 16px;
 
   .modal-title {
     margin: 0;
-    font-weight: 700;
-    font-size: 18px;
+    font-size: 20px;
+    line-height: 28px;
+    font-weight: 400;
     color: var(--text-primary);
   }
 }
 
 .modal-body {
-  padding: $spacing-lg;
+  padding: 16px;
   overflow: auto;
   max-height: 65vh;
 }
@@ -471,54 +416,27 @@ textarea {
 }
 
 .modal-footer {
-  padding: $spacing-md $spacing-lg;
-  border-top: 1px solid var(--border-color);
   display: flex;
   justify-content: flex-end;
-  gap: $spacing-sm;
+  gap: 8px;
+  padding: 16px;
+  border-top: 1px solid var(--border-color);
   background: var(--bg-primary);
 }
 
 @media (max-width: $breakpoint-mobile) {
-  .modal-overlay {
-    padding: $spacing-md;
-  }
-
-  .modal {
-    max-height: calc(100vh - #{$spacing-md * 2});
-    border-radius: $radius-md;
-  }
-
-  @supports (height: 100dvh) {
-    .modal {
-      max-height: calc(100dvh - #{$spacing-md * 2});
-    }
-  }
-
-  .modal-header {
-    padding: $spacing-md;
-    padding-right: 52px;
-  }
-
   .modal-body {
-    padding: $spacing-md;
-    max-height: min(60vh, calc(100vh - 180px));
-  }
-
-  @supports (height: 100dvh) {
-    .modal-body {
-      max-height: min(60dvh, calc(100dvh - 180px));
-    }
+    max-height: min(60dvh, calc(100dvh - 180px));
   }
 
   .modal-footer {
-    padding: $spacing-md;
     flex-direction: column-reverse;
     align-items: stretch;
   }
 
   .modal-footer .btn {
     width: 100%;
+    min-height: 48px;
   }
 }
 
