@@ -449,7 +449,6 @@ export function QuotaPage() {
                 options={sortOptions}
                 onChange={handleSortModeChange}
                 ariaLabel={t('quota_management.sort_label')}
-                size="sm"
               />
             </div>
             <div className={styles.control}>
@@ -465,7 +464,6 @@ export function QuotaPage() {
                 options={viewOptions}
                 onChange={handleViewChange}
                 ariaLabel={t('quota_management.view_label')}
-                size="sm"
               />
             </div>
           </div>

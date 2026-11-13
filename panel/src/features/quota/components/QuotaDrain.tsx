@@ -164,7 +164,6 @@ export function QuotaDrain({ pools, now, resolvedTheme, nameOf }: QuotaDrainProp
               options={usageOptions}
               onChange={(value) => setUsage(value as FutureUsage)}
               ariaLabel={t('quota_management.drain_usage_label')}
-              size="sm"
             />
           </div>
 
