@@ -13,16 +13,16 @@
 
   :global(.form-group > label) {
     color: var(--text-secondary);
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.02em;
+    font-size: var(--fs-meta);
+    font-weight: 400;
+    letter-spacing: 0.32px;
   }
 
   :global(.input) {
-    min-height: 42px;
-    border-radius: 10px;
+    min-height: 40px;
+    border-radius: 0;
     background: var(--bg-secondary);
-    border-color: var(--border-color);
+    border-color: transparent transparent var(--border-primary);
     box-shadow: none;
     transition:
       border-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out),
@@ -31,13 +31,19 @@
   }
 
   :global(.input:focus) {
-    background: var(--bg-primary);
-    border-color: var(--text-primary);
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--text-primary) 12%, transparent);
+    outline: 2px solid var(--focus-color);
+    outline-offset: -2px;
+    box-shadow: none;
   }
 
   :global(textarea.input) {
     min-height: 112px;
+  }
+
+  @include mobile {
+    :global(.input) {
+      min-height: 48px;
+    }
   }
 
   :global(.input-wrap:has(.input-right) > .input) {
@@ -51,7 +57,7 @@
   }
 
   :global(.error-box) {
-    border-radius: 10px;
+    border-radius: 0;
   }
 
   :global(.item-list) {
@@ -60,7 +66,7 @@
   }
 
   :global(.item-row) {
-    border-radius: 10px;
+    border-radius: 0;
     padding: 12px;
     background: transparent;
     border-color: var(--border-color);
@@ -76,7 +82,7 @@
 
   :global(.pill) {
     border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: 0;
     background: transparent;
     color: var(--text-secondary);
   }
@@ -93,7 +99,7 @@
   padding: 10px 12px;
   border: 1px solid var(--border-color);
   border-left-width: 3px;
-  border-radius: 10px;
+  border-radius: 0;
   background: transparent;
   transition:
     border-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out),
@@ -227,15 +233,7 @@
 }
 
 .restartPill {
-  display: inline-flex;
-  align-items: center;
-  padding: 1px 7px;
-  border: 1px solid var(--amber-30);
-  border-radius: $radius-full;
-  background: var(--amber-10);
-  color: var(--amber-text);
-  font-weight: 650;
-  letter-spacing: 0.02em;
+  @include tag(var(--warning-text));
 }
 
 .dirtyMeta {
@@ -254,7 +252,7 @@
   width: 6px;
   height: 6px;
   margin-right: 5px;
-  border-radius: $radius-full;
+  border-radius: 0;
   background: var(--amber-color);
   vertical-align: 1px;
 }
@@ -262,7 +260,7 @@
 .resetButton {
   @include button-reset;
   padding: 1px 6px;
-  border-radius: 6px;
+  border-radius: 0;
   color: var(--text-secondary);
   font-family: inherit;
   font-size: 11px;
@@ -302,17 +300,17 @@
   align-items: center;
   gap: 4px;
   padding: 1px 5px;
-  border: 1px solid var(--amber-30);
-  border-radius: 5px;
-  background: var(--amber-10);
-  color: var(--amber-text);
+  border: 1px solid var(--warning-border);
+  border-radius: 0;
+  background: transparent;
+  color: var(--warning-text);
   font-weight: 600;
   text-decoration: none;
   vertical-align: baseline;
   transition: background-color 0.15s ease;
 
   &:hover {
-    background: var(--amber-30);
+    background: var(--bg-hover);
     text-decoration: none;
   }
 }
@@ -324,7 +322,7 @@
 }
 
 .fieldHighlightActive {
-  border-radius: 10px;
+  border-radius: 0;
   animation: config-field-highlight 1.8s ease-out;
 }
 
@@ -348,7 +346,7 @@
   gap: 12px;
   padding: 16px;
   border: 1px solid var(--border-color);
-  border-radius: 10px;
+  border-radius: 0;
   background: transparent;
 }
 
@@ -429,7 +427,7 @@
   justify-content: center;
   width: 28px;
   height: 28px;
-  border-radius: 7px;
+  border-radius: 0;
   color: var(--text-tertiary);
 
   &:hover {
@@ -458,7 +456,7 @@
   min-height: 22px;
   padding: 0 7px;
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: 0;
   background: var(--bg-primary);
   color: var(--text-secondary);
   font-size: 11px;
@@ -476,7 +474,7 @@
   min-height: 24px;
   padding: 0 8px;
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: 0;
   background: var(--bg-primary);
   color: var(--text-secondary);
   font-size: 11px;

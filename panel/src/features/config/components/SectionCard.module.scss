@@ -10,8 +10,8 @@
   box-sizing: border-box;
   padding: clamp(20px, 2.4vw, 28px);
   border: 1px solid var(--border-color);
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--bg-primary) 82%, transparent);
+  border-radius: 0;
+  background: var(--bg-primary);
 
   @include mobile {
     gap: 14px;
@@ -61,7 +61,7 @@
   height: 28px;
   padding: 0 8px;
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 0;
   color: var(--text-secondary);
   font-family: $font-mono;
   font-size: 11px;
@@ -76,7 +76,7 @@
   justify-content: center;
   width: 28px;
   height: 28px;
-  border-radius: 8px;
+  border-radius: 0;
   color: var(--text-secondary);
   flex: 0 0 auto;
 }

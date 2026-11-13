@@ -19,13 +19,11 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 8px 16px;
-  padding: 10px 14px;
-  border-radius: 16px;
-  --glass-blur: 14px;
-  border: 1px solid var(--glass-border);
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-backdrop-filter);
-  box-shadow: var(--shadow-lg);
+  padding: 8px 8px 8px 16px;
+  border-radius: 0;
+  border: 1px solid var(--border-color);
+  background: var(--floating-surface);
+  box-shadow: var(--floating-shadow);
 }
 
 /* 状态文案：mono 遥测 + 色点（finding 24） */
@@ -59,7 +57,7 @@
   width: 7px;
   height: 7px;
   margin-top: 5px;
-  border-radius: $radius-full;
+  border-radius: 0;
   background: currentColor;
 }
 
@@ -68,18 +66,19 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  border: 1px solid color-mix(in srgb, var(--viz-failure) 40%, transparent);
+  border: 1px solid var(--danger-border);
   cursor: pointer;
-  background: color-mix(in srgb, var(--viz-failure) 10%, transparent);
-  color: var(--viz-failure);
-  border-radius: $radius-full;
-  padding: 8px 12px;
-  font-size: 12.5px;
+  background: transparent;
+  color: var(--danger-text);
+  border-radius: 0;
+  min-height: 40px;
+  padding: 0 12px;
+  font-size: var(--fs-body);
   font-weight: 600;
   line-height: 1;
 
   &:hover {
-    background: color-mix(in srgb, var(--viz-failure) 16%, transparent);
+    background: var(--bg-hover);
   }
 
   &:focus-visible {
@@ -119,12 +118,13 @@
   gap: 7px;
   border: 0;
   cursor: pointer;
-  background: var(--text-primary);
-  color: var(--bg-secondary);
-  border-radius: $radius-full;
-  padding: 9px 16px;
-  font-size: 13px;
-  font-weight: 600;
+  background: var(--primary-color);
+  color: var(--primary-contrast);
+  border-radius: 0;
+  min-height: 40px;
+  padding: 0 16px;
+  font-size: var(--fs-body);
+  font-weight: 500;
   line-height: 1;
   transition:
     transform var(--dur-press, 160ms) var(--ease-out-strong, ease-out),
@@ -148,9 +148,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   .savePill:hover:not(:disabled) {
-    transform: translateY(-1px);
-    background: color-mix(in srgb, var(--text-primary) 86%, var(--bg-secondary));
-    box-shadow: 0 12px 26px color-mix(in srgb, var(--text-primary) 22%, transparent);
+    background: var(--primary-hover);
   }
 }
 
@@ -163,7 +161,7 @@
   cursor: pointer;
   background: none;
   color: var(--text-secondary);
-  border-radius: $radius-full;
+  border-radius: 0;
   padding: 9px 12px;
   font-size: 12.5px;
   font-weight: 550;
