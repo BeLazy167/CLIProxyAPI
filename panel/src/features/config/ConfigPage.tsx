@@ -5,6 +5,7 @@ import { usePageTransitionLayer } from '@/components/common/PageTransitionLayer'
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorBanner } from '@/components/ui/ErrorBanner';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { TabPanel, Tabs } from '@/components/ui/Tabs';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useRevealGroup } from '@/hooks/motion';
 import { useUnsavedChangesGuard } from '@/hooks/useUnsavedChangesGuard';
@@ -16,8 +17,6 @@ import {
   CONFIG_SECTION_STORAGE_KEY,
   FIELD_VALUE_KEYS,
   LEGACY_EDITOR_MODE_STORAGE_KEY,
-  configPanelDomId,
-  configTabDomId,
   type ConfigEditorMode,
   type ConfigTabId,
 } from './constants';
@@ -448,15 +447,19 @@ export function ConfigPage() {
     if (showSkeleton) {
       return (
         <div className={styles.skeletonStack} aria-busy="true">
-          <Skeleton height={44} rounded={12} />
-          <Skeleton height={220} rounded={14} />
-          <Skeleton height={160} rounded={14} />
+          <Skeleton height={44} />
+          <Skeleton height={220} />
+          <Skeleton height={160} />
         </div>
       );
     }
     if (doc.error && !doc.content) return null;
     return (
-      <>
+      <Tabs
+        className={styles.tabsRoot}
+        value={activeSection}
+        onChange={(id) => handleSectionChange(id as ConfigTabId)}
+      >
         <div className={styles.chrome} data-reveal>
           <div className={styles.toolbar}>
             {mode === 'visual' ? (
@@ -483,21 +486,15 @@ export function ConfigPage() {
                 dirtyTabs={dirtyTabs}
                 warningTabs={warningTabs}
                 disabled={doc.saving || doc.loading}
-                onChange={handleSectionChange}
               />
             </div>
           ) : null}
         </div>
 
         {mode === 'visual' ? (
-          <div
-            className={styles.panel}
-            role="tabpanel"
-            id={configPanelDomId(activeSection)}
-            aria-labelledby={configTabDomId(activeSection)}
-          >
+          <TabPanel value={activeSection} className={styles.panel}>
             {renderActiveSection()}
-          </div>
+          </TabPanel>
         ) : (
           <SourcePanel
             search={sourceSearch}
@@ -507,7 +504,7 @@ export function ConfigPage() {
             editable={!disableControls && !doc.loading && !doc.saving && !doc.diffModalOpen}
           />
         )}
-      </>
+      </Tabs>
     );
   };
 

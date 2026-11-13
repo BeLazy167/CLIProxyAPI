@@ -1,7 +1,7 @@
 export function shouldExitLogFullscreen(
   event: Pick<KeyboardEvent, 'key' | 'defaultPrevented'>,
-  hasOpenModal: boolean
+  hasOpenPopup: boolean
 ): boolean {
   // Nested controls (for example Select) get first refusal on Escape.
-  return event.key === 'Escape' && !event.defaultPrevented && !hasOpenModal;
+  return event.key === 'Escape' && !event.defaultPrevented && !hasOpenPopup;
 }

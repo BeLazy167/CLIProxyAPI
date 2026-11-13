@@ -1,8 +1,14 @@
-import { useId, useRef, type PropsWithChildren, type ReactNode, type RefObject } from 'react';
-import { createPortal } from 'react-dom';
+import type { PropsWithChildren, ReactNode, RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  AlertDialog,
+  AlertDialogClose,
+  AlertDialogContent,
+  AlertDialogTitle,
+} from '@ui-sdk/react/alert-dialog';
+import { Dialog, DialogClose, DialogContent, DialogTitle } from '@ui-sdk/react/dialog';
 import { IconX } from './icons';
-import { useDialog } from './useDialog';
+import { useScrollLock } from './scrollLock';
 
 interface ModalProps {
   open: boolean;
@@ -12,14 +18,11 @@ interface ModalProps {
   width?: number | string;
   className?: string;
   closeDisabled?: boolean;
-  /** 打开时聚焦的元素（如危险确认框聚焦「取消」）。 */
   initialFocusRef?: RefObject<HTMLElement | null>;
-  /** 点击遮罩关闭，默认关闭（表单类对话框不希望误触）。 */
   closeOnOverlayClick?: boolean;
+  /** A question that needs an answer: an alert dialog, which never closes on an outside press. */
+  alert?: boolean;
 }
-
-// 与 components.scss 的 modal-fade-out 时长一致
-const CLOSE_ANIMATION_DURATION = 160;
 
 export function Modal({
   open,
@@ -31,69 +34,48 @@ export function Modal({
   closeDisabled = false,
   initialFocusRef,
   closeOnOverlayClick = false,
+  alert = false,
   children,
 }: PropsWithChildren<ModalProps>) {
   const { t } = useTranslation();
-  const titleId = useId();
-  const modalRef = useRef<HTMLDivElement | null>(null);
-  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
-
-  const { isVisible, isClosing, handleClose } = useDialog({
+  useScrollLock(open);
+  const Content = alert ? AlertDialogContent : DialogContent;
+  const Title = alert ? AlertDialogTitle : DialogTitle;
+  const Close = alert ? AlertDialogClose : DialogClose;
+  const root = {
     open,
-    onClose,
-    containerRef: modalRef,
-    initialFocusRef,
-    fallbackFocusRef: closeButtonRef,
-    closeDisabled,
-    closeDuration: CLOSE_ANIMATION_DURATION,
-  });
+    dismissible: !closeDisabled,
+    onOpenChange: (next: boolean) => {
+      if (!next) onClose();
+    },
+  };
 
-  if (!open && !isVisible) return null;
-
-  const overlayClass = `modal-overlay ${isClosing ? 'modal-overlay-closing' : 'modal-overlay-entering'}`;
-  const modalClass = `modal ${isClosing ? 'modal-closing' : 'modal-entering'}${className ? ` ${className}` : ''}`;
-
-  const modalContent = (
-    <div
-      className={overlayClass}
-      onMouseDown={(event) => {
-        if (!closeOnOverlayClick || closeDisabled) return;
-        if (event.target === event.currentTarget) void handleClose();
-      }}
+  const content = (
+    <Content
+      className={['modal', className].filter(Boolean).join(' ')}
+      style={{ width, maxWidth: 'calc(100vw - 32px)' }}
+      initialFocus={initialFocusRef ? () => initialFocusRef.current : undefined}
     >
-      <div
-        ref={modalRef}
-        className={modalClass}
-        style={{ width, maxWidth: '100%' }}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={title ? titleId : undefined}
-        tabIndex={-1}
+      <Close
+        className="modal-close-floating"
+        aria-label={t('common.close')}
+        disabled={closeDisabled}
       >
-        <button
-          ref={closeButtonRef}
-          type="button"
-          className="modal-close-floating"
-          onClick={closeDisabled ? undefined : () => void handleClose()}
-          aria-label={t('common.close')}
-          disabled={closeDisabled}
-        >
-          <IconX size={20} />
-        </button>
-        <div className="modal-header">
-          <h2 className="modal-title" id={title ? titleId : undefined}>
-            {title}
-          </h2>
-        </div>
-        <div className="modal-body">{children}</div>
-        {footer && <div className="modal-footer">{footer}</div>}
+        <IconX size={20} />
+      </Close>
+      <div className="modal-header">
+        {title ? <Title className="modal-title">{title}</Title> : null}
       </div>
-    </div>
+      <div className="modal-body">{children}</div>
+      {footer && <div className="modal-footer">{footer}</div>}
+    </Content>
   );
 
-  if (typeof document === 'undefined') {
-    return modalContent;
-  }
-
-  return createPortal(modalContent, document.body);
+  return alert ? (
+    <AlertDialog {...root}>{content}</AlertDialog>
+  ) : (
+    <Dialog {...root} closeOnOutsidePress={closeOnOverlayClick && !closeDisabled}>
+      {content}
+    </Dialog>
+  );
 }

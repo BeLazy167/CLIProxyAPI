@@ -1,86 +1,79 @@
-@use '../../../styles/mixins' as *;
 @use '../../../styles/variables' as *;
 
 .root {
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   background: var(--bg-primary);
   overflow: hidden;
 }
 
 .summary {
-  list-style: none;
-  cursor: pointer;
-  padding: 10px 14px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
   user-select: none;
 
-  &::-webkit-details-marker {
-    display: none;
-  }
-
   &:hover {
-    background: color-mix(in srgb, var(--accent-bg) 35%, transparent);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--primary-color);
-    outline-offset: -2px;
+    background: var(--bg-hover);
   }
 }
 
 .summaryLabel {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex: 1;
   min-width: 0;
 }
 
 .summaryHint {
-  font-size: 12px;
-  color: var(--muted-foreground);
+  font-size: var(--fs-meta);
+  color: var(--text-secondary);
   font-weight: 400;
 }
 
-/* 摘要行徽章槽（可选）与错误圆点（可选）：默认不渲染，不影响既有消费者 */
 .badge {
   flex-shrink: 0;
   font-family: $font-mono;
-  font-size: 11px;
-  font-weight: 650;
+  font-size: var(--fs-meta);
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--amber-text);
 }
 
 .errorDot {
   flex-shrink: 0;
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
-  background: var(--viz-failure);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--error-color);
 }
 
 .chevron {
-  width: 16px;
-  height: 16px;
-  color: var(--muted-foreground);
-  transition: transform var(--dur-hover, 200ms) var(--ease-out-strong, ease-out);
+  display: inline-flex;
   flex-shrink: 0;
+  color: var(--text-secondary);
+  transition: transform var(--dur-hover, 200ms) var(--ease-out-strong, ease-out);
 
-  .root[open] & {
+  [data-open] > & {
     transform: rotate(180deg);
   }
 }
 
 .content {
-  padding: 14px;
+  padding: 16px;
   border-top: 1px solid var(--border-color);
 }
 
@@ -89,44 +82,11 @@
   border-top: 1px solid var(--border-color);
 }
 
-/* 展开时内容 160ms 淡入。只做透明度、不做高度动画 ——
-   与程序化 details.open = true（搜索跳转强制展开）不会互相打架。 */
-.root[open] > .content,
-.root[open] > .contentFlush {
-  animation: collapsible-content-in var(--dur-press, 160ms) var(--ease-out-strong, ease-out);
-}
+.content,
+.contentFlush {
+  transition: opacity var(--dur-press, 160ms) var(--ease-out-strong, ease-out);
 
-@keyframes collapsible-content-in {
-  from {
+  &[data-starting-style] {
     opacity: 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  /* 摘要行徽章槽（可选）与错误圆点（可选）：默认不渲染，不影响既有消费者 */
-.badge {
-  flex-shrink: 0;
-  font-family: $font-mono;
-  font-size: 11px;
-  font-weight: 650;
-  font-variant-numeric: tabular-nums;
-  color: var(--amber-text);
-}
-
-.errorDot {
-  flex-shrink: 0;
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
-  background: var(--viz-failure);
-}
-
-.chevron {
-    transition: none;
-  }
-
-  .root[open] > .content,
-  .root[open] > .contentFlush {
-    animation: none;
   }
 }

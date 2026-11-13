@@ -250,11 +250,9 @@ export function BatchActionBar(props: BatchActionBarProps) {
           >
             {t('common.delete')}
           </Button>
-          <OverflowMenu
-            className={styles.mobileOnly}
-            items={mobileMenuItems}
-            label={t('auth_files.more_actions')}
-          />
+          <span className={styles.mobileOnly}>
+            <OverflowMenu items={mobileMenuItems} label={t('auth_files.more_actions')} />
+          </span>
         </div>
       </div>
     </div>,

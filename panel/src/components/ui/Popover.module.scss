@@ -1,0 +1,17 @@
+:where(.content) {
+  width: max-content;
+  box-sizing: border-box;
+  max-width: calc(100vw - 16px);
+  max-height: var(--available-height);
+  margin: 0;
+  padding: 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--border-primary);
+  background: var(--floating-surface);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  box-shadow: var(--floating-shadow);
+}

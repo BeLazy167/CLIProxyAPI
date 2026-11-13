@@ -25,6 +25,7 @@ import { QUOTA_ADAPTERS, type QuotaCardState } from '../providers';
 import { isQuotaRefreshDisabled, type QuotaFileEntry } from '../logic';
 import { useClaudeResetGrants } from '../providers/claude/ClaudeResetGrants';
 import { ClaudeResetGroups } from '../providers/claude/ClaudeResetGroups';
+import resetStyles from '../providers/claude/ClaudeResetGroups.module.scss';
 import bodyStyles from './QuotaBody.module.scss';
 import styles from './QuotaCard.module.scss';
 
@@ -121,7 +122,9 @@ export function QuotaCard(props: QuotaCardProps) {
         {entry.type === 'claude' && status === 'success' && (
           <div className={quotaClasses.codexResetCredits}>
             <div className={quotaClasses.codexResetCreditsTitle}>{t('claude_reset.remaining')}</div>
-            <ClaudeResetGroups reset={claudeReset} now={now} />
+            <div className={resetStyles.lines}>
+              <ClaudeResetGroups reset={claudeReset} now={now} suggestedKind={null} />
+            </div>
           </div>
         )}
         {status === 'idle' ? (

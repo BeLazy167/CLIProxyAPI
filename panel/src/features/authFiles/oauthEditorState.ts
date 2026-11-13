@@ -1,3 +1,4 @@
+import { hasOpenPopup } from '@/components/ui/popupState';
 import { normalizeProviderKey } from './constants';
 
 type ModelAliasDraftEntry = {
@@ -42,10 +43,12 @@ export const isOAuthEditorDirty = (
   normalizeProviderKey(initialProvider) !== normalizeProviderKey(currentProvider) ||
   baselineContentSignature !== currentContentSignature;
 
+const TYPING_TARGETS = 'input, select, textarea, [contenteditable=""], [contenteditable="true"]';
+
 /**
  * Both OAuth editor pages bind Escape on `window` to go back. That must not
- * fire while the user is typing in a field or has a picker/menu/dialog open:
- * those own Escape themselves (close the popover, clear the input).
+ * fire while the user is typing in a field or has a popup open (a suggestion
+ * list, menu, select or dialog): those own Escape themselves.
  */
 export const shouldIgnoreEditorEscape = (event: {
   defaultPrevented?: boolean;
@@ -54,10 +57,6 @@ export const shouldIgnoreEditorEscape = (event: {
   if (event.defaultPrevented) return true;
   const target = event.target;
   if (!target || typeof (target as Element).closest !== 'function') return false;
-  return Boolean(
-    (target as Element).closest(
-      'input, select, textarea, [contenteditable=""], [contenteditable="true"], ' +
-        '[role="listbox"], [role="menu"], [role="dialog"], [aria-expanded="true"]'
-    )
-  );
+  const element = target as Element;
+  return hasOpenPopup(element.ownerDocument) || Boolean(element.closest(TYPING_TARGETS));
 };

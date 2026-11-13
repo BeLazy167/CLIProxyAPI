@@ -7,6 +7,7 @@ import { ErrorBanner } from '@/components/ui/ErrorBanner';
 import { Input } from '@/components/ui/Input';
 import { PageHeader, type PageHeaderMetaSegment } from '@/components/ui/PageHeader';
 import { SearchField } from '@/components/ui/SearchField';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Select } from '@/components/ui/Select';
 import { Sheet } from '@/components/ui/Sheet';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -820,31 +821,29 @@ export function PluginsPage() {
           ariaLabel={t('plugin_management.search_label')}
           disabled={loading && !data}
         />
-        <div
+        <SegmentedControl
           className={styles.filterChips}
-          role="group"
-          aria-label={t('plugin_management.filter_label')}
-        >
-          {STATUS_FILTERS.map((key) => (
-            <button
-              key={key}
-              type="button"
-              className={`${styles.filterChip} ${statusFilter === key ? styles.filterChipActive : ''}`}
-              onClick={() => setStatusFilter(key)}
-              aria-pressed={statusFilter === key}
-            >
-              {t(`plugin_management.filter_${key}`)}
-              <span className={styles.filterChipCount}>{filterCounts[key]}</span>
-            </button>
-          ))}
-        </div>
+          itemClassName={styles.filterChip}
+          ariaLabel={t('plugin_management.filter_label')}
+          value={statusFilter}
+          onChange={setStatusFilter}
+          options={STATUS_FILTERS.map((key) => ({
+            value: key,
+            label: (
+              <>
+                {t(`plugin_management.filter_${key}`)}
+                <span className={styles.filterChipCount}>{filterCounts[key]}</span>
+              </>
+            ),
+          }))}
+        />
       </div>
 
       {loading && !data ? (
         <div className={styles.list} aria-busy="true">
           {Array.from({ length: SKELETON_ROWS }, (_, index) => (
             <div key={index} className={styles.skeletonRow}>
-              <Skeleton width={40} height={40} rounded={10} />
+              <Skeleton width={40} height={40} />
               <div className={styles.skeletonText}>
                 <Skeleton width="38%" height={14} />
                 <Skeleton width="62%" height={10} />

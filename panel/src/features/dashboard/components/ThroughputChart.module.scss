@@ -35,7 +35,7 @@
 .legendSwatch {
   width: 10px;
   height: 10px;
-  border-radius: 3px;
+  border-radius: 0;
   flex: none;
 }
 
@@ -118,6 +118,11 @@
 .column {
   position: relative;
   flex: 1 1 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
   min-width: 0;
   height: 100%;
   display: flex;
@@ -154,7 +159,7 @@
   }
 }
 
-.columnActive .stack {
+.column[data-pressed] .stack {
   filter: brightness(1.06);
 }
 
@@ -187,7 +192,7 @@
   display: block;
   width: 100%;
   height: 2px;
-  border-radius: $radius-full;
+  border-radius: 0;
   background: var(--border-primary);
 }
 
@@ -224,8 +229,6 @@
 /* ---------- 悬浮提示 ---------- */
 
 .tooltip {
-  --glass-blur: 10px;
-
   position: absolute;
   top: 4px;
   z-index: 2;
@@ -234,12 +237,10 @@
   gap: 3px;
   padding: $spacing-sm $spacing-md;
   min-width: 132px;
-  border-radius: $radius-md;
-  border: 1px solid var(--glass-border);
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-backdrop-filter);
-  -webkit-backdrop-filter: var(--glass-backdrop-filter);
-  box-shadow: var(--shadow-lg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  background: var(--floating-surface);
+  box-shadow: var(--floating-shadow);
   font-size: 12px;
   color: var(--text-secondary);
   pointer-events: none;

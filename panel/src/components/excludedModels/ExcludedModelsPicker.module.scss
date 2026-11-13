@@ -210,12 +210,12 @@
   transition: background-color var(--dur-press, 160ms) var(--ease-out-strong, ease-out);
 
   &:focus-visible {
-    outline: 2px solid var(--primary-color);
+    outline: var(--focus-ring);
     outline-offset: -2px;
   }
 }
 
-.rowHighlighted {
+.row[data-highlighted] {
   background: var(--bg-tertiary);
 }
 
@@ -276,7 +276,7 @@
   flex-shrink: 0;
   padding: 2px 6px;
   border: 1px dashed color-mix(in srgb, var(--primary-color) 38%, var(--border-color));
-  border-radius: $radius-full;
+  border-radius: 0;
   color: var(--text-secondary);
   font-size: 10px;
 }
@@ -338,7 +338,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--primary-color);
+    outline: var(--focus-ring);
     outline-offset: 1px;
   }
 

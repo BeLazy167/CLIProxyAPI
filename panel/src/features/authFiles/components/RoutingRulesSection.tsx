@@ -20,7 +20,7 @@ export function RoutingRulesSection({
       label={t('auth_files.routing_rules_title')}
       hint={t('auth_files.routing_rules_hint')}
       open={open}
-      onToggle={(event) => onOpenChange(event.currentTarget.open)}
+      onOpenChange={onOpenChange}
       flush
     >
       <div className={styles.configGrid}>{children}</div>

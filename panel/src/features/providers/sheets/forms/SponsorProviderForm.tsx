@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Collapsible } from '@/components/ui/Collapsible';
+import { RadioGroup } from '@/components/ui/RadioGroup';
 import { Select } from '@/components/ui/Select';
 import {
   IconAlertTriangle,
@@ -454,43 +455,37 @@ function SponsorKeyEntryCard({
 
           {definition.baseUrlOptions.length > 1 && !hideCredentialFields ? (
             <div className={styles.field}>
-              <span className={styles.label}>
+              <span className={styles.label} id={`${formId}-group-${index}-base-url-label`}>
                 {t('providersPage.sponsor.urlMode', { provider: definition.displayName })}
               </span>
-              <div className={styles.sponsorUrlOptions} role="radiogroup">
-                {definition.baseUrlOptions.map((option) => {
-                  const checked = definition.resolveBaseUrl(entry.baseUrl) === option.baseUrl;
-                  const className = [
-                    styles.sponsorUrlOption,
-                    checked ? styles.sponsorUrlOptionActive : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ');
-                  return (
-                    <label key={option.id} className={className}>
-                      <input
-                        type="radio"
-                        name={`${formId}-group-${index}-base-url`}
-                        value={option.baseUrl}
-                        checked={checked}
-                        onChange={() => updateEntry({ baseUrl: option.baseUrl })}
-                        disabled={mutating}
-                      />
-                      <span className={styles.sponsorUrlOptionText}>
-                        <span>{t(`providersPage.sponsor.urlOptions.${option.id}`)}</span>
-                        <small>{option.baseUrl}</small>
-                        {option.descriptionKey ? (
-                          <small className={styles.sponsorUrlOptionDescription}>
-                            {t(
-                              `providersPage.sponsor.urlOptionDescriptions.${option.descriptionKey}`
-                            )}
-                          </small>
-                        ) : null}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
+              <RadioGroup
+                className={styles.sponsorUrlOptions}
+                optionClassName={styles.sponsorUrlOption}
+                ariaLabelledBy={`${formId}-group-${index}-base-url-label`}
+                disabled={mutating}
+                value={
+                  definition.baseUrlOptions.find(
+                    (option) => definition.resolveBaseUrl(entry.baseUrl) === option.baseUrl
+                  )?.baseUrl ?? null
+                }
+                onChange={(baseUrl) => updateEntry({ baseUrl })}
+                options={definition.baseUrlOptions.map((option) => ({
+                  value: option.baseUrl,
+                  label: (
+                    <span className={styles.sponsorUrlOptionText}>
+                      <span>{t(`providersPage.sponsor.urlOptions.${option.id}`)}</span>
+                      <small>{option.baseUrl}</small>
+                      {option.descriptionKey ? (
+                        <small className={styles.sponsorUrlOptionDescription}>
+                          {t(
+                            `providersPage.sponsor.urlOptionDescriptions.${option.descriptionKey}`
+                          )}
+                        </small>
+                      ) : null}
+                    </span>
+                  ),
+                }))}
+              />
               <span className={styles.labelHint}>{t('providersPage.sponsor.urlHint')}</span>
             </div>
           ) : null}
@@ -950,44 +945,35 @@ export function SponsorProviderForm({
 
           {definition.baseUrlOptions.length > 1 ? (
             <div className={styles.field}>
-              <span className={styles.label}>{t('providersPage.sponsor.quickStart.region')}</span>
-              <div className={styles.sponsorUrlOptions} role="radiogroup">
-                {definition.baseUrlOptions.map((option, optionIndex) => {
-                  const checked =
-                    definition.resolveBaseUrl(primaryEntry.baseUrl) === option.baseUrl;
-                  return (
-                    <label
-                      key={option.id}
-                      className={[
-                        styles.sponsorUrlOption,
-                        checked ? styles.sponsorUrlOptionActive : '',
-                      ]
-                        .filter(Boolean)
-                        .join(' ')}
-                    >
-                      <input
-                        type="radio"
-                        name={`${formId}-primary-base-url`}
-                        value={option.baseUrl}
-                        checked={checked}
-                        onChange={() =>
-                          updateEntry(0, { ...primaryEntry, baseUrl: option.baseUrl })
-                        }
-                        disabled={mutating}
-                      />
-                      <span className={styles.sponsorUrlOptionText}>
-                        <span>
-                          {t(`providersPage.sponsor.urlOptions.${option.id}`)}
-                          {optionIndex === 0
-                            ? ` · ${t('providersPage.sponsor.quickStart.recommended')}`
-                            : ''}
-                        </span>
-                        <small>{option.baseUrl}</small>
+              <span className={styles.label} id={`${formId}-primary-base-url-label`}>
+                {t('providersPage.sponsor.quickStart.region')}
+              </span>
+              <RadioGroup
+                className={styles.sponsorUrlOptions}
+                optionClassName={styles.sponsorUrlOption}
+                ariaLabelledBy={`${formId}-primary-base-url-label`}
+                disabled={mutating}
+                value={
+                  definition.baseUrlOptions.find(
+                    (option) => definition.resolveBaseUrl(primaryEntry.baseUrl) === option.baseUrl
+                  )?.baseUrl ?? null
+                }
+                onChange={(baseUrl) => updateEntry(0, { ...primaryEntry, baseUrl })}
+                options={definition.baseUrlOptions.map((option, optionIndex) => ({
+                  value: option.baseUrl,
+                  label: (
+                    <span className={styles.sponsorUrlOptionText}>
+                      <span>
+                        {t(`providersPage.sponsor.urlOptions.${option.id}`)}
+                        {optionIndex === 0
+                          ? ` · ${t('providersPage.sponsor.quickStart.recommended')}`
+                          : ''}
                       </span>
-                    </label>
-                  );
-                })}
-              </div>
+                      <small>{option.baseUrl}</small>
+                    </span>
+                  ),
+                }))}
+              />
             </div>
           ) : null}
 

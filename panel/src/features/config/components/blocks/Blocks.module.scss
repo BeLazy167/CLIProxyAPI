@@ -90,7 +90,7 @@
 
 .emptyState {
   border: 1px dashed var(--border-color);
-  border-radius: 10px;
+  border-radius: 0;
   padding: 16px;
   color: var(--text-secondary);
   text-align: center;
@@ -105,7 +105,7 @@
   gap: 12px;
   padding: 12px;
   border: 1px solid var(--border-color);
-  border-radius: 10px;
+  border-radius: 0;
   background: color-mix(in srgb, var(--bg-secondary) 64%, transparent);
 }
 
@@ -169,7 +169,7 @@
 .strengthSegment {
   flex: 1;
   height: 4px;
-  border-radius: $radius-full;
+  border-radius: 0;
   overflow: hidden;
   // 轨道 = 填充色的淡化步阶，未点亮的段也带着当前状态
   background: color-mix(in srgb, var(--strength-color) 16%, transparent);
@@ -233,7 +233,7 @@
   gap: 12px;
   padding: 14px;
   border: 1px solid var(--border-color);
-  border-radius: 10px;
+  border-radius: 0;
   background: color-mix(in srgb, var(--bg-secondary) 42%, transparent);
 }
 
@@ -475,12 +475,10 @@
 
 .removedRow {
   border-left: 3px solid var(--amber-color);
-  background: color-mix(in srgb, var(--amber-10) 50%, transparent);
 }
 
 .removedPill {
-  color: var(--amber-text);
-  background: var(--amber-10);
+  @include tag(var(--warning-text));
 }
 
 .removedTitle {

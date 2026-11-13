@@ -22,11 +22,14 @@ describe('quota toolbar presentation contracts', () => {
   test('groups search and sorting separately from provider navigation', () => {
     const toolbarStart = source.indexOf('<div className={styles.toolbar}>');
     const searchStart = source.indexOf('<SearchField');
-    const sortStart = source.indexOf('<div className={styles.sort}>');
+    const sortStart = source.indexOf('<div className={styles.accountsBar}>');
     expect(toolbarStart).toBeGreaterThan(source.indexOf('<ProviderTabs'));
     expect(searchStart).toBeGreaterThan(toolbarStart);
     expect(sortStart).toBeGreaterThan(searchStart);
     expect(styles).toMatch(/\.toolbar\s*\{[^}]*flex-wrap: wrap;/);
-    expect(source).toMatch(/<Select[\s\S]*?variant="quiet"/);
+    // Sort and View sit in the Accounts bar, each Select under its own visible label.
+    expect(source.slice(sortStart)).toMatch(
+      /\{t\('quota_management\.sort_label'\)\}[\s\S]*?<Select[\s\S]*?\{t\('quota_management\.view_label'\)\}[\s\S]*?<Select/
+    );
   });
 });

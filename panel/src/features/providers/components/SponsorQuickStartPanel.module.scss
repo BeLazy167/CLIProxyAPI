@@ -81,7 +81,7 @@
   align-self: flex-start;
   padding: 6px 12px;
   border: 1px solid var(--border-color);
-  border-radius: $radius-full;
+  border-radius: 0;
   color: var(--text-primary);
 
   &:hover {
@@ -191,21 +191,19 @@
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  border-radius: $radius-full;
+  border-radius: 0;
   border: 1px solid var(--border-color);
   font-size: var(--fs-body);
   font-weight: 600;
   color: var(--text-secondary);
 
   &.markDone {
-    background: color-mix(in srgb, var(--viz-success) 12%, transparent);
-    border-color: color-mix(in srgb, var(--viz-success) 40%, transparent);
+    border-color: var(--success-border);
     color: var(--success-text);
   }
 
   &.markFailed {
-    background: var(--danger-bg);
-    border-color: color-mix(in srgb, var(--viz-failure) 40%, transparent);
+    border-color: var(--danger-border);
     color: var(--danger-text);
   }
 }

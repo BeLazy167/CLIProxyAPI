@@ -31,58 +31,17 @@
   }
 }
 
-/* ---------- tabs ---------- */
-
-.tabs {
-  display: flex;
-  align-items: stretch;
-  gap: 2px;
-  min-width: 0;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.tab {
-  @include button-reset;
-  position: relative;
-  padding: 8px 12px 11px;
-  border-radius: 8px 8px 0 0;
-  font-size: 13px;
-  font-weight: 550;
-  color: var(--text-secondary);
-  white-space: nowrap;
-  cursor: pointer;
-
-  &::after {
-    content: '';
-    position: absolute;
-    left: 10px;
-    right: 10px;
-    bottom: -1px;
-    height: 2px;
-    border-radius: 999px;
-    background: transparent;
-  }
-
-  &:hover {
-    color: var(--text-primary);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--primary-color);
-    outline-offset: -2px;
-  }
-}
-
-.tabActive {
-  color: var(--text-primary);
-  font-weight: 650;
-
-  &::after {
-    background: var(--text-primary);
-  }
-}
-
 /* ---------- panels ---------- */
+
+/* The tabs root sits between the page column and the panels, so it passes the height down. */
+.tabsRoot {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  min-height: 0;
+}
 
 .content {
   position: relative;
@@ -99,14 +58,6 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-}
-
-/* Hidden, not unmounted: the viewer keeps its scroll position across tab switches. */
-.panelHidden {
-  position: absolute;
-  inset: 0;
-  visibility: hidden;
-  pointer-events: none;
 }
 
 .logCard,
@@ -154,8 +105,18 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 8px 16px;
   border-bottom: 1px solid var(--border-color);
+  background: var(--bg-primary);
+}
+
+/* One 40 px control height across the toolbar, like the search field. */
+.toolbar :global(.btn) {
+  min-height: 40px;
+}
+
+.toolbar :global(.btn-icon) {
+  min-width: 40px;
 }
 
 .toolbarSpacer {
@@ -187,27 +148,31 @@
 
 .segment {
   display: inline-flex;
-  padding: 2px;
-  border-radius: 999px;
-  background: var(--bg-tertiary);
+  padding: 0;
+  border: 1px solid var(--border-primary);
+  border-radius: 0;
+  background: var(--bg-primary);
 }
 
 .segmentItem {
   @include button-reset;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  height: 28px;
-  padding: 0 10px;
-  border-radius: 999px;
-  font-size: 12.5px;
-  font-weight: 550;
-  color: var(--text-secondary);
+  gap: 6px;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 0;
+  font-size: var(--fs-body);
+  color: var(--text-primary);
   cursor: pointer;
   white-space: nowrap;
 
+  & + & {
+    border-left: 1px solid var(--border-primary);
+  }
+
   &:hover {
-    color: var(--text-primary);
+    background: var(--bg-hover);
   }
 
   &:focus-visible {
@@ -216,44 +181,32 @@
   }
 }
 
-.segmentActive {
-  color: var(--text-primary);
-  background: var(--bg-primary);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+.segmentItem[data-checked] {
+  color: var(--bg-primary);
+  background: var(--text-primary);
+  font-weight: 600;
 }
 
 .segmentCount {
   font-family: $font-mono;
-  font-size: 11px;
+  font-size: var(--fs-meta);
   font-variant-numeric: tabular-nums;
-  color: var(--text-tertiary);
-
-  .segmentActive & {
-    color: var(--text-secondary);
-  }
-}
-
-.popover {
-  position: relative;
+  color: inherit;
 }
 
 .popoverBadge {
-  min-width: 18px;
-  padding: 0 5px;
-  border-radius: 999px;
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 0;
   font-family: $font-mono;
-  font-size: 11px;
-  line-height: 18px;
+  font-size: var(--fs-meta);
+  line-height: 20px;
   text-align: center;
-  color: var(--primary-color);
-  background: color-mix(in srgb, var(--primary-color) 14%, transparent);
+  color: var(--text-primary);
+  background: var(--bg-band);
 }
 
 .popoverPanel {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  z-index: 20;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -262,19 +215,8 @@
   padding: 12px;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
-  background: var(--bg-primary);
-  box-shadow: 0 8px 24px rgb(0 0 0 / 0.12);
-
-  &[role='menu'] {
-    gap: 2px;
-    min-width: 220px;
-    padding: 6px;
-  }
-}
-
-.popoverEnd {
-  left: auto;
-  right: 0;
+  background: var(--floating-surface);
+  box-shadow: var(--floating-shadow);
 }
 
 .filterGroup {
@@ -285,10 +227,7 @@
 
 .filterLabel {
   font-size: var(--fs-meta);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
 }
 
 .filterChipList {
@@ -303,10 +242,10 @@
   align-items: center;
   gap: 4px;
   max-width: 100%;
-  height: 26px;
-  padding: 0 9px;
-  border: 1px solid var(--border-color);
-  border-radius: 999px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--border-primary);
+  border-radius: 0;
   font-family: $font-mono;
   font-size: 12px;
   color: var(--text-secondary);
@@ -329,10 +268,10 @@
   }
 }
 
-.filterChipActive {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-  background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+.filterChip[data-pressed] {
+  border-color: var(--text-primary);
+  color: var(--text-primary);
+  background: var(--bg-selected);
 }
 
 .filterChipPath {
@@ -357,58 +296,17 @@
   gap: 10px;
 }
 
-.menuItem {
-  @include button-reset;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 7px 10px;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  color: var(--text-primary);
-  text-align: left;
-  cursor: pointer;
-
-  &:hover:not(:disabled),
-  &:focus-visible {
-    background: var(--bg-tertiary);
-    outline: none;
-  }
-
-  &:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
-}
-
-.menuItemDanger {
-  color: var(--danger-text);
-
-  &:hover:not(:disabled),
-  &:focus-visible {
-    background: var(--danger-bg);
-  }
-}
-
-.menuSeparator {
-  height: 1px;
-  margin: 4px 0;
-  background: var(--border-color);
-}
-
 /* Live / Paused / Retrying pill driven by request health. */
 .livePill {
   @include button-reset;
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  height: 32px;
+  height: 40px;
   padding: 0 12px 0 10px;
-  border: 1px solid var(--border-color);
-  border-radius: 999px;
-  font-size: 12.5px;
-  font-weight: 550;
+  border: 1px solid var(--border-primary);
+  border-radius: 0;
+  font-size: var(--fs-body);
   font-variant-numeric: tabular-nums;
   color: var(--text-secondary);
   background: var(--bg-primary);
@@ -442,7 +340,6 @@
 
   .liveDot {
     background: var(--viz-success);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--viz-success) 25%, transparent);
   }
 }
 
@@ -496,7 +393,7 @@
   max-width: 100%;
   height: 24px;
   padding: 0 4px 0 9px;
-  border-radius: 999px;
+  border-radius: 0;
   font-family: $font-mono;
   font-size: 12px;
   color: var(--text-primary);
@@ -581,7 +478,7 @@
 
   > :global(.error-banner) {
     margin: 0;
-    box-shadow: 0 4px 16px rgb(0 0 0 / 0.1);
+    box-shadow: var(--floating-shadow);
   }
 }
 
@@ -595,12 +492,13 @@
   align-items: center;
   gap: 8px;
   padding: 6px 8px 6px 12px;
-  border: 1px solid var(--warning-border);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  border-left: 3px solid var(--warning-border);
+  border-radius: 0;
   font-size: var(--fs-meta);
   color: var(--text-primary);
-  background: var(--warning-bg);
-  box-shadow: 0 4px 16px rgb(0 0 0 / 0.1);
+  background: var(--floating-surface);
+  box-shadow: var(--floating-shadow);
 
   > span {
     flex: 1;
@@ -630,7 +528,7 @@
   left: 50%;
   z-index: 2;
   transform: translateX(-50%);
-  box-shadow: 0 2px 12px var(--border-color);
+  box-shadow: var(--floating-shadow);
   white-space: nowrap;
 }
 
@@ -668,6 +566,11 @@
   padding: 6px 12px;
   border-bottom: 1px solid var(--border-color);
   background: var(--bg-primary);
+}
+
+.loadMoreBanner > :global(.btn) {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .loadMoreStats {
@@ -712,12 +615,11 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  padding: 3px 12px;
-  font-size: 11px;
+  padding: 4px 16px;
+  font-size: var(--fs-meta);
   font-weight: 600;
-  letter-spacing: 0.04em;
-  color: var(--text-tertiary);
-  background: var(--bg-secondary);
+  color: var(--text-primary);
+  background: var(--bg-band);
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -765,21 +667,20 @@
 .levelBadge {
   display: inline-block;
   padding: 0 5px;
-  border-radius: var(--radius-sm);
-  font-size: 10.5px;
-  font-weight: 650;
-  line-height: 16px;
+  border: 1px solid currentColor;
+  border-radius: 0;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 14px;
   letter-spacing: 0.03em;
 }
 
 .levelWarn {
   color: var(--warning-text);
-  background: color-mix(in srgb, var(--amber-color) 16%, transparent);
 }
 
 .levelError {
   color: var(--danger-text);
-  background: color-mix(in srgb, var(--viz-failure) 16%, transparent);
 }
 
 .levelDim {
@@ -847,15 +748,15 @@
 
 .requestIdChip {
   @include button-reset;
-  padding: 0 5px;
-  border-radius: var(--radius-sm);
+  padding: 0 2px;
+  border-radius: 0;
   font: inherit;
-  color: var(--primary-color);
-  background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+  color: var(--link-color);
+  background: transparent;
   cursor: pointer;
 
   &:hover {
-    background: color-mix(in srgb, var(--primary-color) 18%, transparent);
+    text-decoration: underline;
   }
 
   &:focus-visible {

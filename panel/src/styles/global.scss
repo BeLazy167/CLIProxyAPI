@@ -2,6 +2,8 @@
  * 全局样式
  */
 
+// Sass requires @use before any rule, so the layer order is a module used first.
+@use './layers.scss';
 @use './variables.scss' as *;
 @use './mixins.scss' as *;
 @use './reset.scss';
@@ -9,10 +11,12 @@
 @use './components.scss';
 @use './layout.scss';
 
-// 统一焦点环：模块里更具体的规则可覆盖
+// 统一焦点环：模块里更具体的规则可覆盖. A 2px ring inside the edge with a 1px gap in the
+// surface color, so it reads on any fill.
 :focus-visible {
   outline: var(--focus-ring);
-  outline-offset: 2px;
+  outline-offset: -2px;
+  box-shadow: inset 0 0 0 3px var(--focus-gap);
 }
 
 // 减少动态：全站一处兜底，模块无需各自声明
@@ -56,7 +60,7 @@ body.modal-open .content {
 
 ::-webkit-scrollbar-thumb {
   background: var(--border-color);
-  border-radius: $radius-full;
+  border-radius: 0;
 
   &:hover {
     background: var(--border-hover);

@@ -1,10 +1,9 @@
-import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Popover } from '@/components/ui/Popover';
 import type { AuthFileCooldownSnapshot } from '@/types/authFile';
 import { summarizeCooldowns } from '@/features/authFiles/cooldowns';
 import { CooldownBody } from './AuthFileCooldownSection';
 import { formatCooldownDuration, useCooldownNow } from '@/features/authFiles/cooldownClock';
-import { useDismissable } from '@/features/authFiles/hooks/useDismissable';
 import styles from './AuthFileCooldownChip.module.scss';
 
 export type AuthFileCooldownChipProps = {
@@ -27,9 +26,6 @@ export function AuthFileCooldownChip({
 }: AuthFileCooldownChipProps) {
   const { t } = useTranslation();
   const now = useCooldownNow();
-  const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLSpanElement>(null);
-  useDismissable(rootRef, open, () => setOpen(false));
 
   const { rows, earliestSeconds } = summarizeCooldowns(snapshot, now);
   if (rows.length === 0) return null;
@@ -45,27 +41,19 @@ export function AuthFileCooldownChip({
       : t('auth_files.cooldown_chip', { time: formatCooldownDuration(t, earliestSeconds) });
 
   return (
-    <span className={styles.root} ref={rootRef}>
-      <button
-        type="button"
-        className={`${styles.chip} ${elapsed ? styles.chipElapsed : ''}`}
-        aria-expanded={open}
-        aria-haspopup="dialog"
-        onClick={() => setOpen((value) => !value)}
-      >
-        {label}
-      </button>
-      {open && (
-        <div className={styles.popover} role="dialog" aria-label={label}>
-          <CooldownBody
-            snapshot={snapshot}
-            now={now}
-            resetting={resetting}
-            resetDisabled={resetDisabled}
-            onReset={onReset}
-          />
-        </div>
-      )}
-    </span>
+    <Popover
+      label={label}
+      trigger={label}
+      triggerClassName={`${styles.chip} ${elapsed ? styles.chipElapsed : ''}`}
+      className={styles.popover}
+    >
+      <CooldownBody
+        snapshot={snapshot}
+        now={now}
+        resetting={resetting}
+        resetDisabled={resetDisabled}
+        onReset={onReset}
+      />
+    </Popover>
   );
 }

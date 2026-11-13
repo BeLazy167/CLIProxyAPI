@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Toggle } from '@/components/ui/Toggle';
 import type { AuthFileStatusCounts } from '@/features/authFiles/constants';
 import type { AuthFilesStatusFilterMode } from '@/features/authFiles/uiState';
 import styles from './VaultSummary.module.scss';
@@ -52,22 +53,17 @@ export function VaultSummary({ counts, statusFilterMode, onChange }: VaultSummar
       {CHIPS.map((chip) => {
         const active = statusFilterMode === chip.mode;
         return (
-          <button
+          <Toggle
             key={chip.mode}
-            type="button"
-            className={[
-              styles.chip,
-              chip.tone ? TONE_CLASS[chip.tone] : '',
-              active ? styles.chipActive : '',
-            ]
+            className={[styles.chip, chip.tone ? TONE_CLASS[chip.tone] : '']
               .filter(Boolean)
               .join(' ')}
-            aria-pressed={active}
-            onClick={() => onChange(active && chip.mode !== 'all' ? 'all' : chip.mode)}
+            pressed={active}
+            onPressedChange={() => onChange(active && chip.mode !== 'all' ? 'all' : chip.mode)}
           >
             <span className={styles.chipCount}>{counts[chip.countKey]}</span>
             <span className={styles.chipLabel}>{t(chip.labelKey)}</span>
-          </button>
+          </Toggle>
         );
       })}
     </div>

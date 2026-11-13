@@ -431,19 +431,19 @@ export function ProvidersWorkbenchPage({ fixedBrand }: ProvidersWorkbenchPagePro
     return (
       <div className={styles.page} aria-busy="true">
         <div className={styles.skeletonHeader}>
-          <Skeleton width={220} height={28} rounded={6} />
-          <Skeleton width={320} height={14} rounded={6} />
+          <Skeleton width={220} height={28} />
+          <Skeleton width={320} height={14} />
         </div>
         <div className={`${styles.layout} ${fixedBrand ? styles.layoutSingle : ''}`.trim()}>
           {!fixedBrand ? (
             <div className={styles.skeletonRail}>
               {Array.from({ length: 6 }, (_, index) => (
-                <Skeleton key={index} height={44} rounded={8} />
+                <Skeleton key={index} height={44} />
               ))}
             </div>
           ) : null}
           <div className={styles.skeletonPanel}>
-            <Skeleton width={180} height={22} rounded={6} />
+            <Skeleton width={180} height={22} />
             <ProviderResourceLedgerSkeleton rows={5} />
           </div>
         </div>

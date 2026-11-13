@@ -1,5 +1,8 @@
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui/Button';
 import { IconZap } from '@/components/ui/icons';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { useNow } from '@/hooks/useNow';
 import type { ClaudeQuotaState } from '@/types';
 import { formatInstantShort } from '@/utils/quota';
@@ -8,46 +11,47 @@ import { formatDaysLeft } from '../../compactDuration';
 import type { QuotaFileEntry } from '../../logic';
 import type { QuotaCardState } from '..';
 import { formatResetWindows, useClaudeResetGrants } from './ClaudeResetGrants';
-import { groupResetGrants, suggestReset, type ResetGrantKind } from './resetGrantGroups';
+import type { ResetGrantKind, ResetSuggestion } from './resetGrantGroups';
 import styles from './ClaudeResetGroups.module.scss';
 
 export interface ClaudeResetSuggestionProps {
-  /** Every Claude account; the suggestion compares them all. */
-  entries: QuotaFileEntry[];
+  suggestion: ResetSuggestion<QuotaFileEntry>;
   quotaFor: (entry: QuotaFileEntry) => QuotaCardState | undefined;
   /** True when that account's ⚡ would be disabled. */
   isBlocked: (entry: QuotaFileEntry) => boolean;
   onRefresh: (entry: QuotaFileEntry) => void;
 }
 
-/** One line naming the reset to use now across Claude accounts, or why none is worth it. */
+/** The reset notice: its title with the tip on how the pick is made, the text, and an action. */
+function Notice({ children, action }: { children: ReactNode; action?: ReactNode }) {
+  const { t } = useTranslation();
+  return (
+    <div className={styles.suggestion} data-testid="claude-reset-suggestion">
+      <span className={styles.suggestionTitle}>
+        {t('quota_management.reset_notice_title')}
+        <Tooltip
+          label={t('quota_management.tip_suggestion_label')}
+          content={t('quota_management.tip_suggestion')}
+        />
+      </span>
+      <p className={styles.suggestionText}>{children}</p>
+      {action}
+    </div>
+  );
+}
+
+/** One notice naming the reset to use now across Claude accounts, or why none is worth it. */
 export function ClaudeResetSuggestion({
-  entries,
+  suggestion,
   quotaFor,
   isBlocked,
   onRefresh,
 }: ClaudeResetSuggestionProps) {
   const { t } = useTranslation();
   const now = useNow();
-  const suggestion = suggestReset(
-    entries.map((entry) => {
-      const quota = quotaFor(entry) as ClaudeQuotaState | undefined;
-      const status = quota?.status === 'success' ? quota.resetGrants : null;
-      return {
-        account: entry,
-        groups: status ? groupResetGrants(status, quota?.windows ?? [], now) : null,
-      };
-    })
-  );
 
   if (suggestion.state === 'none') {
-    return (
-      <p className={styles.suggestion} data-testid="claude-reset-suggestion">
-        <span className={styles.suggestionText}>
-          {t(`claude_reset.suggest_none_${suggestion.reason}`)}
-        </span>
-      </p>
-    );
+    return <Notice>{t(`claude_reset.suggest_none_${suggestion.reason}`)}</Notice>;
   }
 
   const { account: entry, kind, endsAtMs, windows } = suggestion;
@@ -58,25 +62,26 @@ export function ClaudeResetSuggestion({
     windows: formatResetWindows(t, windows, now),
   };
   return (
-    <p className={styles.suggestion} data-testid="claude-reset-suggestion">
-      <span className={styles.suggestionText}>
-        {endsAtMs === null
-          ? t('claude_reset.suggest_ready_no_end', values)
-          : t('claude_reset.suggest_ready', {
-              ...values,
-              expires: formatDaysLeft(t, endsAtMs - now),
-              date: formatInstantShort(endsAtMs),
-            })}
-      </span>
-      <SuggestedSpend
-        key={`${entry.file.name}:${kind}`}
-        entry={entry}
-        kind={kind}
-        quota={quotaFor(entry) as ClaudeQuotaState | undefined}
-        blocked={isBlocked(entry)}
-        onRefresh={() => onRefresh(entry)}
-      />
-    </p>
+    <Notice
+      action={
+        <SuggestedSpend
+          key={`${entry.file.name}:${kind}`}
+          entry={entry}
+          kind={kind}
+          quota={quotaFor(entry) as ClaudeQuotaState | undefined}
+          blocked={isBlocked(entry)}
+          onRefresh={() => onRefresh(entry)}
+        />
+      }
+    >
+      {endsAtMs === null
+        ? t('claude_reset.suggest_ready_no_end', values)
+        : t('claude_reset.suggest_ready', {
+            ...values,
+            expires: formatDaysLeft(t, endsAtMs - now),
+            date: formatInstantShort(endsAtMs),
+          })}
+    </Notice>
   );
 }
 
@@ -98,14 +103,14 @@ function SuggestedSpend({
   const reset = useClaudeResetGrants(entry.file, quota, blocked, onRefresh);
   const group = reset.groups.find((candidate) => candidate.kind === kind);
   return (
-    <button
-      type="button"
+    <Button
+      size="sm"
       className={styles.suggestionSpend}
       disabled={reset.blocked || group?.action.state !== 'ready'}
       onClick={() => group && reset.confirm(group)}
     >
       <IconZap size={14} aria-hidden="true" className={reset.busy ? styles.pulsing : undefined} />
       {t('claude_reset.suggest_use')}
-    </button>
+    </Button>
   );
 }

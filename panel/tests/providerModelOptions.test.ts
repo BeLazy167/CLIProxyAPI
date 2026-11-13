@@ -211,7 +211,9 @@ describe('provider model options', () => {
     expect(controls.length).toBeGreaterThan(10);
     for (const control of controls) expect(control).toContain('disabled=""');
     const defaultThinking = render('gemini', false, false).split('<fieldset')[1];
-    const inputs = defaultThinking.match(/<(?:input|button)\b[^>]*>/g) ?? [];
+    const inputs = (defaultThinking.match(/<(?:input|button)\b[^>]*>/g) ?? []).filter(
+      (input) => !input.includes('data-slot="select-form-input"')
+    );
     expect(inputs.length).toBeGreaterThan(4);
     const mode = inputs.filter((input) => input.includes('aria-haspopup="listbox"'));
     expect(mode).toHaveLength(1);

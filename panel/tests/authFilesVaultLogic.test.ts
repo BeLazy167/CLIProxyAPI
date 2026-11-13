@@ -124,10 +124,19 @@ describe('shouldIgnoreEditorEscape', () => {
         selector && query.split(',').some((part) => part.trim() === selector) ? {} : null,
     }) as unknown as Element;
 
+  const onPageWithOpenPopup = (selector: string | null) =>
+    ({
+      ...elementIn(selector),
+      ownerDocument: {
+        querySelector: (query: string) =>
+          query === '[data-slot$="-content"][data-open]' ? {} : null,
+      },
+    }) as unknown as Element;
+
   test('ignores Escape while typing or while a popover is open', () => {
     expect(shouldIgnoreEditorEscape({ target: elementIn('input') })).toBe(true);
     expect(shouldIgnoreEditorEscape({ target: elementIn('textarea') })).toBe(true);
-    expect(shouldIgnoreEditorEscape({ target: elementIn('[role="menu"]') })).toBe(true);
+    expect(shouldIgnoreEditorEscape({ target: onPageWithOpenPopup(null) })).toBe(true);
     expect(shouldIgnoreEditorEscape({ defaultPrevented: true, target: null })).toBe(true);
   });
 

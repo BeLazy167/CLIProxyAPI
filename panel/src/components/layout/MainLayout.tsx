@@ -1,6 +1,5 @@
 import {
   ReactNode,
-  RefObject,
   SVGProps,
   useCallback,
   useEffect,
@@ -10,11 +9,11 @@ import {
   useState,
   type MouseEvent as ReactMouseEvent,
   type SyntheticEvent,
-  type KeyboardEvent as ReactKeyboardEvent,
 } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
+import { Menu } from '@/components/ui/Menu';
 import { PageTransition } from '@/components/common/PageTransition';
 import { MainRoutes } from '@/router/MainRoutes';
 import { authFilesApi, pluginsApi } from '@/services/api';
@@ -93,39 +92,6 @@ interface SidebarNavGroup {
 
 const flattenNavItems = (items: SidebarNavItem[]): SidebarNavLinkItem[] =>
   items.flatMap((item) => (item.kind === 'drawer' ? item.children : [item]));
-
-/** 点击菜单外或按下 Escape 时关闭弹出菜单 */
-function useMenuDismiss(
-  open: boolean,
-  menuRef: RefObject<HTMLDivElement | null>,
-  onClose: () => void
-) {
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    const handlePointerDown = (event: MouseEvent) => {
-      if (!menuRef.current?.contains(event.target as Node)) {
-        onClose();
-      }
-    };
-
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    document.addEventListener('mousedown', handlePointerDown);
-    document.addEventListener('keydown', handleEscape);
-
-    return () => {
-      document.removeEventListener('mousedown', handlePointerDown);
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, [open, menuRef, onClose]);
-}
 
 function PluginSidebarIcon({ src }: { src: string }) {
   const [failed, setFailed] = useState(false);
@@ -324,7 +290,6 @@ export function MainLayout() {
     anchorTop: number;
     top: number;
   } | null>(null);
-  const [themeMenuOpen, setThemeMenuOpen] = useState(false);
   const [pluginResources, setPluginResources] = useState<PluginResourceEntry[]>([]);
   const [expandedPluginResourceIDs, setExpandedPluginResourceIDs] = useState<Set<string>>(
     () => new Set()
@@ -333,7 +298,6 @@ export function MainLayout() {
   const authFilesCountRequestRef = useRef(0);
   const railTooltipRef = useRef<HTMLDivElement | null>(null);
   const focusedRailItemRef = useRef<HTMLElement | null>(null);
-  const themeMenuRef = useRef<HTMLDivElement | null>(null);
   const headerRef = useRef<HTMLElement | null>(null);
 
   const fullBrandName = 'CLI Proxy API Management Center';
@@ -438,39 +402,6 @@ export function MainLayout() {
       // 隐私模式等场景下 localStorage 不可用，忽略
     }
   }, [sidebarCollapsed]);
-
-  const closeThemeMenu = useCallback(() => setThemeMenuOpen(false), []);
-  useMenuDismiss(themeMenuOpen, themeMenuRef, closeThemeMenu);
-
-  // Arrow keys and Home/End cycle focus inside the popover; useMenuDismiss handles Escape.
-  const handleMenuKeyDown = useCallback((event: ReactKeyboardEvent<HTMLDivElement>) => {
-    const keys = ['ArrowDown', 'ArrowUp', 'Home', 'End'];
-    if (!keys.includes(event.key)) return;
-    const items = Array.from(
-      event.currentTarget.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')
-    );
-    if (items.length === 0) return;
-    const index = items.indexOf(document.activeElement as HTMLButtonElement);
-    let next = index;
-    if (event.key === 'ArrowDown') next = (index + 1) % items.length;
-    if (event.key === 'ArrowUp') next = (index - 1 + items.length) % items.length;
-    if (event.key === 'Home') next = 0;
-    if (event.key === 'End') next = items.length - 1;
-    event.preventDefault();
-    items[next]?.focus();
-  }, []);
-
-  const toggleThemeMenu = useCallback(() => {
-    setThemeMenuOpen((prev) => !prev);
-  }, []);
-
-  const handleThemeSelect = useCallback(
-    (nextTheme: Theme) => {
-      setTheme(nextTheme);
-      setThemeMenuOpen(false);
-    },
-    [setTheme]
-  );
 
   useEffect(() => {
     fetchConfig().catch(() => {
@@ -966,8 +897,6 @@ export function MainLayout() {
         isPluginResourcePage ? 'plugin-resource-shell' : ''
       }`}
     >
-      <div className="top-gradient-blur" aria-hidden="true" />
-
       <header className="main-header" ref={headerRef}>
         <button
           type="button"
@@ -1005,7 +934,13 @@ export function MainLayout() {
           </Button>
         </div>
 
-        <div className="header-actions floating-actions">
+        <div className="header-brand" title={fullBrandName}>
+          <img src={INLINE_LOGO_JPEG} alt="CPAMC logo" className="header-brand-logo" />
+          <span className="header-brand-title">{abbrBrandName}</span>
+          <span className="header-brand-subtitle">{t('sidebar.subtitle')}</span>
+        </div>
+
+        <div className="header-actions">
           <Button
             variant="ghost"
             size="sm"
@@ -1015,40 +950,28 @@ export function MainLayout() {
           >
             {headerIcons.refresh}
           </Button>
-          <div className={`theme-menu ${themeMenuOpen ? 'open' : ''}`} ref={themeMenuRef}>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleThemeMenu}
-              title={t('theme.switch')}
-              aria-label={t('theme.switch')}
-              aria-haspopup="menu"
-              aria-expanded={themeMenuOpen}
-            >
-              {theme === 'auto'
-                ? headerIcons.autoTheme
-                : theme === 'dark'
-                  ? headerIcons.moon
-                  : theme === 'white'
-                    ? headerIcons.whiteTheme
-                    : headerIcons.sun}
-            </Button>
-            {themeMenuOpen && (
-              <div
-                className="theme-menu-popover"
-                onKeyDown={handleMenuKeyDown}
-                role="menu"
-                aria-label={t('theme.switch')}
-              >
-                {THEME_CARDS.map((tc) => (
-                  <button
-                    key={tc.key}
-                    type="button"
-                    className={`theme-card ${theme === tc.key ? 'active' : ''}`}
-                    onClick={() => handleThemeSelect(tc.key)}
-                    role="menuitemradio"
-                    aria-checked={theme === tc.key}
-                  >
+          <div className="theme-menu">
+            <Menu
+              label={t('theme.switch')}
+              triggerClassName="btn btn-ghost btn-sm"
+              trigger={
+                theme === 'auto'
+                  ? headerIcons.autoTheme
+                  : theme === 'dark'
+                    ? headerIcons.moon
+                    : theme === 'white'
+                      ? headerIcons.whiteTheme
+                      : headerIcons.sun
+              }
+              contentClassName="theme-menu-popover"
+              value={theme}
+              onValueChange={(next) => setTheme(next as Theme)}
+              options={THEME_CARDS.map((tc) => ({
+                value: tc.key,
+                textValue: t(tc.labelKey),
+                className: 'theme-card',
+                label: (
+                  <>
                     <div
                       className="theme-card-preview"
                       style={{
@@ -1084,10 +1007,10 @@ export function MainLayout() {
                       </div>
                     </div>
                     <span className="theme-card-label">{t(tc.labelKey)}</span>
-                  </button>
-                ))}
-              </div>
-            )}
+                  </>
+                ),
+              }))}
+            />
           </div>
           <Button
             variant="ghost"
@@ -1114,18 +1037,6 @@ export function MainLayout() {
         <aside
           className={`sidebar ${sidebarOpen ? 'open' : ''} ${sidebarCollapsed ? 'collapsed' : ''}`}
         >
-          <div className="sidebar-header">
-            <div className="sidebar-brand" title={fullBrandName}>
-              <img src={INLINE_LOGO_JPEG} alt="CPAMC logo" className="sidebar-brand-logo" />
-              {showSidebarLabels && (
-                <span className="sidebar-brand-text">
-                  <span className="sidebar-brand-title">{abbrBrandName}</span>
-                  <span className="sidebar-brand-subtitle">{t('sidebar.subtitle')}</span>
-                </span>
-              )}
-            </div>
-          </div>
-
           <div className="nav-section">
             {navGroups.map((group, idx) => (
               <div className="nav-group" key={group.id}>

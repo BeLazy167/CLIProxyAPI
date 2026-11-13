@@ -7,17 +7,22 @@
   flex: 1 1 260px;
   min-width: 0;
   max-width: 420px;
-  height: 36px;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  background: var(--bg-secondary);
+  height: 40px;
+  border: 0;
+  border-bottom: 1px solid var(--border-primary);
+  border-radius: 0;
+  background: var(--bg-primary);
+
+  @media (max-width: $breakpoint-mobile) {
+    height: 48px;
+  }
   transition:
     border-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out),
     background-color var(--dur-hover, 200ms) var(--ease-out-strong, ease-out);
 
   &:focus-within {
-    border-color: var(--primary-color);
-    background: var(--bg-primary);
+    outline: var(--focus-ring);
+    outline-offset: -2px;
   }
 }
 
@@ -37,6 +42,11 @@
   color: var(--text-primary);
   font-size: var(--fs-base);
   outline: none;
+
+  // 16 px keeps a phone from zooming into the field on focus.
+  @media (max-width: $breakpoint-mobile) {
+    font-size: 16px;
+  }
 
   &::placeholder {
     color: var(--text-tertiary);
@@ -63,7 +73,7 @@
   align-items: center;
   justify-content: center;
   border: 0;
-  border-radius: 8px;
+  border-radius: 0;
   background: transparent;
   color: var(--text-tertiary);
   cursor: pointer;

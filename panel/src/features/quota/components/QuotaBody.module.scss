@@ -97,14 +97,14 @@
 
 .quotaBar {
   height: 6px;
-  border-radius: $radius-full;
+  border-radius: 0;
   background: color-mix(in srgb, var(--text-primary) 8%, transparent);
   overflow: hidden;
 }
 
 .quotaBarFill {
   height: 100%;
-  border-radius: $radius-full;
+  border-radius: 0;
   /* 刷新时平滑重定向到新水位（可中断） */
   transition: width 360ms var(--ease-out-strong, ease);
   /* 数据到达是本页的高潮时刻：水位逐行铺开（每行 40ms 级差）。
@@ -294,7 +294,7 @@
   font-weight: 700;
   font-size: 12px;
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: 0;
   white-space: nowrap;
   flex: 0 0 auto;
   overflow: visible;
@@ -466,7 +466,7 @@
   font-size: 12px;
   letter-spacing: 0.03em;
   padding: 2px 9px;
-  border-radius: 999px;
+  border-radius: 0;
   white-space: nowrap;
   flex: 0 0 auto;
   overflow: visible;

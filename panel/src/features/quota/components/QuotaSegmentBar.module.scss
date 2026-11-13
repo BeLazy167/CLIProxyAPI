@@ -15,7 +15,7 @@
   flex: 1 1 0;
   min-width: 6px;
   height: 5px;
-  border-radius: $radius-full;
+  border-radius: 0;
   background: color-mix(in srgb, var(--text-primary) 10%, transparent);
   overflow: hidden;
 }

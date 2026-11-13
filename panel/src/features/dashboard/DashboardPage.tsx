@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { ErrorBanner } from '@/components/ui/ErrorBanner';
 import { PageHeader, type PageHeaderMetaSegment } from '@/components/ui/PageHeader';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -460,28 +461,16 @@ export function DashboardPage() {
             <p className={styles.sectionDescription}>{t('dashboard.fleet_description')}</p>
           </div>
           {connected && providers.length > 1 && (
-            <div
+            <SegmentedControl
               className={styles.sortToggle}
-              role="group"
-              aria-label={t('dashboard.fleet_sort_label')}
-            >
-              {(['traffic', 'rate'] as const).map((option) => (
-                <Button
-                  key={option}
-                  variant={fleetSort === option ? 'secondary' : 'ghost'}
-                  size="xs"
-                  shape="pill"
-                  aria-pressed={fleetSort === option}
-                  onClick={() => setFleetSort(option)}
-                >
-                  {t(
-                    option === 'traffic'
-                      ? 'dashboard.fleet_sort_traffic'
-                      : 'dashboard.fleet_sort_rate'
-                  )}
-                </Button>
-              ))}
-            </div>
+              ariaLabel={t('dashboard.fleet_sort_label')}
+              value={fleetSort}
+              onChange={setFleetSort}
+              options={[
+                { value: 'traffic', label: t('dashboard.fleet_sort_traffic') },
+                { value: 'rate', label: t('dashboard.fleet_sort_rate') },
+              ]}
+            />
           )}
         </header>
         <div className={styles.panel}>

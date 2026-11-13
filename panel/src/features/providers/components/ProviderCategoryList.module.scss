@@ -16,25 +16,28 @@
 .aside {
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
-  box-shadow: var(--shadow);
-  padding: 12px;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0 0 8px;
   min-width: 0;
 }
 
 .eyebrow {
-  margin: 4px 8px 8px;
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--muted-foreground);
+  margin: 0 0 8px;
+  padding: 0 16px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  background: var(--bg-band);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0;
 }
 
 .item {
@@ -42,9 +45,10 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 12px;
-  border-radius: var(--radius-md);
-  border: 1px solid transparent;
+  padding: 8px 16px 8px 13px;
+  border-radius: 0;
+  border: 0;
+  border-left: 3px solid transparent;
   background: transparent;
   cursor: pointer;
   text-align: left;
@@ -57,31 +61,19 @@
   min-width: 0;
 
   &:hover:not(.active) {
-    background: color-mix(in srgb, var(--accent-bg) 50%, transparent);
-    border-color: var(--border-color);
+    background: var(--bg-hover);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--primary-color);
+    outline: var(--focus-ring);
     outline-offset: -2px;
   }
 
   &.active {
-    border-color: var(--primary-30);
-    background: var(--primary-10);
-    color: var(--primary-color);
-  }
-}
-
-.itemKimi {
-  &.active {
-    border-color: color-mix(in srgb, #1783ff 30%, transparent);
-    background: color-mix(in srgb, #1783ff 10%, var(--bg-primary));
-    color: color-mix(in srgb, #1783ff 82%, var(--text-primary));
-
-    .itemSubtitle {
-      color: color-mix(in srgb, #1783ff 82%, var(--text-primary));
-    }
+    border-left-color: var(--primary-color);
+    background: var(--bg-selected);
+    color: var(--text-primary);
+    font-weight: 600;
   }
 }
 
@@ -158,8 +150,7 @@
   font-weight: 400;
 
   .active & {
-    color: var(--primary-color);
-    opacity: 0.85;
+    color: var(--text-secondary);
   }
 }
 
@@ -167,7 +158,7 @@
   flex-shrink: 0;
   width: 8px;
   height: 8px;
-  border-radius: $radius-full;
+  border-radius: 50%;
   background: var(--danger-color);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--danger-color) 18%, transparent);
 }
@@ -202,11 +193,16 @@
   border: 0;
   background: none;
   cursor: pointer;
-  padding: 8px 12px 11px;
-  border-radius: 8px 8px 0 0;
-  font-size: 13px;
-  font-weight: 550;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 0;
+  font-size: var(--fs-body);
+  font-weight: 400;
   color: var(--text-secondary);
+
+  @include mobile {
+    min-height: 48px;
+  }
   white-space: nowrap;
   transition:
     color $transition-fast,
@@ -215,17 +211,17 @@
   &::after {
     content: '';
     position: absolute;
-    left: 10px;
-    right: 10px;
+    left: 0;
+    right: 0;
     bottom: -1px;
     height: 2px;
-    border-radius: $radius-full;
+    border-radius: 0;
     background: transparent;
     transition: background-color $transition-fast;
   }
 
   &:focus-visible {
-    outline: 2px solid var(--primary-color);
+    outline: var(--focus-ring);
     outline-offset: -2px;
   }
 }
@@ -233,16 +229,16 @@
 @media (hover: hover) and (pointer: fine) {
   .tab:hover {
     color: var(--text-primary);
-    background: color-mix(in srgb, var(--bg-tertiary) 55%, transparent);
+    background: var(--bg-hover);
   }
 }
 
-.tabActive {
+.tab[data-selected] {
   color: var(--text-primary);
-  font-weight: 650;
+  font-weight: 600;
 
   &::after {
-    background: var(--text-primary);
+    background: var(--primary-color);
   }
 }
 
@@ -253,13 +249,13 @@
   justify-content: center;
   width: 18px;
   height: 18px;
-  border-radius: 5px;
+  border-radius: 0;
 }
 
 .tabIcon {
   width: 16px;
   height: 16px;
-  border-radius: 4px;
+  border-radius: 0;
   object-fit: contain;
   display: block;
 }
@@ -276,10 +272,10 @@
   line-height: 1.6;
   color: var(--text-tertiary);
   padding: 0 6px;
-  border-radius: $radius-full;
+  border-radius: 0;
   background: color-mix(in srgb, var(--text-primary) 6%, transparent);
 
-  .tabActive & {
+  [data-selected] > & {
     color: var(--text-primary);
     background: color-mix(in srgb, var(--text-primary) 10%, transparent);
   }
@@ -289,5 +285,13 @@
   .tab,
   .tab::after {
     transition: none;
+  }
+}
+
+.tabsWrap {
+  min-width: 0;
+
+  @media (min-width: 1280px) {
+    display: none;
   }
 }

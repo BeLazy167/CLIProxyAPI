@@ -1,6 +1,7 @@
 import { useCallback, useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconAlertTriangle, IconChevronDown, IconLoader2 } from '@/components/ui/icons';
+import type { ListboxChange } from '@/components/ui/Listbox';
 import { ExcludedModelChipRow, ExcludedModelRuleChip } from './ExcludedModelRuleChip';
 import { ExcludedModelsPanel, type ExcludedModelCandidate } from './ExcludedModelsPanel';
 import {
@@ -114,8 +115,13 @@ export function ExcludedModelsPicker({
     [candidateIds, customRules, hasCatalog]
   );
 
-  const handleToggle = (modelId: string, excluded: boolean) =>
-    commit(toggleExcludedRule(rules, modelId, excluded));
+  const handleToggle = (changes: ListboxChange[]) =>
+    commit(
+      changes.reduce(
+        (next, change) => toggleExcludedRule(next, change.value, change.selected),
+        rules
+      )
+    );
 
   const handleSelectAll = () => commit(normalizeExcludedRules([...rules, ...candidateIds]));
 

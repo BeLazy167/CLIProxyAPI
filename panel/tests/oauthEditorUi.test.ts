@@ -14,6 +14,15 @@ const noop = () => {};
 const render = (element: ReturnType<typeof createElement>) =>
   renderToStaticMarkup(createElement(I18nextProvider, { i18n }, element));
 
+// UI SDK mirrors a control's value into a hidden form input; only visible controls count.
+// A disabled radio item keeps aria-disabled instead of the native attribute.
+const disabledControls = (markup: string) =>
+  (
+    markup.match(
+      /<(?:button|input|textarea)\b[^>]*\s(?:disabled=""|aria-disabled="true")[^>]*>/g
+    ) ?? []
+  ).filter((tag) => !tag.includes('aria-hidden="true"'));
+
 function renderMapping(overrides: { disabled?: boolean; canRemove?: boolean } = {}) {
   return render(
     createElement(OAuthAliasMappingRow, {
@@ -55,8 +64,8 @@ describe('OAuth editor UI', () => {
         translationPrefix: 'oauth_excluded',
       })
     );
-    expect(markup.match(/aria-pressed="true"/g)).toHaveLength(1);
-    expect(markup.match(/aria-pressed="false"/g)).toHaveLength(2);
+    expect(markup.match(/role="radio"[^>]*aria-checked="true"/g)).toHaveLength(1);
+    expect(markup.match(/role="radio"[^>]*aria-checked="false"/g)).toHaveLength(2);
     const inputId = markup.match(/<input id="([^"]+)"/)?.[1];
     expect(inputId).toBeDefined();
     expect(markup).toContain(`for="${inputId}"`);
@@ -73,7 +82,12 @@ describe('OAuth editor UI', () => {
         translationPrefix: 'oauth_model_alias',
       })
     );
-    expect(markup.match(/disabled=""/g)).toHaveLength(3);
+    const disabled = disabledControls(markup);
+    // The provider field, its suggestions button and the two provider options.
+    expect(disabled).toHaveLength(4);
+    expect(disabled.filter((tag) => tag.includes('data-slot="autocomplete-trigger"'))).toHaveLength(
+      1
+    );
   });
 
   test('mapping fields have persistent associated labels and a contextual delete name', () => {
@@ -92,9 +106,10 @@ describe('OAuth editor UI', () => {
 
   test('preserves the last-row delete guard and disabled editing state', () => {
     const lastRow = renderMapping({ canRemove: false });
-    expect(lastRow.match(/disabled=""/g)).toHaveLength(1);
+    expect(disabledControls(lastRow)).toHaveLength(1);
     const disabledRow = renderMapping({ disabled: true });
-    expect(disabledRow.match(/disabled=""/g)).toHaveLength(4);
+    // Source field and its suggestions button, alias field, fork switch, delete button.
+    expect(disabledControls(disabledRow)).toHaveLength(5);
   });
 
   test('all four locales include editor guidance and accessible row labels', () => {

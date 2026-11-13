@@ -74,10 +74,9 @@
 }
 
 .columnHeader {
-  font-size: 13px;
+  font-size: var(--fs-body);
   font-weight: 600;
-  color: var(--text-secondary);
-  text-transform: uppercase;
+  color: var(--text-primary);
   margin-bottom: 8px;
   padding: 0 4px;
 }
@@ -85,7 +84,7 @@
 .item {
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 0;
   padding: 10px 14px;
   font-size: 13px;
   color: var(--text-primary);
@@ -144,7 +143,7 @@
     justify-content: center;
     border: none;
     background: var(--bg-secondary);
-    border-radius: 4px;
+    border-radius: 0;
     cursor: pointer;
     color: var(--text-secondary);
     transition:
@@ -219,7 +218,7 @@
 .providerBadge {
   font-size: 11px;
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: 0;
   background: var(--bg-secondary);
   color: var(--text-secondary);
   margin-right: 8px;
@@ -239,14 +238,14 @@
   margin-left: 8px;
   background: var(--bg-secondary);
   padding: 1px 6px;
-  border-radius: 10px;
+  border-radius: 0;
 }
 
 .contextMenu {
   position: fixed;
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: 0;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 9999;
   min-width: 120px;
@@ -352,7 +351,7 @@
   background: transparent;
   color: var(--error-color);
   padding: 6px;
-  border-radius: 6px;
+  border-radius: 0;
   cursor: pointer;
 
   &:hover {

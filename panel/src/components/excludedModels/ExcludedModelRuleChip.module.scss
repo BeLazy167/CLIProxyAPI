@@ -12,7 +12,7 @@
   min-width: 0;
   max-width: 100%;
   padding: 4px 5px 4px 9px;
-  border-radius: $radius-full;
+  border-radius: 0;
   color: var(--text-primary);
   font-family: $font-mono;
   font-size: 11px;
@@ -33,8 +33,8 @@
 
 /* 显式勾选：实线 + primary 染色，读起来是「我选的」。 */
 .exact {
-  border: 1px solid color-mix(in srgb, var(--primary-color) 45%, var(--border-color));
-  background: color-mix(in srgb, var(--primary-color) 8%, var(--bg-primary));
+  border: 1px solid var(--primary-color);
+  background: var(--bg-selected);
 }
 
 /* 规则派生：虚线 = 「不是逐个挑的，是某条规则算出来的」。 */
@@ -74,7 +74,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--primary-color);
+    outline: var(--focus-ring);
     outline-offset: 1px;
   }
 

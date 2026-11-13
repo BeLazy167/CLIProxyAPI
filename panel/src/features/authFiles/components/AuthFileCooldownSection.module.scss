@@ -13,14 +13,14 @@
   padding-block: 8px;
   cursor: pointer;
   list-style: none;
-  border-radius: 4px;
+  border-radius: 0;
 
   &::-webkit-details-marker {
     display: none;
   }
 
   &:focus-visible {
-    outline: 2px solid var(--primary-color);
+    outline: var(--focus-ring);
     outline-offset: 3px;
   }
 }

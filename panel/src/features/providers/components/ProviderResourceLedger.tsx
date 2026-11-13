@@ -42,7 +42,7 @@ export interface ProviderResourceLedgerProps {
 }
 
 /** 行内自带点击行为的元素;点到它们不打开详情。 */
-const ROW_CONTROL_SELECTOR = 'button, input, label, a, [role="menu"], [role="dialog"]';
+const ROW_CONTROL_SELECTOR = 'button, input, label, a, [data-slot$="-content"]';
 
 const resourceDisplayName = (resource: ProviderResource): string =>
   resource.name ?? resource.apiKeyPreview ?? resource.identifier;
@@ -81,7 +81,7 @@ export function ProviderResourceLedgerSkeleton({ rows = 5 }: { rows?: number }) 
   return (
     <div className={styles.ledger} aria-hidden="true">
       {Array.from({ length: rows }, (_, index) => (
-        <Skeleton key={index} height={52} rounded={8} />
+        <Skeleton key={index} height={52} />
       ))}
     </div>
   );

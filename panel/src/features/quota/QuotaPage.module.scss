@@ -17,7 +17,7 @@
 .workbench {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 24px;
   min-width: 0;
 }
 
@@ -43,21 +43,61 @@
   flex-wrap: wrap;
   gap: 8px 16px;
   min-width: 0;
+
+  > * {
+    max-width: none;
+  }
 }
 
-.sort,
-.viewSelect {
-  flex: 0 0 auto;
-  min-width: 148px;
-  max-width: 100%;
+/* The Accounts bar: title and count on the left, labeled Sort and View on the right. */
+.accountsBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-bottom: -8px;
+  padding: 8px 16px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+}
+
+.accountsTitle {
+  margin: 0;
+  font-size: var(--fs-title);
+  line-height: var(--lh-title);
+  font-weight: 600;
+}
+
+.accountsNote {
+  font-size: var(--fs-meta);
+  color: var(--text-secondary);
 }
 
 .controls {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-left: auto;
+}
+
+.control {
+  display: flex;
+  align-items: center;
   gap: 8px;
   min-width: 0;
+
+  > :last-child {
+    min-width: 168px;
+  }
+}
+
+.controlLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: var(--fs-meta);
+  color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 /* ---------- 卡片网格 ----------
@@ -74,5 +114,33 @@
 @include mobile {
   .page {
     gap: 16px;
+  }
+
+  .accountsBar {
+    padding: 12px;
+  }
+
+  .controls {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .control {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+
+    > :last-child {
+      min-width: 0;
+    }
+  }
+}
+
+/* Up to tablet width the ledger always draws accounts as cards, so a View choice would only mislabel the layout. */
+@media (max-width: #{$breakpoint-tablet}) {
+  .viewControl {
+    display: none;
   }
 }

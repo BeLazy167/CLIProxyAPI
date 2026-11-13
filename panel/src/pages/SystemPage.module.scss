@@ -43,44 +43,44 @@
 .aboutLogo {
   width: 40px;
   height: 40px;
-  border-radius: 10px;
+  border-radius: 0;
   object-fit: cover;
 }
 
 .aboutTitle {
   font-size: var(--fs-title);
-  font-weight: 650;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
 .tiles {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
-  gap: $spacing-sm;
+  gap: 1px;
+  border: 1px solid var(--border-color);
+  background: var(--border-color);
 }
 
 .tile {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 12px 14px;
-  border-radius: var(--radius-md);
-  border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
-  background: color-mix(in srgb, var(--bg-secondary) 55%, transparent);
+  padding: 12px 16px;
+  border-radius: 0;
+  border: 0;
+  background: var(--bg-primary);
 }
 
 .tileLabel {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-tertiary);
+  font-size: var(--fs-meta);
+  color: var(--text-secondary);
 }
 
 .tileValue {
   font-family: $font-mono;
-  font-size: var(--fs-stat);
-  font-weight: 650;
+  font-size: var(--fs-page);
+  line-height: var(--lh-page);
+  font-weight: 400;
   color: var(--text-primary);
   overflow-wrap: anywhere;
 }
@@ -219,7 +219,7 @@
   flex-direction: column;
   gap: 4px;
   padding: 20px 12px;
-  border-radius: var(--radius-md);
+  border-radius: 0;
   border: 1px dashed var(--border-color);
   color: var(--text-secondary);
   font-size: 13px;
@@ -259,10 +259,11 @@
   display: inline-flex;
   align-items: baseline;
   gap: 6px;
-  padding: 3px 9px;
-  border-radius: $radius-full;
-  border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
-  background: color-mix(in srgb, var(--bg-secondary) 70%, transparent);
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 0;
+  border: 0;
+  background: var(--bg-band);
   color: var(--text-primary);
   font: inherit;
   font-family: $font-mono;

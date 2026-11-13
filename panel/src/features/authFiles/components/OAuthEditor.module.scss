@@ -181,7 +181,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--primary-color);
+    outline: var(--focus-ring);
     outline-offset: 3px;
   }
 
@@ -203,7 +203,7 @@
   visibility: hidden;
 }
 
-.providerOptionActive {
+.providerOption[data-checked] {
   border-color: var(--primary-color);
   background: var(--primary-10);
   color: var(--text-primary);
@@ -230,7 +230,7 @@
 .countBadge {
   flex-shrink: 0;
   padding: 4px 9px;
-  border-radius: $radius-full;
+  border-radius: 0;
   background: var(--bg-tertiary);
   color: var(--text-secondary);
   font-size: 12px;

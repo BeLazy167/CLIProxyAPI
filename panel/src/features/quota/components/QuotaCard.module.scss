@@ -12,7 +12,7 @@
   flex-direction: column;
   gap: 11px;
   padding: 15px 16px;
-  border-radius: 14px;
+  border-radius: 0;
   border: 1px solid var(--border-color);
   background: color-mix(in srgb, var(--bg-primary) 82%, transparent);
   transition:
@@ -58,7 +58,7 @@
   justify-content: center;
   width: 26px;
   height: 26px;
-  border-radius: 8px;
+  border-radius: 0;
   background: color-mix(in srgb, var(--bg-tertiary) 60%, transparent);
 }
 
@@ -107,7 +107,7 @@
   padding: 12px 10px;
   cursor: pointer;
   border: 1px dashed var(--border-color);
-  border-radius: 10px;
+  border-radius: 0;
   background: none;
   color: var(--text-tertiary);
   transition:
@@ -125,7 +125,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--primary-color);
+    outline: var(--focus-ring);
     outline-offset: 2px;
   }
 }
@@ -169,7 +169,7 @@
 .skeletonLabel,
 .skeletonTrack {
   display: block;
-  border-radius: $radius-full;
+  border-radius: 0;
   background-color: color-mix(in srgb, var(--text-primary) 8%, transparent);
   background-image: linear-gradient(
     90deg,
@@ -221,7 +221,7 @@
   color: var(--viz-failure);
   background: color-mix(in srgb, var(--viz-failure) 8%, transparent);
   border: 1px solid color-mix(in srgb, var(--viz-failure) 32%, transparent);
-  border-radius: 9px;
+  border-radius: 0;
   padding: 8px 10px;
   overflow-wrap: anywhere;
 }
@@ -242,7 +242,7 @@
   gap: 5px;
   cursor: pointer;
   border: 1px solid var(--border-color);
-  border-radius: $radius-full;
+  border-radius: 0;
   background: none;
   padding: 5px 11px;
   font-size: 11.5px;
@@ -266,7 +266,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--primary-color);
+    outline: var(--focus-ring);
     outline-offset: 2px;
   }
 }

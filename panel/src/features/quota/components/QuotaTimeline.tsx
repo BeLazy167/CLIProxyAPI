@@ -15,6 +15,8 @@
 import { useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { formatRelativeInstant, TYPE_COLORS } from '@/utils/quota';
 import { getQuotaCacheKey, getQuotaDisplayName } from '@/utils/quota/identity';
 import { useNow } from '@/hooks/useNow';
@@ -30,6 +32,8 @@ import {
 import type { TimelineLane, TimelineMode } from '../quotaTimelineModel';
 import type { QuotaFileEntry } from '../logic';
 import type { QuotaCardState } from '../providers';
+import { QuotaSection } from './QuotaSection';
+import { remainingTone } from './quotaTone';
 import styles from './QuotaTimeline.module.scss';
 
 const WEEKDAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const;
@@ -154,25 +158,58 @@ export function QuotaTimeline({
 
   if (!hasAnyLane) return null;
 
-  return (
-    <section className={styles.timeline}>
-      <header className={styles.head}>
-        <div>
-          <h2 className={styles.title}>
-            {t('quota_management.windows_title', { defaultValue: 'Quota windows' })}
-          </h2>
-          <p className={styles.range}>
-            {formatDay(span.startMs)} – {formatDay(span.endMs - DAY_MS)}
-            {' · '}
-            {mode === 'weekly'
-              ? t('quota_management.windows_span_weekly', { defaultValue: 'two weeks' })
-              : t('quota_management.windows_span_session', { defaultValue: 'three days' })}
-            {offset === 0 &&
-              ` · ${t('quota_management.windows_current', { defaultValue: 'current' })}`}
-          </p>
-        </div>
+  const note =
+    mode === 'weekly'
+      ? t('quota_management.windows_note_weekly', {
+          defaultValue:
+            'Each bar is one full quota window, drawn from when it opened to when it resets. Lanes ending together compete for the same days.',
+        })
+      : t('quota_management.windows_note_session', {
+          defaultValue:
+            'Each bar is one 5-hour window. Only credentials with a window counting down can be projected; the rest stay empty rather than invented.',
+        });
 
-        <div className={styles.controls}>
+  return (
+    <QuotaSection
+      id="quota-windows-heading"
+      className={styles.timeline}
+      title={
+        <>
+          {t('quota_management.windows_title', { defaultValue: 'Quota windows' })}
+          <Tooltip label={t('quota_management.tip_windows_label')} content={note} />
+        </>
+      }
+      note={
+        <>
+          {formatDay(span.startMs)} – {formatDay(span.endMs - DAY_MS)}
+          {' · '}
+          {mode === 'weekly'
+            ? t('quota_management.windows_span_weekly', { defaultValue: 'two weeks' })
+            : t('quota_management.windows_span_session', { defaultValue: 'three days' })}
+          {offset === 0 &&
+            ` · ${t('quota_management.windows_current', { defaultValue: 'current' })}`}
+        </>
+      }
+      tools={
+        <>
+          <SegmentedControl
+            className={styles.modes}
+            value={mode}
+            onChange={(value) => {
+              setMode(value);
+              setOffset(0); // spans differ in size; an old offset means nothing
+            }}
+            options={[
+              {
+                value: 'weekly',
+                label: t('quota_management.windows_mode_weekly', { defaultValue: 'Weekly' }),
+              },
+              {
+                value: 'session',
+                label: t('quota_management.windows_mode_session', { defaultValue: '5-hour' }),
+              },
+            ]}
+          />
           <div className={styles.nav}>
             <button
               type="button"
@@ -198,28 +235,18 @@ export function QuotaTimeline({
               ›
             </button>
           </div>
-
-          <div className={styles.modes} role="group">
-            {(['weekly', 'session'] as const).map((value) => (
-              <button
-                key={value}
-                type="button"
-                aria-pressed={mode === value}
-                onClick={() => {
-                  setMode(value);
-                  setOffset(0); // spans differ in size; an old offset means nothing
-                }}
-              >
-                {value === 'weekly'
-                  ? t('quota_management.windows_mode_weekly', { defaultValue: 'Weekly' })
-                  : t('quota_management.windows_mode_session', { defaultValue: '5-hour' })}
-              </button>
-            ))}
-          </div>
-        </div>
-      </header>
-
-      <div className={styles.chart}>
+        </>
+      }
+    >
+      <p className={styles.scrollCue}>
+        {t('quota_management.windows_scroll_cue', { count: span.days })}
+      </p>
+      <div
+        className={styles.chart}
+        role="region"
+        aria-label={t('quota_management.windows_chart_label')}
+        tabIndex={0}
+      >
         {lanes.length === 0 ? (
           <div className={styles.empty} role="status">
             {t('quota_management.windows_empty_session', {
@@ -286,20 +313,9 @@ export function QuotaTimeline({
               defaultValue: 'manual reset expiry',
             })}
           </span>
-          <span className={styles.legendNote}>
-            {mode === 'weekly'
-              ? t('quota_management.windows_note_weekly', {
-                  defaultValue:
-                    'Each bar is one full quota window, drawn from when it opened to when it resets. Lanes ending together compete for the same days.',
-                })
-              : t('quota_management.windows_note_session', {
-                  defaultValue:
-                    'Each bar is one 5-hour window. Only credentials with a window counting down can be projected; the rest stay empty rather than invented.',
-                })}
-          </span>
         </footer>
       )}
-    </section>
+    </QuotaSection>
   );
 }
 
@@ -392,7 +408,13 @@ function Lane({ lane, span, now, mode, cells, nowPercent, resolvedTheme }: LaneP
             return (
               <div
                 key={window.startMs}
-                className={`${styles.window} ${styles[`window${capitalize(window.state)}`]}`}
+                className={[
+                  styles.window,
+                  styles[`window${capitalize(window.state)}`],
+                  window.remaining !== null && remainingTone(window.remaining) === 'low'
+                    ? styles.windowLow
+                    : '',
+                ].join(' ')}
                 style={{ left: `${window.leftPercent}%`, width: `${window.widthPercent}%` }}
                 title={`${lane.displayName}\n${formatDay(window.startMs)} ${formatTime(
                   window.startMs

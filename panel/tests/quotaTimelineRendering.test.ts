@@ -69,7 +69,7 @@ describe('QuotaTimeline rendering', () => {
     );
 
     expect(markup).toContain('<section');
-    expect(markup).toContain('aria-pressed="true"');
+    expect(markup).toMatch(/role="radio"[^>]*aria-checked="true"/);
     expect(markup).toContain('role="status"');
   });
 

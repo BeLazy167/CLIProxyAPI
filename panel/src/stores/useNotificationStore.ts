@@ -81,7 +81,6 @@ export const useNotificationStore = create<NotificationState>((set) => ({
       confirmation: {
         ...state.confirmation,
         isOpen: false,
-        options: null, // Cleanup
       },
     }));
   },

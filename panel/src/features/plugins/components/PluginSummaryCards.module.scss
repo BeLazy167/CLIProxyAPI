@@ -4,7 +4,9 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
-  gap: 10px;
+  gap: 1px;
+  border: 1px solid var(--border-color);
+  background: var(--border-color);
 }
 
 .card {
@@ -13,11 +15,12 @@
   flex-direction: column;
   gap: 2px;
   min-width: 0;
-  padding: 12px 14px;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--bg-primary) 82%, transparent);
-  color: var(--text-secondary);
+  padding: 12px 16px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   font: inherit;
   text-align: left;
 }
@@ -34,24 +37,22 @@
   }
 }
 
-.cardActive {
-  border-color: color-mix(in srgb, var(--summary-accent) 55%, var(--border-color));
-  background: color-mix(in srgb, var(--summary-accent) 10%, var(--bg-primary));
-  color: var(--text-primary);
+.card[data-pressed] {
+  border-bottom-color: var(--primary-color);
+  background: var(--bg-selected);
+  font-weight: 600;
 }
 
 .count {
-  font-family: $font-mono;
   font-size: var(--fs-stat);
-  font-weight: 700;
-  line-height: 1.1;
+  font-weight: 300;
+  line-height: var(--lh-stat);
   font-variant-numeric: tabular-nums;
   color: var(--summary-accent);
 }
 
 .label {
   font-size: var(--fs-body);
-  font-weight: 550;
   @include text-ellipsis;
 }
 
@@ -77,8 +78,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   .cardButton:hover {
-    border-color: var(--border-hover);
-    color: var(--text-primary);
+    background: var(--bg-hover);
   }
 }
 

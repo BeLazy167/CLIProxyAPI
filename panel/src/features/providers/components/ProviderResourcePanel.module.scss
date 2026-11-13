@@ -4,7 +4,7 @@
 .panel {
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: 0;
   box-shadow: var(--shadow);
   padding: 20px;
   min-width: 0;
@@ -114,7 +114,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--primary-color);
+    outline: var(--focus-ring);
     outline-offset: 3px;
   }
 }
@@ -190,9 +190,9 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--primary-color);
+    outline: var(--focus-ring);
     outline-offset: 2px;
-    border-radius: 4px;
+    border-radius: 0;
   }
 }
 
@@ -222,20 +222,19 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--primary-color);
+    outline: var(--focus-ring);
     outline-offset: 2px;
   }
 }
 
 .emptyActionButtonEmphasis {
-  color: var(--amber-text);
-  border-color: color-mix(in srgb, var(--amber-color) 48%, var(--border-color));
-  background: color-mix(in srgb, var(--amber-color) 14%, var(--bg-primary));
+  color: var(--warning-text);
+  border-color: var(--warning-border);
+  background: transparent;
   font-weight: 600;
 
   &:hover {
-    border-color: color-mix(in srgb, var(--amber-color) 72%, var(--border-color));
-    background: color-mix(in srgb, var(--amber-color) 20%, var(--bg-primary));
+    background: var(--bg-hover);
   }
 
   &:focus-visible {

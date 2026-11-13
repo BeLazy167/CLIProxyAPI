@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Select } from '@/components/ui/Select';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { useHeaderRefresh } from '@/hooks/useHeaderRefresh';
 import { useNow } from '@/hooks/useNow';
 import { useRevealGroup } from '@/hooks/motion';
@@ -29,6 +30,7 @@ import { Pagination } from '@/components/ui/Pagination';
 import { SearchField } from '@/components/ui/SearchField';
 import { QuotaHeader } from './components/QuotaHeader';
 import { ClaudeResetSuggestion } from './providers/claude/ClaudeResetSuggestion';
+import { claudeResetSuggestion } from './providers/claude/claudeResetSuggestion';
 import { QuotaCard } from './components/QuotaCard';
 import { QuotaLedger } from './components/QuotaLedger';
 import { QuotaPools } from './components/QuotaPools';
@@ -231,15 +233,18 @@ export function QuotaPage() {
     [filteredEntries, getQuota, clock]
   );
 
-  const { loadedCount, attentionCount } = useMemo(() => {
+  const { loadedCount, attentionCount, readAtMs } = useMemo(() => {
     let loaded = 0;
     let attention = 0;
+    let readAt: number | null = null;
     entries.forEach((entry) => {
-      const status = quotaByType[entry.type][getQuotaCacheKey(entry.file)]?.status;
-      if (status === 'success') loaded += 1;
-      else if (status === 'error') attention += 1;
+      const quota = quotaByType[entry.type][getQuotaCacheKey(entry.file)];
+      if (quota?.status === 'success') {
+        loaded += 1;
+        if (quota.loadedAtMs !== undefined) readAt = Math.max(readAt ?? 0, quota.loadedAtMs);
+      } else if (quota?.status === 'error') attention += 1;
     });
-    return { loadedCount: loaded, attentionCount: attention };
+    return { loadedCount: loaded, attentionCount: attention, readAtMs: readAt };
   }, [entries, quotaByType]);
 
   // 剪枝：文件列表落定后，各 provider 缓存只保留仍存在的凭证
@@ -320,10 +325,18 @@ export function QuotaPage() {
     () => entries.filter((entry) => entry.type === 'claude'),
     [entries]
   );
+  const resetSuggestion = useMemo(
+    () => claudeResetSuggestion(claudeEntries, getQuota, clock),
+    [claudeEntries, getQuota, clock]
+  );
+  const suggestedReset =
+    resetSuggestion.state === 'ready'
+      ? { key: getQuotaCacheKey(resetSuggestion.account.file), kind: resetSuggestion.kind }
+      : null;
   const claudeHint =
     claudeEntries.length > 0 ? (
       <ClaudeResetSuggestion
-        entries={claudeEntries}
+        suggestion={resetSuggestion}
         quotaFor={getQuota}
         isBlocked={(entry) =>
           !canUseActions ||
@@ -363,6 +376,7 @@ export function QuotaPage() {
         totalCount={entries.length}
         loadedCount={loadedCount}
         attentionCount={attentionCount}
+        readAtMs={readAtMs}
         refreshing={loading || batchLoading}
         disableControls={disableControls}
         onRefreshAll={handleRefreshAll}
@@ -402,7 +416,7 @@ export function QuotaPage() {
             pools={pools}
             now={clock}
             resolvedTheme={resolvedTheme}
-            claudeHint={claudeHint}
+            notice={pools.some((pool) => pool.provider === 'claude') ? claudeHint : null}
           />
         )}
 
@@ -415,34 +429,50 @@ export function QuotaPage() {
           />
         )}
 
-        {/* Sort and view only reorder the account list, so they sit right above it. */}
-        <div className={styles.controls}>
-          <div className={styles.sort}>
-            <Select
-              value={sortMode}
-              options={sortOptions}
-              onChange={handleSortModeChange}
-              ariaLabel={t('quota_management.sort_label')}
-              size="sm"
-              variant="quiet"
-            />
-          </div>
-          <div className={styles.viewSelect}>
-            <Select
-              value={view}
-              options={viewOptions}
-              onChange={handleViewChange}
-              ariaLabel={t('quota_management.view_label')}
-              size="sm"
-              variant="quiet"
-            />
+        {/* Sort and view only reorder the account list, so they sit in its bar right above it. */}
+        <div className={styles.accountsBar}>
+          <h2 className={styles.accountsTitle}>{t('quota_management.accounts_title')}</h2>
+          <span className={styles.accountsNote}>
+            {t(`quota_management.accounts_meta_${sortMode}`, { count: filteredEntries.length })}
+          </span>
+          <div className={styles.controls}>
+            <div className={styles.control}>
+              <span className={styles.controlLabel}>
+                {t('quota_management.sort_label')}
+                <Tooltip
+                  label={t('quota_management.tip_sort_label')}
+                  content={t('quota_management.tip_sort')}
+                />
+              </span>
+              <Select
+                value={sortMode}
+                options={sortOptions}
+                onChange={handleSortModeChange}
+                ariaLabel={t('quota_management.sort_label')}
+              />
+            </div>
+            <div className={`${styles.control} ${styles.viewControl}`}>
+              <span className={styles.controlLabel}>
+                {t('quota_management.view_label')}
+                <Tooltip
+                  label={t('quota_management.tip_view_label')}
+                  content={t('quota_management.tip_view')}
+                />
+              </span>
+              <Select
+                value={view}
+                options={viewOptions}
+                onChange={handleViewChange}
+                ariaLabel={t('quota_management.view_label')}
+              />
+            </div>
           </div>
         </div>
 
         {loading ? (
           <div className={styles.grid} aria-hidden="true">
             {Array.from({ length: SKELETON_CARD_COUNT }, (_, index) => (
-              <Skeleton key={index} height={168} rounded={14} />
+              <Skeleton key={index} height={168} />
             ))}
           </div>
         ) : isEmpty ? (
@@ -484,7 +514,7 @@ export function QuotaPage() {
             resettingKey={resettingQuotaName}
             onRefresh={(entry) => void refreshQuota(entry.file, QUOTA_ADAPTERS[entry.type])}
             onReset={(entry) => resetQuota(entry.file, QUOTA_ADAPTERS[entry.type])}
-            claudeHint={claudeHint}
+            suggested={suggestedReset}
           />
         ) : (
           <div className={styles.grid}>
@@ -507,10 +537,20 @@ export function QuotaPage() {
 
         {!loading && (
           <Pagination
+            className="pagination-bar"
             page={currentPage}
             totalPages={totalPages}
             totalItems={filteredEntries.length}
             onChange={setPage}
+            lead={
+              <>
+                {t('quota_management.items_per_page', { size: QUOTA_PAGE_SIZE })}
+                <Tooltip
+                  label={t('quota_management.tip_page_size_label')}
+                  content={t('quota_management.tip_page_size', { size: QUOTA_PAGE_SIZE })}
+                />
+              </>
+            }
           />
         )}
 

@@ -6,81 +6,60 @@
 $lane-width: 210px;
 
 .timeline {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-md;
-}
-
-.head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: $spacing-md;
-  flex-wrap: wrap;
-}
-
-.title {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 650;
-  color: var(--text-primary);
-}
-
-.range {
-  margin: 2px 0 0;
-  font-size: 12px;
-  color: var(--text-quaternary);
-  font-variant-numeric: tabular-nums;
-}
-
-.controls {
-  display: flex;
-  align-items: center;
-  gap: $spacing-sm;
-  flex-wrap: wrap;
+  gap: 0;
 }
 
 .nav,
 .modes {
   display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 3px;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-color);
-  border-radius: 999px;
+  align-items: stretch;
+  border: 1px solid var(--border-primary);
+  background: var(--bg-primary);
 
   button {
-    padding: 4px 12px;
-    font: inherit;
-    font-size: 12.5px;
-    color: var(--text-secondary);
+    min-height: 32px;
+    padding: 0 12px;
+    border: 0;
+    border-right: 1px solid var(--border-primary);
+    border-radius: 0;
     background: transparent;
-    border: 1px solid transparent;
-    border-radius: 999px;
+    color: var(--text-primary);
+    font: inherit;
     cursor: pointer;
-    transition: all $transition-fast;
+
+    &:last-child {
+      border-right: 0;
+    }
 
     &:hover:not(:disabled) {
-      color: var(--text-primary);
+      background: var(--bg-hover);
     }
 
     &:disabled {
-      opacity: 0.5;
+      color: var(--text-quaternary);
       cursor: default;
     }
 
-    &[aria-pressed='true'] {
-      background: var(--floating-surface, var(--bg-primary));
-      border-color: var(--border-hover);
-      color: var(--text-primary);
+    &[data-checked] {
+      background: var(--text-primary);
+      color: var(--bg-primary);
+      font-weight: 600;
+    }
+
+    &:focus-visible {
+      outline: var(--focus-ring);
+      outline-offset: -2px;
+    }
+
+    @media (max-width: $breakpoint-mobile) {
+      min-height: 44px;
+      padding: 0 14px;
     }
   }
 }
 
 .chart {
   border: 1px solid var(--border-color);
-  border-radius: $radius-lg;
   background: var(--bg-primary);
   overflow: hidden;
 }
@@ -103,15 +82,13 @@ $lane-width: 210px;
 
 .axis {
   border-bottom: 1px solid var(--border-color);
+  background: var(--bg-band);
 }
 
 .axisLabel {
   padding: 8px 12px;
-  font-size: 10.5px;
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-quaternary);
+  color: var(--text-primary);
   display: flex;
   align-items: flex-end;
 }
@@ -136,20 +113,20 @@ $lane-width: 210px;
 
   // The current day is the reference point for reading the whole chart.
   &[data-today='1'] {
-    background: rgba(255, 255, 255, 0.03);
+    box-shadow: inset 0 -3px 0 var(--primary-color);
   }
 }
 
 .axisWeekday {
-  font-size: 10px;
-  color: var(--text-quaternary);
+  font-size: var(--fs-meta);
+  color: var(--text-secondary);
   min-height: 12px;
 }
 
 .axisDate {
-  font-size: 11.5px;
+  font-size: var(--fs-meta);
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -158,7 +135,7 @@ $lane-width: 210px;
   border-top: 1px solid var(--border-color);
 
   &:hover {
-    background: rgba(255, 255, 255, 0.012);
+    background: var(--bg-hover);
   }
 }
 
@@ -181,7 +158,7 @@ $lane-width: 210px;
   flex: none;
   width: 7px;
   height: 7px;
-  border-radius: 50%;
+  border-radius: 0;
   background: var(--provider-accent, var(--text-quaternary));
 }
 
@@ -197,7 +174,7 @@ $lane-width: 210px;
 .lanePeriod {
   flex: none;
   padding: 0 6px;
-  border-radius: 999px;
+  border-radius: 0;
   font-size: 10px;
   font-weight: 600;
   color: var(--count-badge-text, var(--text-secondary));
@@ -211,15 +188,11 @@ $lane-width: 210px;
 }
 
 .laneLimit {
-  padding: 1px 6px;
-  border-radius: $radius-sm;
-  font-size: 10.5px;
-  color: var(--text-quaternary);
-  background: var(--bg-tertiary);
+  @include count-tag;
 
   b {
-    color: var(--text-secondary);
-    font-variant-numeric: tabular-nums;
+    margin-left: 4px;
+    font-weight: 600;
   }
 }
 
@@ -251,9 +224,8 @@ $lane-width: 210px;
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 1px;
-  background: var(--text-tertiary, var(--text-quaternary));
-  opacity: 0.8;
+  width: 2px;
+  background: var(--primary-color);
   z-index: 1;
 }
 
@@ -264,32 +236,37 @@ $lane-width: 210px;
   display: flex;
   align-items: center;
   padding: 0 8px;
-  border-radius: 999px;
+  border-radius: 0;
   overflow: hidden;
-  font-size: 10.5px;
+  font-size: var(--fs-meta);
   white-space: nowrap;
   position: absolute;
 }
 
-// Current window: solid, in the provider's colour — the row's focal point.
+// Current window: a gray lane with a solid edge, the row's focal point.
 .windowLive {
-  background: color-mix(in srgb, var(--provider-accent) 26%, transparent);
-  border: 1px solid color-mix(in srgb, var(--provider-accent) 45%, transparent);
+  background: var(--bg-band);
+  border: 1px solid var(--text-secondary);
   color: var(--text-primary);
+}
+
+// Below the low band: a red edge says this window needs a look.
+.windowLow {
+  border-color: var(--danger-border);
 }
 
 // Upcoming: dashed outline, nothing consumed yet.
 .windowNext {
   background: transparent;
-  border: 1px dashed color-mix(in srgb, var(--provider-accent) 32%, transparent);
-  color: var(--text-quaternary);
+  border: 1px dashed var(--text-secondary);
+  color: var(--text-secondary);
 }
 
 // Elapsed: recedes.
 .windowPast {
-  background: color-mix(in srgb, var(--provider-accent) 8%, transparent);
-  border: 1px solid transparent;
-  color: var(--text-quaternary);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
 }
 
 // Consumed portion of the current window, drawn behind its label.
@@ -298,7 +275,7 @@ $lane-width: 210px;
   left: 0;
   top: 0;
   bottom: 0;
-  background: color-mix(in srgb, var(--provider-accent) 34%, transparent);
+  background: color-mix(in srgb, var(--text-secondary) 28%, var(--bg-band));
   pointer-events: none;
 }
 
@@ -318,7 +295,7 @@ $lane-width: 210px;
   bottom: 6px;
   width: 2px;
   transform: translateX(-50%);
-  border-radius: 999px;
+  border-radius: 0;
   background: var(--amber-color);
   box-shadow: 0 0 0 1px var(--bg-primary);
   cursor: help;
@@ -332,17 +309,18 @@ $lane-width: 210px;
   position: relative;
   z-index: 2;
   padding-left: 10px;
-  font-size: 11px;
-  color: var(--text-quaternary);
+  font-size: var(--fs-meta);
+  color: var(--text-secondary);
 }
 
 .legend {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: $spacing-md;
-  font-size: 11px;
-  color: var(--text-quaternary);
+  gap: 8px 24px;
+  padding: 8px 0;
+  font-size: var(--fs-meta);
+  color: var(--text-secondary);
 }
 
 .legendItem {
@@ -354,32 +332,32 @@ $lane-width: 210px;
 .swatch {
   width: 22px;
   height: 10px;
-  border-radius: 999px;
+  border-radius: 0;
 }
 
 .swatchLive {
-  background: color-mix(in srgb, var(--text-tertiary, #888) 34%, transparent);
-  border: 1px solid color-mix(in srgb, var(--text-tertiary, #888) 50%, transparent);
+  background: var(--bg-band);
+  border: 1px solid var(--text-secondary);
 }
 
 .swatchNext {
-  border: 1px dashed color-mix(in srgb, var(--text-tertiary, #888) 45%, transparent);
+  border: 1px dashed var(--text-secondary);
 }
 
 .swatchPast {
-  background: color-mix(in srgb, var(--text-tertiary, #888) 12%, transparent);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-color);
 }
 
 .swatchCredit {
   width: 2px;
   height: 14px;
-  border-radius: 999px;
+  border-radius: 0;
   background: var(--amber-color);
 }
 
-.legendNote {
-  flex: 1 1 320px;
-  min-width: 0;
+.scrollCue {
+  display: none;
 }
 
 @include mobile {
@@ -387,6 +365,17 @@ $lane-width: 210px;
   // chart scrolls horizontally rather than compressing to illegibility.
   .chart {
     overflow-x: auto;
+  }
+
+  .scrollCue {
+    display: block;
+    padding: 8px 0;
+    border: 1px solid var(--border-color);
+    border-bottom: 0;
+    padding-inline: 12px;
+    background: var(--bg-primary);
+    font-size: var(--fs-meta);
+    color: var(--text-secondary);
   }
 
   .axis,

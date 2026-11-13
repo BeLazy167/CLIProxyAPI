@@ -73,12 +73,8 @@
 }
 
 .filterPanel {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
   min-width: 220px;
   max-width: 320px;
-  z-index: $z-dropdown;
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
@@ -150,8 +146,8 @@
 }
 
 .filterTriggerActive {
-  border-color: var(--primary-30);
-  color: var(--primary-color);
+  border-color: var(--text-primary);
+  color: var(--text-primary);
 }
 
 .filterCount {
@@ -161,12 +157,12 @@
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
-  border-radius: $radius-full;
-  background: var(--primary-10);
-  color: var(--primary-color);
+  border-radius: 0;
+  background: var(--bg-band);
+  color: var(--text-primary);
   font-family: $font-mono;
-  font-size: 11px;
-  font-weight: 650;
+  font-size: var(--fs-meta);
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
@@ -178,7 +174,7 @@
   height: 22px;
   margin-left: 2px;
   border: 0;
-  border-radius: $radius-full;
+  border-radius: 0;
   background: transparent;
   color: var(--text-tertiary);
   cursor: pointer;
@@ -189,7 +185,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--primary-color);
+    outline: var(--focus-ring);
     outline-offset: 1px;
   }
 }
@@ -215,8 +211,7 @@
   }
 
   &:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px var(--primary-10);
+    outline: 2px solid var(--focus-color);
+    outline-offset: -2px;
   }
 }

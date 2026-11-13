@@ -823,9 +823,7 @@ export function OAuthPage() {
               flush
               label={t('auth_login.step_callback')}
               open={callbackOpen}
-              onToggle={(event) =>
-                updateProviderState(provider.id, { callbackOpen: event.currentTarget.open })
-              }
+              onOpenChange={(next) => updateProviderState(provider.id, { callbackOpen: next })}
             >
               <div className={styles.callbackSection}>
                 <Input

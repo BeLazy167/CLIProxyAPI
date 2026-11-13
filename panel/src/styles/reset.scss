@@ -21,9 +21,11 @@ body {
 body {
   margin: 0;
   font-family: $font-family;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  line-height: 1.5;
 }
 
 #root {

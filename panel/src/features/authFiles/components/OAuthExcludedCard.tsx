@@ -43,7 +43,7 @@ export function OAuthExcludedCard(props: OAuthExcludedCardProps) {
         ) : excludedError === 'loading' ? (
           <div className={styles.list} aria-busy="true">
             {Array.from({ length: 3 }, (_, index) => (
-              <Skeleton key={index} height={48} rounded={10} />
+              <Skeleton key={index} height={48} />
             ))}
           </div>
         ) : Object.keys(excluded).length === 0 ? (

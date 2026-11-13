@@ -16,14 +16,13 @@
   min-width: 0;
   padding: 13px 15px 14px;
   border: 1px solid var(--border-color);
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--bg-primary) 82%, transparent);
+  border-radius: 0;
+  background: var(--bg-primary);
 }
 
-/* 需要注意：琥珀描边 + 淡琥珀底 */
+/* 需要注意：琥珀左边条 */
 .cardAttention {
-  border-color: var(--amber-30);
-  background: color-mix(in srgb, var(--amber-10) 60%, var(--bg-primary));
+  border-left: 3px solid var(--warning-border);
 }
 
 .cardHead {
@@ -59,9 +58,9 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--primary-color);
+    outline: var(--focus-ring);
     outline-offset: 2px;
-    border-radius: 4px;
+    border-radius: 0;
   }
 }
 

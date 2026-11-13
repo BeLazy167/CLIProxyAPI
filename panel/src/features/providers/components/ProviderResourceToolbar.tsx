@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   IconChevronDown,
@@ -6,6 +6,7 @@ import {
   IconSlidersHorizontal,
   IconX,
 } from '@/components/ui/icons';
+import { Popover } from '@/components/ui/Popover';
 import { Select } from '@/components/ui/Select';
 import { SelectionCheckbox } from '@/components/ui/SelectionCheckbox';
 import type { ProviderSortBy, SortDir } from '../types';
@@ -31,11 +32,7 @@ export function ProviderResourceToolbar({
   onSelectedModelsChange,
 }: ProviderResourceToolbarProps) {
   const { t } = useTranslation();
-  const [filterOpen, setFilterOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const containerRef = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const panelId = useId();
 
   const sortOptions = useMemo(
     () => [
@@ -48,27 +45,6 @@ export function ProviderResourceToolbar({
     ],
     [t]
   );
-
-  useEffect(() => {
-    if (!filterOpen) return;
-    const onClickOutside = (e: PointerEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setFilterOpen(false);
-      }
-    };
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      e.stopPropagation();
-      setFilterOpen(false);
-      triggerRef.current?.focus();
-    };
-    document.addEventListener('pointerdown', onClickOutside);
-    document.addEventListener('keydown', onKeyDown, true);
-    return () => {
-      document.removeEventListener('pointerdown', onClickOutside);
-      document.removeEventListener('keydown', onKeyDown, true);
-    };
-  }, [filterOpen]);
 
   const toggleModel = (name: string) => {
     const next = new Set(selectedModels);
@@ -114,27 +90,73 @@ export function ProviderResourceToolbar({
         </button>
       </div>
 
-      <div className={styles.filterGroup} ref={containerRef}>
-        <button
-          ref={triggerRef}
-          type="button"
-          className={`${styles.filterTrigger} ${selectedModels.size > 0 ? styles.filterTriggerActive : ''}`}
-          onClick={() => setFilterOpen((v) => !v)}
+      <div className={styles.filterGroup}>
+        <Popover
+          label={t('providersPage.toolbar.filter.dialogLabel')}
+          align="end"
           disabled={availableModels.length === 0}
-          aria-haspopup="dialog"
-          aria-expanded={filterOpen}
-          aria-controls={filterOpen ? panelId : undefined}
+          triggerClassName={`${styles.filterTrigger} ${selectedModels.size > 0 ? styles.filterTriggerActive : ''}`}
+          className={styles.filterPanel}
+          trigger={
+            <>
+              <IconSlidersHorizontal size={14} aria-hidden="true" />
+              <span>
+                {t('providersPage.toolbar.filter.label')}{' '}
+                {selectedModels.size === 0 ? t('providersPage.toolbar.filter.all') : ''}
+              </span>
+              {selectedModels.size > 0 ? (
+                <span className={styles.filterCount}>{selectedModels.size}</span>
+              ) : null}
+              <IconChevronDown size={12} aria-hidden="true" />
+            </>
+          }
         >
-          <IconSlidersHorizontal size={14} aria-hidden="true" />
-          <span>
-            {t('providersPage.toolbar.filter.label')}{' '}
-            {selectedModels.size === 0 ? t('providersPage.toolbar.filter.all') : ''}
-          </span>
-          {selectedModels.size > 0 ? (
-            <span className={styles.filterCount}>{selectedModels.size}</span>
-          ) : null}
-          <IconChevronDown size={12} aria-hidden="true" />
-        </button>
+          <input
+            type="search"
+            className={styles.filterSearch}
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t('providersPage.toolbar.filter.searchPlaceholder')}
+            aria-label={t('providersPage.toolbar.filter.searchPlaceholder')}
+          />
+          <div className={styles.filterToolbar}>
+            <button
+              type="button"
+              className={styles.filterToolbarBtn}
+              onClick={selectAll}
+              disabled={availableModels.length === 0}
+            >
+              {t('providersPage.toolbar.filter.selectAll')}
+            </button>
+            <button
+              type="button"
+              className={styles.filterToolbarBtn}
+              onClick={clearAll}
+              disabled={selectedModels.size === 0}
+            >
+              {t('providersPage.toolbar.filter.clear')}
+            </button>
+          </div>
+          {visibleModels.length === 0 ? (
+            <div className={styles.filterEmpty}>
+              {availableModels.length === 0
+                ? t('providersPage.toolbar.filter.empty')
+                : t('providersPage.toolbar.filter.noMatch')}
+            </div>
+          ) : (
+            <ul className={styles.filterList}>
+              {visibleModels.map((name) => (
+                <li key={name} className={styles.filterItem}>
+                  <SelectionCheckbox
+                    checked={selectedModels.has(name)}
+                    onChange={() => toggleModel(name)}
+                    label={<span className={styles.filterItemLabel}>{name}</span>}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </Popover>
         {selectedModels.size > 0 ? (
           <button
             type="button"
@@ -145,61 +167,6 @@ export function ProviderResourceToolbar({
           >
             <IconX size={12} />
           </button>
-        ) : null}
-        {filterOpen ? (
-          <div
-            id={panelId}
-            className={styles.filterPanel}
-            role="dialog"
-            aria-label={t('providersPage.toolbar.filter.dialogLabel')}
-          >
-            <input
-              type="search"
-              className={styles.filterSearch}
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={t('providersPage.toolbar.filter.searchPlaceholder')}
-              aria-label={t('providersPage.toolbar.filter.searchPlaceholder')}
-              autoFocus
-            />
-            <div className={styles.filterToolbar}>
-              <button
-                type="button"
-                className={styles.filterToolbarBtn}
-                onClick={selectAll}
-                disabled={availableModels.length === 0}
-              >
-                {t('providersPage.toolbar.filter.selectAll')}
-              </button>
-              <button
-                type="button"
-                className={styles.filterToolbarBtn}
-                onClick={clearAll}
-                disabled={selectedModels.size === 0}
-              >
-                {t('providersPage.toolbar.filter.clear')}
-              </button>
-            </div>
-            {visibleModels.length === 0 ? (
-              <div className={styles.filterEmpty}>
-                {availableModels.length === 0
-                  ? t('providersPage.toolbar.filter.empty')
-                  : t('providersPage.toolbar.filter.noMatch')}
-              </div>
-            ) : (
-              <ul className={styles.filterList}>
-                {visibleModels.map((name) => (
-                  <li key={name} className={styles.filterItem}>
-                    <SelectionCheckbox
-                      checked={selectedModels.has(name)}
-                      onChange={() => toggleModel(name)}
-                      label={<span className={styles.filterItemLabel}>{name}</span>}
-                    />
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
         ) : null}
       </div>
     </div>

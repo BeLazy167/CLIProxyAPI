@@ -61,6 +61,7 @@ export function AuthFileDeleteConfirmModal({
 
   return (
     <Modal
+      alert
       open={open}
       onClose={onCancel}
       title={t('auth_files.delete_modal_title', { count })}

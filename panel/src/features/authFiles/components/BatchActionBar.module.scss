@@ -19,13 +19,11 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 8px 16px;
-  padding: 10px 14px;
-  border-radius: 16px;
-  --glass-blur: 14px;
-  border: 1px solid var(--glass-border);
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-backdrop-filter);
-  box-shadow: var(--shadow-lg);
+  padding: 8px 16px;
+  border-radius: 0;
+  border: 1px solid var(--border-color);
+  background: var(--floating-surface);
+  box-shadow: var(--floating-shadow);
 }
 
 .left,

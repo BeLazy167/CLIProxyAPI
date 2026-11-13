@@ -17,14 +17,13 @@
   gap: 8px;
   width: 100%;
   height: 40px;
-  padding: 0 12px;
-  border: 1px solid var(--border-color);
-  border-radius: $radius-md;
+  padding: 0 12px 0 16px;
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
   background-color: var(--bg-primary);
-  box-shadow: var(--shadow);
   color: var(--text-primary);
-  font-size: 13px;
-  font-weight: 500;
+  font: inherit;
+  font-size: var(--fs-body);
   cursor: pointer;
   appearance: none;
   text-align: left;
@@ -34,56 +33,53 @@
     border-color: var(--border-hover);
   }
 
-  &:focus {
-    outline: none;
-    box-shadow:
-      var(--shadow),
-      0 0 0 3px rgba($primary-color, 0.18);
+  &[data-open] {
+    border-color: var(--focus-color);
+    box-shadow: inset 0 0 0 1px var(--focus-color);
   }
 
-  &[aria-expanded='true'] {
-    border-color: var(--primary-color);
-    box-shadow:
-      var(--shadow),
-      0 0 0 3px rgba($primary-color, 0.18);
+  &[data-disabled] {
+    cursor: not-allowed;
+    color: var(--text-quaternary);
+    border-color: var(--border-color);
+  }
+
+  &[aria-invalid='true'] {
+    border-color: var(--error-color);
+  }
+
+  @include mobile {
+    height: 48px;
   }
 }
 
 .triggerSm {
-  height: 28px;
-  padding: 0 10px;
-  font-size: 12px;
-  box-shadow: none;
+  height: 32px;
+  padding: 0 8px 0 12px;
+  font-size: var(--fs-meta);
+
+  @include mobile {
+    height: 40px;
+  }
 }
 
-/* 工具栏安静触发器：透明边、悬停着色、展开/聚焦时显环 */
 .triggerQuiet {
-  height: 36px;
-  padding: 0 10px 0 12px;
+  height: 40px;
+  padding: 0 12px 0 16px;
+  font-size: var(--fs-body);
   border-color: transparent;
-  border-radius: 10px;
   background: transparent;
-  box-shadow: none;
   color: var(--text-secondary);
 
-  &:hover {
+  &:hover,
+  &[data-open] {
     border-color: transparent;
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-  }
-
-  &:focus-visible,
-  &[aria-expanded='true'] {
-    outline: var(--focus-ring);
-    outline-offset: 2px;
-    box-shadow: none;
-    border-color: transparent;
-    background: var(--bg-secondary);
+    background: var(--bg-hover);
     color: var(--text-primary);
   }
 
   @include mobile {
-    height: 40px;
+    height: 48px;
   }
 }
 
@@ -91,65 +87,74 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
 
-.placeholder {
-  color: var(--text-tertiary);
+  &[data-placeholder] {
+    color: var(--text-tertiary);
+  }
 }
 
 .triggerIcon {
   display: inline-flex;
   color: var(--text-secondary);
   flex-shrink: 0;
-  transition: transform 0.2s ease;
 
-  [aria-expanded='true'] > & {
+  [data-open] > & {
     transform: rotate(180deg);
   }
 }
 
 .dropdown {
-  position: fixed;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: $radius-lg;
-  padding: 6px;
-  box-shadow: var(--shadow-lg);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  max-height: 240px;
+  box-sizing: border-box;
+  min-width: var(--anchor-width);
+  max-width: calc(100vw - 16px);
+  max-height: min(240px, var(--available-height));
+  margin: 0;
+  padding: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  scrollbar-gutter: stable;
+  border: 1px solid var(--border-primary);
+  background: var(--floating-surface);
+  color: var(--text-primary);
+  box-shadow: var(--floating-shadow);
 }
 
 .option {
-  padding: 8px 12px;
-  border-radius: $radius-md;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px;
+  border-top: 1px solid var(--border-color);
+  font-size: var(--fs-body);
   cursor: pointer;
-  text-align: left;
-  font-size: 13px;
-  font-weight: 500;
-  transition:
-    background-color 0.15s ease,
-    border-color 0.15s ease;
-  flex-shrink: 0;
+  outline: none;
 
-  &:hover {
-    background: var(--bg-secondary);
+  &:first-child {
+    border-top: 0;
+  }
+
+  &[data-highlighted] {
+    background: var(--bg-hover);
+  }
+
+  &[data-selected] {
+    background: var(--bg-selected);
+    font-weight: 600;
+  }
+
+  [data-modality='keyboard'] > &[data-highlighted],
+  &:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px var(--focus-color);
+  }
+
+  @include mobile {
+    min-height: 48px;
   }
 }
 
-.optionActive {
-  border-color: rgba($primary-color, 0.5);
-  background: rgba($primary-color, 0.1);
-  font-weight: 600;
-}
-
-.optionHighlighted {
-  background: var(--bg-secondary);
+.check {
+  display: inline-flex;
+  flex-shrink: 0;
 }
