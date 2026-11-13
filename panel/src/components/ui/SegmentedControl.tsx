@@ -13,7 +13,8 @@ export interface SegmentedOption<T extends string> {
 }
 
 interface SegmentedControlProps<T extends string> {
-  value: T;
+  /** `null` checks nothing, as when free text matches no option. */
+  value: T | null;
   options: ReadonlyArray<SegmentedOption<T>>;
   onChange: (value: T) => void;
   ariaLabel?: string;

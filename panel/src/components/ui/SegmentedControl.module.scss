@@ -1,11 +1,12 @@
-.root {
+// Zero-specificity defaults, so a caller's className restyles the control.
+:where(.root) {
   display: inline-flex;
   max-width: 100%;
   border: 1px solid var(--border-primary);
   background: var(--bg-primary);
 }
 
-.item {
+:where(.item) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -21,27 +22,27 @@
   white-space: nowrap;
   cursor: pointer;
 
-  &:last-child {
-    border-right: 0;
-  }
-
-  &:hover {
-    background: var(--bg-hover);
-  }
-
-  &[data-checked] {
-    background: var(--text-primary);
-    color: var(--bg-primary);
-    font-weight: 600;
-  }
-
-  &[data-disabled] {
-    color: var(--text-quaternary);
-    cursor: not-allowed;
-  }
-
   @media (max-width: $breakpoint-mobile) {
     min-height: 44px;
     padding: 0 14px;
   }
+}
+
+:where(.item:last-child) {
+  border-right: 0;
+}
+
+:where(.item:hover) {
+  background: var(--bg-hover);
+}
+
+:where(.item[data-checked]) {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  font-weight: 600;
+}
+
+:where(.item[data-disabled]) {
+  color: var(--text-quaternary);
+  cursor: not-allowed;
 }

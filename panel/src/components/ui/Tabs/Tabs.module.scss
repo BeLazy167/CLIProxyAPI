@@ -1,4 +1,5 @@
-.list {
+// Zero-specificity defaults, so a caller's className restyles the tabs.
+:where(.list) {
   display: flex;
   min-width: 0;
   overflow-x: auto;
@@ -6,7 +7,7 @@
   border-bottom: 1px solid var(--border-color);
 }
 
-.tab {
+:where(.tab) {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -23,23 +24,23 @@
   white-space: nowrap;
   cursor: pointer;
 
-  &:hover {
-    color: var(--text-primary);
-    background: var(--bg-hover);
-  }
-
-  &[data-selected] {
-    color: var(--text-primary);
-    font-weight: 600;
-    border-bottom-color: var(--primary-color);
-  }
-
-  &[data-disabled] {
-    color: var(--text-quaternary);
-    cursor: not-allowed;
-  }
-
   @media (max-width: $breakpoint-mobile) {
     height: 48px;
   }
+}
+
+:where(.tab:hover) {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+:where(.tab[data-selected]) {
+  color: var(--text-primary);
+  font-weight: 600;
+  border-bottom-color: var(--primary-color);
+}
+
+:where(.tab[data-disabled]) {
+  color: var(--text-quaternary);
+  cursor: not-allowed;
 }
