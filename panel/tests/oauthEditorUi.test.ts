@@ -15,10 +15,13 @@ const render = (element: ReturnType<typeof createElement>) =>
   renderToStaticMarkup(createElement(I18nextProvider, { i18n }, element));
 
 // UI SDK mirrors a control's value into a hidden form input; only visible controls count.
+// A disabled radio item keeps aria-disabled instead of the native attribute.
 const disabledControls = (markup: string) =>
-  (markup.match(/<[a-z]+\b[^>]*\sdisabled=""[^>]*>/g) ?? []).filter(
-    (tag) => !tag.includes('aria-hidden="true"')
-  );
+  (
+    markup.match(
+      /<(?:button|input|textarea)\b[^>]*\s(?:disabled=""|aria-disabled="true")[^>]*>/g
+    ) ?? []
+  ).filter((tag) => !tag.includes('aria-hidden="true"'));
 
 function renderMapping(overrides: { disabled?: boolean; canRemove?: boolean } = {}) {
   return render(
@@ -61,8 +64,8 @@ describe('OAuth editor UI', () => {
         translationPrefix: 'oauth_excluded',
       })
     );
-    expect(markup.match(/aria-pressed="true"/g)).toHaveLength(1);
-    expect(markup.match(/aria-pressed="false"/g)).toHaveLength(2);
+    expect(markup.match(/role="radio"[^>]*aria-checked="true"/g)).toHaveLength(1);
+    expect(markup.match(/role="radio"[^>]*aria-checked="false"/g)).toHaveLength(2);
     const inputId = markup.match(/<input id="([^"]+)"/)?.[1];
     expect(inputId).toBeDefined();
     expect(markup).toContain(`for="${inputId}"`);
@@ -80,7 +83,7 @@ describe('OAuth editor UI', () => {
       })
     );
     const disabled = disabledControls(markup);
-    // The provider field, its suggestions button and the two provider shortcuts.
+    // The provider field, its suggestions button and the two provider options.
     expect(disabled).toHaveLength(4);
     expect(disabled.filter((tag) => tag.includes('data-slot="autocomplete-trigger"'))).toHaveLength(
       1
